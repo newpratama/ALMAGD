@@ -95,10 +95,10 @@ policies:
       id: "Hewan peliharaan tidak diperbolehkan."
       en: "Pets are not allowed."
       ar: "لا يُسمح باصطحاب الحيوانات الأليفة."
-heroImage: /images/venues/villa-njd-hero.jpg
-cardImage: /images/venues/villa-njd-pool.jpg
+heroImage: /images/venues/villa-njd-main.jpg
+cardImage: /images/venues/villa-njd-main.jpg
 gallery:
-  - /images/venues/villa-njd-hero.jpg
+  - /images/venues/villa-njd-main.jpg
   - /images/venues/villa-njd-pool.jpg
   - /images/venues/villa-njd-exterior.jpg
   - /images/venues/villa-njd-lounge.jpg

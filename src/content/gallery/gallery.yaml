@@ -1,6 +1,6 @@
 images:
   - id: njd-exterior-01
-    file: /images/venues/villa-njd-hero.jpg
+    file: /images/venues/villa-njd-main.jpg
     venueId: villa-njd
     topic: exterior
     alt:
@@ -18,7 +18,7 @@ images:
     sortOrder: 1
 
   - id: njd-pool-01
-    file: /images/venues/villa-njd-pool.jpg
+    file: /images/venues/villa-njd-main.jpg
     venueId: villa-njd
     topic: pool
     alt:
