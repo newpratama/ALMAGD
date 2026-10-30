@@ -1,0 +1,190 @@
+---
+import Icon from '../primitives/Icon.astro';
+import type { Locale } from '../../lib/i18n';
+
+interface Geo {
+  lat: number;
+  lng: number;
+}
+
+interface Props {
+  venueName: string;
+  addressText: string;
+  geo?: Geo | null;
+  mapsUrl?: string | null;
+  locale: Locale;
+}
+
+const { venueName, addressText, geo, mapsUrl: mapsUrlProp, locale } = Astro.props;
+
+const mapsUrl = mapsUrlProp || (geo
+  ? `https://www.google.com/maps/search/?api=1&query=${geo.lat},${geo.lng}`
+  : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venueName + ', Cisarua, Bogor')}`);
+
+const labels = {
+  id: {
+    openMaps: 'Buka Petunjuk Arah di Google Maps',
+    viewLocation: 'Peta Lokasi',
+    coordinates: 'Koordinat',
+  },
+  en: {
+    openMaps: 'Open Directions in Google Maps',
+    viewLocation: 'Location Map',
+    coordinates: 'Coordinates',
+  },
+  ar: {
+    openMaps: 'فتح الاتجاهات في خرائط Google',
+    viewLocation: 'خريطة الموقع',
+    coordinates: 'الإحداثيات',
+  },
+}[locale];
+// Google Maps embed URL
+const embedMapUrl = geo
+  ? `https://maps.google.com/maps?q=${geo.lat},${geo.lng}&hl=${locale}&z=16&output=embed`
+  : `https://maps.google.com/maps?q=${encodeURIComponent(venueName + ', Cisarua, Bogor')}&hl=${locale}&z=16&output=embed`;
+---
+
+<div class="map-facade-container" role="region" aria-label={labels.viewLocation}>
+  <div class="map-embed-wrapper">
+    <iframe
+      src={embedMapUrl}
+      title={`${venueName} - Google Maps`}
+      width="100%"
+      height="100%"
+      style="border:0;"
+      allowfullscreen=""
+      loading="lazy"
+      referrerpolicy="no-referrer-when-downgrade"
+      class="map-live-iframe"
+    ></iframe>
+  </div>
+
+  <div class="map-facade-card">
+    <div class="map-facade-info">
+      <h3 class="facade-venue-name">{venueName}</h3>
+      <p class="facade-address-text">{addressText}</p>
+      {geo && (
+        <div class="facade-geo">
+          <span class="geo-label">{labels.coordinates}:</span>
+          <bdi class="geo-val" dir="ltr">{geo.lat.toFixed(6)}, {geo.lng.toFixed(6)}</bdi>
+        </div>
+      )}
+    </div>
+
+    {mapsUrl && (
+      <a
+        href={mapsUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="map-direct-btn"
+      >
+        <Icon name="google-maps" size={20} />
+        <span>{labels.openMaps}</span>
+        <Icon name="external" size={14} />
+      </a>
+    )}
+  </div>
+</div>
+
+<style>
+  .map-facade-container {
+    position: relative;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--color-stone);
+    background-color: var(--color-stone);
+    min-height: 380px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+
+  .map-embed-wrapper {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #e5e3df;
+    z-index: 1;
+  }
+
+  .map-live-iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  .map-facade-card {
+    position: relative;
+    z-index: 2;
+    background-color: var(--color-white);
+    margin: var(--space-4);
+    padding: var(--space-4) var(--space-5);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  @media (min-width: 640px) {
+    .map-facade-card {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
+  }
+
+  .map-facade-info {
+    flex: 1;
+  }
+
+  .facade-venue-name {
+    font-family: var(--font-display);
+    font-size: var(--font-size-h3);
+    color: var(--color-pine);
+    margin: 0 0 var(--space-1) 0;
+  }
+
+  .facade-address-text {
+    font-size: var(--font-size-small);
+    color: var(--color-muted);
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  .facade-geo {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-caption);
+    color: var(--color-brass-text);
+    margin: var(--space-1) 0 0 0;
+  }
+
+  .geo-val {
+    font-family: monospace;
+    font-weight: 600;
+  }
+
+  .map-direct-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: 44px;
+    padding: var(--space-2) var(--space-4);
+    background-color: var(--color-pine);
+    color: var(--color-white);
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-small);
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color var(--transition-fast);
+    flex-shrink: 0;
+  }
+
+  .map-direct-btn:hover {
+    background-color: var(--color-pine-700);
+  }
+</style>

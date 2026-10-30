@@ -1,0 +1,255 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+import Container from '../components/primitives/Container.astro';
+import Button from '../components/primitives/Button.astro';
+import Icon from '../components/primitives/Icon.astro';
+import MenuNav from '../components/dining/MenuNav.astro';
+import MenuSection from '../components/dining/MenuSection.astro';
+import { type Locale, localizePath } from '../lib/i18n';
+import { buildWhatsAppLink } from '../lib/whatsapp';
+import { getEntry } from 'astro:content';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+
+const categoriesEntry = await getEntry('menu', 'categories');
+const allCategories = (categoriesEntry?.data?.categories || [])
+  .filter((c: any) => c.visible !== false)
+  .sort((a: any, b: any) => (a.sortOrder || 0) - (b.sortOrder || 0));
+
+const itemsEntry = await getEntry('menu', 'items');
+const allItems = (itemsEntry?.data?.items || [])
+  .filter((item: any) => item.status === 'published')
+  .sort((a: any, b: any) => (a.sortOrder || 0) - (b.sortOrder || 0));
+
+// Filter out categories that have 0 published items
+const activeCategories = allCategories.filter((cat: any) =>
+  allItems.some((item: any) => item.categoryId === cat.id)
+);
+
+const currentPath = localizePath('/dining/njd-cafe/menu', locale);
+const cafePath = localizePath('/dining/njd-cafe', locale);
+
+const waLink = buildWhatsAppLink({
+  venue: 'njd_cafe',
+  locale,
+});
+
+const copy = {
+  id: {
+    seoTitle: 'Menu NJD Cafe | Puncak Dining by ALMAGD',
+    seoDesc: 'Daftar lengkap menu makanan, kopi, dan minuman segar di NJD Cafe, Cisarua, Puncak.',
+    h1: 'Menu NJD Cafe',
+    subtitle: 'Koleksi Kuliner & Minuman Puncak',
+    lead: 'Jelajahi aneka hidangan pilihan, kopi khas, dan minuman segar kami. Hubungi tim kami via WhatsApp untuk pertanyaan seputar ketersediaan menu.',
+    backToCafe: 'Kembali ke Profil NJD Cafe',
+    waBtn: 'Tanya Tim via WhatsApp',
+    pricingNoteTitle: 'Catatan Menu & Harga',
+    pricingNote: 'Harga tercantum dalam Rupiah (IDR). Beberapa menu musiman atau tanpa harga dapat ditanyakan langsung kepada tim kafe kami via WhatsApp.',
+    crumbs: [
+      { label: 'NJD Cafe', href: cafePath },
+      { label: 'Menu' },
+    ],
+  },
+  en: {
+    seoTitle: 'NJD Cafe Menu | Puncak Dining by ALMAGD',
+    seoDesc: 'Complete food, coffee, and refreshments menu at NJD Cafe, Cisarua, Puncak.',
+    h1: 'NJD Cafe Menu',
+    subtitle: 'Puncak Culinary & Beverage Selection',
+    lead: 'Explore our selected dishes, signature coffee, and refreshments. Contact our team directly on WhatsApp for availability and menu inquiries.',
+    backToCafe: 'Back to NJD Cafe Profile',
+    waBtn: 'Ask Team on WhatsApp',
+    pricingNoteTitle: 'Menu & Pricing Note',
+    pricingNote: 'Prices are listed in Indonesian Rupiah (IDR). For unpriced or seasonal items, please ask our team directly via WhatsApp.',
+    crumbs: [
+      { label: 'NJD Cafe', href: cafePath },
+      { label: 'Menu' },
+    ],
+  },
+  ar: {
+    seoTitle: 'قائمة طعام NJD Cafe | مطاعم بونشاك من المجد',
+    seoDesc: 'قائمة المأكولات والقهوة والمشروبات المنعشة في NJD Cafe، تشيساروا، بونشاك.',
+    h1: 'قائمة طعام NJD Cafe',
+    subtitle: 'تشكيلة المأكولات والمشروبات في بونشاك',
+    lead: 'استكشفوا أطباقنا المختارة والقهوة والمشروبات المنعشة. تواصلوا مع فريقنا عبر واتساب للاستفسار عن القائمة وتوافر الأصناف.',
+    backToCafe: 'العودة إلى صفحة NJD Cafe',
+    waBtn: 'استفسار عبر واتساب',
+    pricingNoteTitle: 'ملاحظة حول القائمة والأسعار',
+    pricingNote: 'الأسعار محددة بالروبية الإندونيسية (IDR). للأصناف غير المحددة السعر، يرجى الاستفسار من فريق المقهى مباشرة عبر واتساب.',
+    crumbs: [
+      { label: 'NJD Cafe', href: cafePath },
+      { label: 'قائمة الطعام' },
+    ],
+  },
+}[locale];
+---
+
+<PageLayout
+  title={copy.seoTitle}
+  description={copy.seoDesc}
+  locale={locale}
+  currentPath={currentPath}
+  breadcrumbs={copy.crumbs}
+  venueKey="njd_cafe"
+>
+  <!-- Hero Section -->
+  <header class="menu-hero-section">
+    <Container>
+      <div class="menu-hero-inner">
+        <a href={cafePath} class="back-link">
+          <Icon name="arrow-right" size={16} flipInRtl />
+          <span>{copy.backToCafe}</span>
+        </a>
+
+        <span class="menu-eyebrow">{copy.subtitle}</span>
+        <h1 class="menu-h1">{copy.h1}</h1>
+        <p class="menu-lead">{copy.lead}</p>
+
+        <div class="menu-hero-actions">
+          <Button
+            variant="whatsapp"
+            size="md"
+            href={waLink}
+            external
+            data-wa-source="menu_hero"
+          >
+            <Icon name="whatsapp" size={20} />
+            <span>{copy.waBtn}</span>
+          </Button>
+        </div>
+      </div>
+    </Container>
+  </header>
+
+  <!-- Sticky Category Nav -->
+  <MenuNav categories={activeCategories} locale={locale} />
+
+  <!-- Menu Content Sections -->
+  <main class="menu-content-main">
+    <Container>
+      <div class="menu-sections-wrapper">
+        {activeCategories.map((cat: any) => {
+          const catItems = allItems.filter((i: any) => i.categoryId === cat.id);
+          return (
+            <MenuSection
+              category={cat}
+              items={catItems}
+              locale={locale}
+            />
+          );
+        })}
+      </div>
+
+      <!-- Pricing and Notes -->
+      <aside class="menu-notes-card" aria-labelledby="notes-title">
+        <div class="notes-icon" aria-hidden="true">
+          <Icon name="info" size={20} />
+        </div>
+        <div class="notes-text">
+          <h2 id="notes-title" class="notes-title">{copy.pricingNoteTitle}</h2>
+          <p>{copy.pricingNote}</p>
+        </div>
+      </aside>
+    </Container>
+  </main>
+</PageLayout>
+
+<style>
+  .menu-hero-section {
+    padding-block: var(--space-6) var(--space-5);
+    background-color: var(--color-mist);
+    border-bottom: 1px solid var(--color-stone);
+  }
+
+  .menu-hero-inner {
+    max-width: 68ch;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-small);
+    font-weight: 500;
+    color: var(--color-pine);
+    text-decoration: none;
+    margin-block-end: var(--space-3);
+    transition: color var(--transition-fast);
+  }
+
+  .back-link:hover {
+    color: var(--color-brass);
+  }
+
+  .menu-eyebrow {
+    display: block;
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-brass-text);
+    margin-block-end: var(--space-1);
+  }
+
+  .menu-h1 {
+    font-family: var(--font-display);
+    font-size: var(--font-size-h1);
+    color: var(--color-pine);
+    margin: 0 0 var(--space-3) 0;
+  }
+
+  .menu-lead {
+    font-size: var(--font-size-body);
+    line-height: var(--line-height-body);
+    color: var(--color-muted);
+    margin: 0 0 var(--space-4) 0;
+  }
+
+  .menu-hero-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .menu-content-main {
+    padding-block: var(--space-6) var(--space-9);
+  }
+
+  .menu-sections-wrapper {
+    margin-block-end: var(--space-7);
+  }
+
+  .menu-notes-card {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-5);
+    background-color: var(--color-mist);
+    border: 1px solid var(--color-stone);
+    border-radius: var(--radius-md);
+    max-width: 68ch;
+  }
+
+  .notes-icon {
+    color: var(--color-brass);
+    flex-shrink: 0;
+    margin-block-start: 2px;
+  }
+
+  .notes-title {
+    font-size: var(--font-size-body);
+    font-weight: 600;
+    color: var(--color-pine);
+    margin: 0 0 var(--space-1) 0;
+  }
+
+  .notes-text p {
+    font-size: var(--font-size-small);
+    line-height: var(--line-height-body);
+    color: var(--color-muted);
+    margin: 0;
+  }
+</style>

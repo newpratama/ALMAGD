@@ -1,0 +1,227 @@
+---
+import Container from '../primitives/Container.astro';
+import ResponsiveImage from '../common/ResponsiveImage.astro';
+import Button from '../primitives/Button.astro';
+import { type Locale, localizePath } from '../../lib/i18n';
+import { getCollection } from 'astro:content';
+
+interface Props {
+  locale: Locale;
+  title?: string;
+  eyebrow?: string;
+  lead?: string;
+}
+
+const { locale, title, eyebrow, lead } = Astro.props;
+
+const allVenues = await getCollection('venues');
+const publishedVenues = allVenues
+  .filter((v) => v.data.status === 'published')
+  .sort((a, b) => a.data.sortOrder - b.data.sortOrder);
+
+const defaultTitle = {
+  id: 'Koleksi ALMAGD',
+  en: 'The ALMAGD Collection',
+  ar: 'مجموعة المجد',
+}[locale];
+
+const defaultEyebrow = {
+  id: 'Destinasi Kami',
+  en: 'Our Destinations',
+  ar: 'وجهاتنا',
+}[locale];
+
+const ctaLabels = {
+  stays: {
+    id: 'Lihat Penginapan',
+    en: 'View Property',
+    ar: 'اطّلعوا على مكان الإقامة',
+  }[locale],
+  dining: {
+    id: 'Lihat Menu & Kafe',
+    en: 'View Menu & Cafe',
+    ar: 'اطّلعوا على القائمة والمقهى',
+  }[locale],
+};
+---
+
+<section class="collection-section" aria-labelledby="collection-heading">
+  <Container>
+    <div class="collection-header">
+      <span class="collection-eyebrow">{eyebrow || defaultEyebrow}</span>
+      <h2 id="collection-heading" class="collection-title">{title || defaultTitle}</h2>
+      {lead && <p class="collection-lead">{lead}</p>}
+    </div>
+
+    <div class="collection-grid">
+      {
+        publishedVenues.map((venue) => {
+          const v = venue.data;
+          const venueUrl =
+            v.collection === 'dining'
+              ? localizePath(`/dining/${v.slug}`, locale)
+              : localizePath(`/properties/${v.slug}`, locale);
+
+          const ctaText = v.collection === 'dining' ? ctaLabels.dining : ctaLabels.stays;
+
+          return (
+            <article class="venue-card">
+              <div class="card-media">
+                <ResponsiveImage
+                  src={v.cardImage}
+                  alt={v.name}
+                  aspectRatio="4:3"
+                />
+              </div>
+              <div class="card-body">
+                <div class="card-meta">
+                  <span class="card-type">{v.typeLabel[locale] || v.typeLabel.id}</span>
+                  <span class="card-endorsement">{v.endorsement[locale] || v.endorsement.id}</span>
+                </div>
+                <h3 class="card-title">
+                  <a href={venueUrl} class="card-title-link">
+                    {v.name}
+                  </a>
+                </h3>
+                <p class="card-summary">{v.summary[locale] || v.summary.id}</p>
+                <div class="card-action">
+                  <Button href={venueUrl} variant="secondary" size="sm">
+                    {ctaText}
+                  </Button>
+                </div>
+              </div>
+            </article>
+          );
+        })
+      }
+    </div>
+  </Container>
+</section>
+
+<style>
+  .collection-section {
+    padding-block: var(--space-9);
+    background-color: var(--color-mist);
+  }
+
+  .collection-header {
+    text-align: center;
+    max-width: 68ch;
+    margin-inline: auto;
+    margin-block-end: var(--space-8);
+  }
+
+  .collection-eyebrow {
+    font-size: var(--font-size-small);
+    font-weight: 600;
+    color: var(--color-brass-text);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: inline-block;
+    margin-block-end: var(--space-2);
+  }
+
+  .collection-title {
+    font-size: var(--font-size-h2);
+    margin: 0;
+  }
+
+  .collection-lead {
+    font-size: 1.125rem;
+    color: var(--color-muted);
+    margin-block-start: var(--space-3);
+    margin-block-end: 0;
+  }
+
+  .collection-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+
+  @media (min-width: 640px) {
+    .collection-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .collection-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .venue-card {
+    background-color: var(--color-white);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-1);
+    border: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+  }
+
+  .venue-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-2);
+  }
+
+  .card-media {
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .card-body {
+    padding: var(--space-5);
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: var(--space-2);
+  }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: var(--font-size-caption);
+  }
+
+  .card-type {
+    font-weight: 600;
+    color: var(--color-tea);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .card-endorsement {
+    color: var(--color-muted);
+    font-style: italic;
+  }
+
+  .card-title {
+    font-size: 1.375rem;
+    margin: 0;
+  }
+
+  .card-title-link {
+    color: var(--color-pine);
+    text-decoration: none;
+  }
+
+  .card-title-link:hover {
+    color: var(--color-pine-700);
+  }
+
+  .card-summary {
+    font-size: var(--font-size-small);
+    color: var(--color-muted);
+    line-height: 1.5;
+    margin: 0;
+    flex: 1;
+  }
+
+  .card-action {
+    margin-block-start: var(--space-4);
+  }
+</style>

@@ -1,0 +1,243 @@
+---
+import Icon from '../primitives/Icon.astro';
+import type { Locale } from '../../lib/i18n';
+
+interface Rating {
+  id: string;
+  venueId: string;
+  platform: string;
+  score: number;
+  scale: number;
+  count: number;
+  url: string;
+  asOf: string;
+  approved: boolean;
+}
+
+interface Props {
+  ratings?: Rating[];
+  locale: Locale;
+  showUnapprovedInDev?: boolean;
+}
+
+const { ratings = [], locale, showUnapprovedInDev = true } = Astro.props;
+
+// Filter: in strict mode only show approved ratings. In dev/preview, we can display with disclaimer.
+const isDev = import.meta.env.DEV;
+const visibleRatings = ratings.filter((r) => r.approved || (isDev && showUnapprovedInDev));
+
+const labels = {
+  id: {
+    title: 'Ulasan & Penilaian',
+    subtitle: 'Skor kepuasan tamu dari platform terverifikasi.',
+    reviews: 'ulasan',
+    asOf: 'Per',
+    viewOnPlatform: 'Lihat ulasan di',
+  },
+  en: {
+    title: 'Guest Ratings & Reviews',
+    subtitle: 'Guest satisfaction scores from verified booking platforms.',
+    reviews: 'reviews',
+    asOf: 'As of',
+    viewOnPlatform: 'View reviews on',
+  },
+  ar: {
+    title: 'تقييمات وآراء الضيوف',
+    subtitle: 'مؤشرات رضا الضيوف من منصات الحجز المعتمدة.',
+    reviews: 'تقييم',
+    asOf: 'حتى',
+    viewOnPlatform: 'عرض التقييمات على',
+  },
+}[locale];
+
+const platformNames: Record<string, string> = {
+  traveloka: 'Traveloka',
+  agoda: 'Agoda',
+  tiket: 'Tiket.com',
+  booking: 'Booking.com',
+};
+---
+
+{visibleRatings.length > 0 && (
+  <section class="ratings-section" id="ratings" aria-labelledby="ratings-title">
+    <div class="ratings-header">
+      <h2 id="ratings-title" class="ratings-title">{labels.title}</h2>
+      <p class="ratings-subtitle">{labels.subtitle}</p>
+    </div>
+
+    <div class="ratings-container">
+      {visibleRatings.map((rating) => {
+        const platform = platformNames[rating.platform] || rating.platform;
+        return (
+          <div class="rating-badge-card">
+            <div class="rating-badge-top">
+              <span class="rating-platform-lockup">
+                <Icon name={rating.platform} size={20} class="rating-platform-icon" />
+                <span class="rating-platform">{platform}</span>
+              </span>
+              <span class="rating-date">
+                {labels.asOf} <bdi dir="ltr">{rating.asOf}</bdi>
+              </span>
+            </div>
+
+            <div class="rating-badge-main">
+              <span class="rating-score" dir="ltr">
+                <span class="score-val">{rating.score}</span>
+                <span class="score-scale">/{rating.scale}</span>
+              </span>
+              <div class="rating-stars" aria-hidden="true">
+                <Icon name="star" size={16} />
+                <Icon name="star" size={16} />
+                <Icon name="star" size={16} />
+                <Icon name="star" size={16} />
+                <Icon name="star" size={16} />
+              </div>
+            </div>
+
+            <div class="rating-badge-footer">
+              <span class="rating-count" dir="ltr">
+                {rating.count.toLocaleString()} {labels.reviews}
+              </span>
+              <a
+                href={rating.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="rating-link"
+              >
+                <span>{labels.viewOnPlatform} {platform}</span>
+                <Icon name="external" size={14} />
+              </a>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </section>
+)}
+
+<style>
+  .ratings-section {
+    padding-block: var(--space-6);
+  }
+
+  .ratings-header {
+    margin-block-end: var(--space-5);
+  }
+
+  .ratings-title {
+    font-family: var(--font-display);
+    font-size: var(--font-size-h2);
+    color: var(--color-pine);
+    margin-block-end: var(--space-2);
+  }
+
+  .ratings-subtitle {
+    font-size: var(--font-size-small);
+    color: var(--color-muted);
+  }
+
+  .ratings-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+  }
+
+  .rating-badge-card {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-4) var(--space-5);
+    background-color: var(--color-mist);
+    border: 1px solid var(--color-stone);
+    border-radius: var(--radius-md);
+    min-width: 280px;
+    gap: var(--space-3);
+  }
+
+  .rating-badge-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: var(--font-size-small);
+  }
+
+  .rating-platform-lockup {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .rating-platform-icon {
+    color: var(--color-pine);
+  }
+
+  .rating-platform {
+    font-weight: 700;
+    color: var(--color-pine);
+    letter-spacing: 0.02em;
+  }
+
+  .rating-date {
+    font-size: var(--font-size-caption);
+    color: var(--color-muted);
+  }
+
+  .rating-badge-main {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+  }
+
+  .rating-score {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 2px;
+  }
+
+  .score-val {
+    font-size: 2.25rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--color-pine);
+    font-family: var(--font-display);
+  }
+
+  .score-scale {
+    font-size: var(--font-size-small);
+    color: var(--color-muted);
+    font-weight: 600;
+  }
+
+  .rating-stars {
+    display: inline-flex;
+    gap: 2px;
+    color: var(--color-brass);
+  }
+
+  .rating-badge-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--color-stone);
+    padding-top: var(--space-3);
+    font-size: var(--font-size-caption);
+  }
+
+  .rating-count {
+    color: var(--color-muted);
+    font-weight: 500;
+  }
+
+  .rating-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    color: var(--color-pine);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .rating-link:hover {
+    color: var(--color-brass);
+  }
+</style>

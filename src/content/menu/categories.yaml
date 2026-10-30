@@ -1,0 +1,114 @@
+type: menu_categories
+categories:
+  - id: signature-mains
+    slug: signature-mains
+    name:
+      id: Hidangan Utama Pilihan
+      en: Main Dishes
+      ar: أطباق رئيسية
+    sortOrder: 1
+    visible: true
+  - id: rice
+    slug: rice
+    name:
+      id: Nasi
+      en: Rice
+      ar: الأرز
+    sortOrder: 2
+    visible: true
+  - id: noodles
+    slug: noodles
+    name:
+      id: Mi & Bihun
+      en: Noodles
+      ar: النودلز
+    sortOrder: 3
+    visible: true
+  - id: western
+    slug: western
+    name:
+      id: Menu Barat
+      en: Western Dishes
+      ar: أطباق غربية
+    sortOrder: 4
+    visible: true
+  - id: middle-eastern
+    slug: middle-eastern
+    name:
+      id: Sajian Timur Tengah
+      en: Middle Eastern Dishes
+      ar: أطباق شرق أوسطية
+    sortOrder: 5
+    visible: true
+  - id: snacks
+    slug: snacks
+    name:
+      id: Camilan
+      en: Snacks
+      ar: وجبات خفيفة
+    sortOrder: 6
+    visible: true
+  - id: sweet-bites
+    slug: sweet-bites
+    name:
+      id: Camilan Manis
+      en: Sweet Bites
+      ar: وجبات حلوة
+    sortOrder: 7
+    visible: true
+  - id: coffee
+    slug: coffee
+    name:
+      id: Kopi
+      en: Coffee
+      ar: القهوة
+    sortOrder: 8
+    visible: true
+  - id: tea
+    slug: tea
+    name:
+      id: Teh
+      en: Tea
+      ar: الشاي
+    sortOrder: 9
+    visible: true
+  - id: chocolate-matcha-milk
+    slug: chocolate-matcha-milk
+    name:
+      id: Cokelat, Matcha & Susu
+      en: Chocolate, Matcha & Milk
+      ar: الشوكولاتة والماتشا والحليب
+    sortOrder: 10
+    visible: true
+  - id: juices
+    slug: juices
+    name:
+      id: Jus
+      en: Juices
+      ar: العصائر
+    sortOrder: 11
+    visible: true
+  - id: mocktails-refreshers
+    slug: mocktails-refreshers
+    name:
+      id: Minuman Penyegar
+      en: Refreshing Drinks
+      ar: مشروبات منعشة
+    sortOrder: 12
+    visible: true
+  - id: water-soft-drinks
+    slug: water-soft-drinks
+    name:
+      id: Air Minum
+      en: Water
+      ar: المياه
+    sortOrder: 13
+    visible: true
+  - id: uncategorised
+    slug: uncategorised
+    name:
+      id: Belum Diklasifikasikan
+      en: Unclassified
+      ar: غير مصنف
+    sortOrder: 14
+    visible: false

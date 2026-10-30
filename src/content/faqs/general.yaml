@@ -1,0 +1,15 @@
+faqs:
+  - id: general-contact
+    venueId: null
+    question:
+      id: Bagaimana cara menghubungi tempat yang saya pilih?
+      en: How do I contact my chosen venue?
+      ar: كيف نتواصل مع الوجهة المختارة؟
+    answer:
+      id: Pilih tempat di halaman Kontak atau gunakan tombol WhatsApp langsung untuk nomor masing-masing properti.
+      en: Choose the venue on the Contact page or use the direct WhatsApp link for each property.
+      ar: اختاروا الوجهة في صفحة التواصل أو استخدموا رابط واتساب المباشر الخاص بكل منشأة.
+    answerStatus: VERIFIED
+    factRefs:
+      - F-X-02
+    sortOrder: 1

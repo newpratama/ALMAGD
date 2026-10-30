@@ -1,0 +1,71 @@
+---
+import { type Locale, LOCALES, localizePath } from '../../lib/i18n';
+
+interface Props {
+  title: string;
+  description: string;
+  locale: Locale;
+  currentPath: string;
+  ogImage?: string;
+  jsonLd?: Record<string, any> | null;
+}
+
+const {
+  title,
+  description,
+  locale,
+  currentPath,
+  ogImage = '/images/almagd-og.jpg',
+  jsonLd = null,
+} = Astro.props;
+
+const siteOrigin = Astro.site ? Astro.site.origin : 'https://almagd.id';
+const canonicalUrl = new URL(Astro.url.pathname, siteOrigin).href;
+const ogImageUrl = new URL(ogImage, siteOrigin).href;
+
+const ogLocales: Record<Locale, string> = {
+  id: 'id_ID',
+  en: 'en_US',
+  ar: 'ar_SA',
+};
+---
+
+<!-- Primary Meta Tags -->
+<title>{title}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonicalUrl} />
+
+<!-- Hreflang Alternates -->
+{LOCALES.map((loc) => {
+  const altUrl = new URL(localizePath(currentPath, loc), siteOrigin).href;
+  return <link rel="alternate" hreflang={loc} href={altUrl} />;
+})}
+<link
+  rel="alternate"
+  hreflang="x-default"
+  href={new URL(localizePath(currentPath, 'id'), siteOrigin).href}
+/>
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website" />
+<meta property="og:url" content={canonicalUrl} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:image" content={ogImageUrl} />
+<meta property="og:site_name" content="ALMAGD Hospitality" />
+<meta property="og:locale" content={ogLocales[locale]} />
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:url" content={canonicalUrl} />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImageUrl} />
+
+<!-- Favicon -->
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+<!-- JSON-LD Structured Data -->
+{jsonLd && (
+  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+)}

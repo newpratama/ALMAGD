@@ -1,0 +1,568 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+import HeroPage from '../components/sections/HeroPage.astro';
+import IntroBlock from '../components/sections/IntroBlock.astro';
+import HighlightList from '../components/property/HighlightList.astro';
+import FAQAccordion from '../components/property/FAQAccordion.astro';
+import CollectionGrid from '../components/sections/CollectionGrid.astro';
+import Container from '../components/primitives/Container.astro';
+import Button from '../components/primitives/Button.astro';
+import Icon from '../components/primitives/Icon.astro';
+import { type Locale, localizePath } from '../lib/i18n';
+import { buildWhatsAppLink } from '../lib/whatsapp';
+import { buildVenueSchema } from '../lib/schema';
+import { getEntry } from 'astro:content';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+
+const venueEntry = await getEntry('venues', 'njd-cafe');
+const venue = venueEntry.data as any;
+
+const villaNjdEntry = await getEntry('venues', 'villa-njd');
+const newPratamaEntry = await getEntry('venues', 'new-pratama');
+
+const faqEntry = await getEntry('faqs', 'njd-cafe');
+const faqs = faqEntry?.data?.faqs || [];
+
+const categoriesEntry = await getEntry('menu', 'categories');
+const categories = (categoriesEntry?.data?.categories || [])
+  .filter((c: any) => c.visible !== false)
+  .sort((a: any, b: any) => (a.sortOrder || 0) - (b.sortOrder || 0));
+
+const currentPath = localizePath('/dining/njd-cafe', locale);
+const menuPath = localizePath('/dining/njd-cafe/menu', locale);
+
+const waLink = buildWhatsAppLink({
+  venue: 'njd_cafe',
+  locale,
+});
+
+const copy = {
+  id: {
+    seoTitle: venue.seo.title.id,
+    seoDesc: venue.seo.description.id,
+    typeLabel: venue.typeLabel.id,
+    endorsement: venue.endorsement.id,
+    summary: venue.summary.id,
+    desc: venue.description.id,
+    viewMenuBtn: 'Lihat Daftar Menu',
+    waBtn: 'Tanya Tim via WhatsApp',
+    menuSectionTitle: 'Daftar Kategori Menu',
+    menuSectionSubtitle: 'Beragam sajian lezat mulai dari hidangan utama, camilan, hingga kopi dan minuman penyegar.',
+    viewAllMenu: 'Buka Halaman Menu Lengkap',
+    cuisineTitle: 'Pilihan Kuliner',
+    hoursTitle: 'Informasi Jam Operasional',
+    hoursText: 'Untuk informasi jam buka harian dan ketersediaan tempat, silakan hubungi tim kami langsung via WhatsApp.',
+    addressTitle: 'Lokasi & Kontak',
+    addressLead: 'Alamat NJD Cafe di kawasan Cisarua, Bogor:',
+    mapsBtn: 'Buka di Google Maps',
+    relatedTitle: 'Akomodasi di The ALMAGD Collection',
+    crumbs: [{ label: 'NJD Cafe' }],
+  },
+  en: {
+    seoTitle: venue.seo.title.en,
+    seoDesc: venue.seo.description.en,
+    typeLabel: venue.typeLabel.en,
+    endorsement: venue.endorsement.en,
+    summary: venue.summary.en,
+    desc: venue.description.en,
+    viewMenuBtn: 'View Full Menu',
+    waBtn: 'Ask Team on WhatsApp',
+    menuSectionTitle: 'Menu Categories',
+    menuSectionSubtitle: 'A variety of flavours ranging from hearty mains and snacks to specialty coffees and drinks.',
+    viewAllMenu: 'Open Full Menu Page',
+    cuisineTitle: 'Cuisine Styles',
+    hoursTitle: 'Operating Hours',
+    hoursText: 'For daily operating hours and table availability, please contact our team directly via WhatsApp.',
+    addressTitle: 'Location & Contact',
+    addressLead: 'Address for NJD Cafe in Cisarua, Bogor:',
+    mapsBtn: 'Open in Google Maps',
+    relatedTitle: 'Stays in The ALMAGD Collection',
+    crumbs: [{ label: 'NJD Cafe' }],
+  },
+  ar: {
+    seoTitle: venue.seo.title.ar,
+    seoDesc: venue.seo.description.ar,
+    typeLabel: venue.typeLabel.ar,
+    endorsement: venue.endorsement.ar,
+    summary: venue.summary.ar,
+    desc: venue.description.ar,
+    viewMenuBtn: 'عرض قائمة الطعام كاملة',
+    waBtn: 'استفسار عبر واتساب',
+    menuSectionTitle: 'أقسام قائمة الطعام',
+    menuSectionSubtitle: 'تشكيلة مميزة من الأطباق الرئيسية والوجبات الخفيفة والقهوة والمشروبات المنعشة.',
+    viewAllMenu: 'فتح صفحة القائمة الكاملة',
+    cuisineTitle: 'أنماط المطبخ',
+    hoursTitle: 'ساعات العمل',
+    hoursText: 'للاستفسار عن ساعات العمل اليومية وحجز الطاولات، يرجى التواصل مع فريقنا مباشرة عبر واتساب.',
+    addressTitle: 'الموقع والتواصل',
+    addressLead: 'عنوان NJD Cafe في منطقة تشيساروا، بوغور:',
+    mapsBtn: 'فتح في خرائط Google',
+    relatedTitle: 'أماكن الإقامة في مجموعة المجد',
+    crumbs: [{ label: 'NJD Cafe' }],
+  },
+}[locale];
+
+const relatedVenues = [villaNjdEntry.data, newPratamaEntry.data];
+const jsonLd = buildVenueSchema(venue);
+---
+
+<PageLayout
+  title={copy.seoTitle}
+  description={copy.seoDesc}
+  locale={locale}
+  currentPath={currentPath}
+  breadcrumbs={copy.crumbs}
+  venueKey="njd_cafe"
+  jsonLd={jsonLd}
+>
+  <!-- Hero Section -->
+  <HeroPage
+    title={venue.name}
+    subtitle={`${copy.typeLabel} · ${copy.endorsement}`}
+    lead={copy.summary}
+    image={venue.heroImage}
+    primaryCta={{
+      label: copy.viewMenuBtn,
+      href: menuPath,
+      variant: 'primary',
+      icon: 'utensils',
+    }}
+    secondaryCta={{
+      label: copy.waBtn,
+      href: waLink,
+      variant: 'whatsapp',
+      icon: 'whatsapp',
+    }}
+  />
+
+  <!-- Overview & Highlights -->
+  <Container>
+    <div class="overview-container">
+      <IntroBlock
+        title={locale === 'ar' ? 'عن المقهى' : locale === 'en' ? 'About the Cafe' : 'Tentang NJD Cafe'}
+        subtitle={copy.typeLabel}
+        content={copy.desc}
+      />
+      {venue.highlights && venue.highlights.length > 0 && (
+        <HighlightList highlights={venue.highlights} locale={locale} />
+      )}
+    </div>
+  </Container>
+
+  <!-- Cuisines Served -->
+  {venue.servesCuisine && venue.servesCuisine.length > 0 && (
+    <Container>
+      <section class="cuisine-section" aria-labelledby="cuisine-title">
+        <h2 id="cuisine-title" class="cuisine-title">{copy.cuisineTitle}</h2>
+        <ul class="cuisine-list" role="list">
+          {venue.servesCuisine.map((c: any) => (
+            <li class="cuisine-badge">
+              <Icon name="check" size={16} />
+              <span>{c[locale] || c.en || c.id}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </Container>
+  )}
+
+  <!-- Menu Preview Categories -->
+  <section class="menu-preview-section" id="on-menu" aria-labelledby="menu-preview-title">
+    <Container>
+      <div class="menu-preview-card">
+        <div class="menu-preview-header">
+          <span class="preview-eyebrow">NJD Cafe</span>
+          <h2 id="menu-preview-title" class="preview-title">{copy.menuSectionTitle}</h2>
+          <p class="preview-subtitle">{copy.menuSectionSubtitle}</p>
+        </div>
+
+        <div class="category-pills-grid">
+          {categories.map((cat: any) => {
+            const catName = cat.name[locale] || cat.name.en || cat.name.id;
+            return (
+              <a href={`${menuPath}#${cat.slug}`} class="cat-pill-link">
+                <span>{catName}</span>
+                <Icon name="arrow-right" size={14} flipInRtl />
+              </a>
+            );
+          })}
+        </div>
+
+        <div class="menu-preview-cta">
+          <Button variant="primary" size="lg" href={menuPath}>
+            <Icon name="utensils" size={20} />
+            <span>{copy.viewAllMenu}</span>
+          </Button>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <!-- Opening Hours Note -->
+  <section class="hours-section" id="hours" aria-labelledby="hours-title">
+    <Container>
+      <div class="hours-card">
+        <span class="hours-icon" aria-hidden="true"><Icon name="clock" size={24} /></span>
+        <div class="hours-content">
+          <h2 id="hours-title" class="hours-title">{copy.hoursTitle}</h2>
+          <p class="hours-text">{copy.hoursText}</p>
+        </div>
+        <Button variant="whatsapp" size="sm" href={waLink} external>
+          <Icon name="whatsapp" size={18} />
+          <span>{copy.waBtn}</span>
+        </Button>
+      </div>
+    </Container>
+  </section>
+
+  <!-- Location Card -->
+  <section class="location-section" id="location" aria-labelledby="cafe-location-title">
+    <Container>
+      <div class="cafe-address-card">
+        <div class="cafe-address-header">
+          <span class="location-icon" aria-hidden="true"><Icon name="map-pin" size={24} /></span>
+          <div>
+            <h2 id="cafe-location-title" class="location-title">{copy.addressTitle}</h2>
+            <p class="location-lead">{copy.addressLead}</p>
+          </div>
+        </div>
+
+        <address class="cafe-address" dir="ltr">
+          <p>{venue.address.street}, {venue.address.village}</p>
+          <p>{venue.address.district}, {venue.address.regency}</p>
+          <p>{venue.address.province} {venue.address.postalCode}, {venue.address.country}</p>
+        </address>
+
+        <div class="cafe-address-actions">
+          {venue.phone && (
+            <div class="cafe-phone-row">
+              <span>{locale === 'ar' ? 'الاتصال المباشر:' : locale === 'en' ? 'Direct phone:' : 'Telepon:'}</span>
+              <a href={`tel:${venue.phone}`} class="cafe-phone-link" dir="ltr">
+                <Icon name="phone" size={16} />
+                <span>{venue.phone}</span>
+              </a>
+            </div>
+          )}
+
+          <a
+            href={venue.mapsUrl || 'https://www.google.com/maps/search/?api=1&query=NJD+Cafe+Cisarua+Bogor'}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="cafe-maps-btn"
+          >
+            <Icon name="google-maps" size={18} />
+            <span>{copy.mapsBtn}</span>
+            <Icon name="external" size={14} />
+          </a>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <!-- FAQs -->
+  {faqs.length > 0 && (
+    <Container>
+      <FAQAccordion faqs={faqs} locale={locale} />
+    </Container>
+  )}
+
+  <!-- Related Stays -->
+  <section class="related-section">
+    <Container>
+      <CollectionGrid
+        title={copy.relatedTitle}
+        subtitle="The ALMAGD Collection"
+        venues={relatedVenues}
+        locale={locale}
+      />
+    </Container>
+  </section>
+</PageLayout>
+
+<style>
+  .overview-container {
+    padding-block: var(--space-6);
+  }
+
+  .cuisine-section {
+    padding-block-end: var(--space-6);
+  }
+
+  .cuisine-title {
+    font-size: var(--font-size-small);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-pine);
+    font-weight: 700;
+    margin-block-end: var(--space-3);
+  }
+
+  .cuisine-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .cuisine-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    background-color: var(--color-mist);
+    border: 1px solid var(--color-stone);
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-small);
+    color: var(--color-pine-700);
+    font-weight: 500;
+  }
+
+  .menu-preview-section {
+    padding-block: var(--space-6);
+  }
+
+  .menu-preview-card {
+    background-color: var(--color-mist);
+    border: 1px solid var(--color-stone);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6) var(--space-5);
+  }
+
+  @media (min-width: 640px) {
+    .menu-preview-card {
+      padding: var(--space-8) var(--space-7);
+    }
+  }
+
+  .preview-eyebrow {
+    font-size: var(--font-size-caption);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-brass-text);
+    font-weight: 600;
+  }
+
+  .preview-title {
+    font-family: var(--font-display);
+    font-size: var(--font-size-h2);
+    color: var(--color-pine);
+    margin: var(--space-1) 0 var(--space-2) 0;
+  }
+
+  .preview-subtitle {
+    font-size: var(--font-size-body);
+    color: var(--color-muted);
+    line-height: var(--line-height-body);
+    max-width: 58ch;
+    margin-block-end: var(--space-6);
+  }
+
+  .category-pills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--space-3);
+    margin-block-end: var(--space-6);
+  }
+
+  .cat-pill-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-3) var(--space-4);
+    background-color: var(--color-white);
+    border: 1px solid var(--color-stone);
+    border-radius: var(--radius-md);
+    color: var(--color-ink);
+    font-size: var(--font-size-small);
+    font-weight: 500;
+    text-decoration: none;
+    transition: all var(--transition-fast);
+  }
+
+  .cat-pill-link:hover {
+    border-color: var(--color-brass);
+    color: var(--color-pine);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .menu-preview-cta {
+    display: flex;
+    justify-content: center;
+  }
+
+  .hours-section {
+    padding-block: var(--space-4) var(--space-6);
+  }
+
+  .hours-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    padding: var(--space-5);
+    background-color: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+
+  @media (min-width: 640px) {
+    .hours-card {
+      flex-direction: row;
+      align-items: center;
+    }
+  }
+
+  .hours-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-sm);
+    background-color: var(--color-stone);
+    color: var(--color-pine);
+    flex-shrink: 0;
+  }
+
+  .hours-content {
+    flex: 1;
+  }
+
+  .hours-title {
+    font-size: var(--font-size-h3);
+    font-family: var(--font-display);
+    color: var(--color-pine);
+    margin: 0 0 var(--space-1) 0;
+  }
+
+  .hours-text {
+    font-size: var(--font-size-small);
+    color: var(--color-muted);
+    margin: 0;
+    line-height: var(--line-height-body);
+  }
+
+  .location-section {
+    padding-block: var(--space-6);
+  }
+
+  .cafe-address-card {
+    background-color: var(--color-mist);
+    border: 1px solid var(--color-stone);
+    border-radius: var(--radius-md);
+    padding: var(--space-5) var(--space-6);
+  }
+
+  .cafe-address-header {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    margin-block-end: var(--space-4);
+  }
+
+  .location-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-sm);
+    background-color: var(--color-stone);
+    color: var(--color-brass);
+    flex-shrink: 0;
+  }
+
+  .location-title {
+    font-family: var(--font-display);
+    font-size: var(--font-size-h3);
+    color: var(--color-pine);
+    margin: 0 0 var(--space-1) 0;
+  }
+
+  .location-lead {
+    font-size: var(--font-size-small);
+    color: var(--color-muted);
+    margin: 0;
+  }
+
+  .cafe-address {
+    font-style: normal;
+    padding-inline-start: 56px;
+    margin-block-end: var(--space-3);
+    line-height: 1.6;
+    color: var(--color-ink);
+  }
+
+  .cafe-address p {
+    margin: 0;
+  }
+
+  .cafe-address-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding-inline-start: 56px;
+    margin-top: var(--space-2);
+  }
+
+  .cafe-phone-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-small);
+  }
+
+  .cafe-phone-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    color: var(--color-pine);
+    font-weight: 600;
+    text-decoration: underline;
+  }
+
+  .cafe-maps-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 44px;
+    padding-inline: var(--space-4);
+    background-color: var(--color-mist);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    color: var(--color-pine);
+    font-size: var(--font-size-small);
+    font-weight: 600;
+    text-decoration: none;
+    transition: all var(--transition-fast);
+  }
+
+  .cafe-maps-btn:hover {
+    background-color: var(--color-stone);
+    border-color: var(--color-brass-300);
+    box-shadow: var(--shadow-1);
+  }
+
+  @media (max-width: 640px) {
+    .cafe-address-actions {
+      padding-inline-start: 0;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+
+  .related-section {
+    padding-block: var(--space-8);
+    background-color: var(--color-mist);
+    border-top: 1px solid var(--color-stone);
+  }
+</style>

@@ -1,0 +1,27 @@
+---
+interface Props {
+  class?: string;
+}
+
+const { class: className = '' } = Astro.props;
+---
+
+<span class:list={['tag-pill', className]}>
+  <slot />
+</span>
+
+<style>
+  .tag-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding-inline: var(--space-3);
+    padding-block: var(--space-1);
+    font-size: var(--font-size-small);
+    font-weight: 500;
+    color: var(--color-pine);
+    background-color: var(--color-tea-100);
+    border-radius: var(--radius-pill);
+    border: 1px solid rgba(79, 107, 76, 0.2);
+  }
+</style>

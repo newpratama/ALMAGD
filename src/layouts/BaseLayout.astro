@@ -1,0 +1,68 @@
+---
+import '../styles/global.css';
+import { type Locale, isRTL } from '../lib/i18n';
+import SEO from '../components/common/SEO.astro';
+import ConsentBanner from '../components/layout/ConsentBanner.astro';
+import WhatsAppChooser from '../components/layout/WhatsAppChooser.astro';
+import MobileNav from '../components/layout/MobileNav.astro';
+import Analytics from '../components/common/Analytics.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  locale: Locale;
+  currentPath?: string;
+  ogImage?: string;
+  jsonLd?: Record<string, any> | null;
+}
+
+const {
+  title,
+  description,
+  locale,
+  currentPath = Astro.url.pathname,
+  ogImage = '/images/almagd-og.jpg',
+  jsonLd = null,
+} = Astro.props;
+
+const rtl = isRTL(locale);
+
+const skipText = {
+  id: 'Lewati ke konten utama',
+  en: 'Skip to main content',
+  ar: 'الانتقال إلى المحتوى الرئيسي',
+}[locale];
+---
+
+<!doctype html>
+<html lang={locale} dir={rtl ? 'rtl' : 'ltr'}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <SEO
+      title={title}
+      description={description}
+      locale={locale}
+      currentPath={currentPath}
+      ogImage={ogImage}
+      jsonLd={jsonLd}
+    />
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">
+      {skipText}
+    </a>
+
+    <slot name="header" />
+
+    <slot />
+
+    <slot name="footer" />
+
+    <!-- Global Accessible Drawers / Modals -->
+    <MobileNav locale={locale} currentPath={currentPath} />
+    <WhatsAppChooser locale={locale} />
+    <ConsentBanner locale={locale} />
+    <Analytics />
+  </body>
+</html>

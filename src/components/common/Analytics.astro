@@ -1,0 +1,105 @@
+---
+interface Props {
+  measurementId?: string;
+}
+
+const { measurementId = 'G-XXXXXXXXXX' } = Astro.props;
+---
+
+<script define:vars={{ measurementId }}>
+  // Setup Google Consent Mode v2 default denied
+  window.dataLayer = window.dataLayer || [];
+  function gtag() {
+    window.dataLayer.push(arguments);
+  }
+  window.gtag = gtag;
+
+  gtag('consent', 'default', {
+    analytics_storage: 'denied',
+    ad_storage: 'denied',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied',
+  });
+
+  function loadGoogleAnalytics() {
+    if (window._gaLoaded) return;
+    window._gaLoaded = true;
+
+    gtag('consent', 'update', {
+      analytics_storage: 'granted',
+    });
+
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
+    document.head.appendChild(script);
+
+    gtag('js', new Date());
+    gtag('config', measurementId, {
+      send_page_view: true,
+      anonymize_ip: true,
+    });
+  }
+
+  // Check if consent was already granted
+  if (typeof localStorage !== 'undefined' && localStorage.getItem('almagd_consent') === 'granted') {
+    loadGoogleAnalytics();
+  }
+
+  // Listen for consent update event
+  window.addEventListener('consent-updated', (event) => {
+    if (event.detail && event.detail.granted) {
+      loadGoogleAnalytics();
+    }
+  });
+
+  // Delegated Canonical Click Tracking (Zero PII!)
+  document.addEventListener('click', (e) => {
+    const target = e.target.closest('a, button');
+    if (!target) return;
+
+    // WhatsApp Click
+    if (target.matches('[data-wa-source]')) {
+      const source = target.getAttribute('data-wa-source') || 'unknown';
+      const room = target.getAttribute('data-room-name') || undefined;
+      gtag('event', 'click_whatsapp', {
+        source,
+        room,
+      });
+    }
+
+    // Phone Call Click
+    if (target.matches('a[href^="tel:"]')) {
+      gtag('event', 'click_phone', {
+        interaction_type: 'direct_call',
+      });
+    }
+
+    // OTA Partner Click
+    if (target.matches('[data-ota-platform]')) {
+      const platform = target.getAttribute('data-ota-platform');
+      gtag('event', 'click_ota', {
+        platform,
+      });
+    }
+  });
+
+  // Custom App Events
+  window.addEventListener('almagd:room_detail_open', (e) => {
+    gtag('event', 'room_detail_open', {
+      room: e.detail?.room,
+    });
+  });
+
+  window.addEventListener('almagd:gallery_filter', (e) => {
+    gtag('event', 'gallery_filter', {
+      venue: e.detail?.venue,
+    });
+  });
+
+  window.addEventListener('almagd:gallery_open', (e) => {
+    gtag('event', 'gallery_open', {
+      index: e.detail?.index,
+    });
+  });
+</script>

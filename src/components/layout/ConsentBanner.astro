@@ -1,0 +1,123 @@
+---
+import { type Locale } from '../../lib/i18n';
+import Button from '../primitives/Button.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+
+const copy = {
+  id: {
+    msg: 'Kami menghargai privasi Anda. Kami menggunakan analitik anonim hanya setelah persetujuan Anda untuk meningkatkan layanan.',
+    accept: 'Setuju',
+    decline: 'Tolak',
+    privacy: 'Kebijakan Privasi',
+  },
+  en: {
+    msg: 'We respect your privacy. We use anonymous analytics only upon your consent to improve our services.',
+    accept: 'Accept',
+    decline: 'Decline',
+    privacy: 'Privacy Policy',
+  },
+  ar: {
+    msg: 'نحترم خصوصيتكم الكريمة. نستخدم تحليلات مجهولة الهوية فقط بموافقتكم لتحسين خدماتنا.',
+    accept: 'موافق',
+    decline: 'رفض',
+    privacy: 'سياسة الخصوصية',
+  },
+}[locale];
+
+const privacyUrl = locale === 'id' ? '/privacy' : `/${locale}/privacy`;
+---
+
+<div id="consent-banner" class="consent-banner" role="region" aria-label="Cookie consent banner" hidden>
+  <div class="consent-content">
+    <p class="consent-text">
+      {copy.msg} <a href={privacyUrl} class="consent-link">{copy.privacy}</a>
+    </p>
+    <div class="consent-actions">
+      <Button variant="ghost" size="sm" id="consent-decline-btn">{copy.decline}</Button>
+      <Button variant="primary" size="sm" id="consent-accept-btn">{copy.accept}</Button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .consent-banner {
+    position: fixed;
+    bottom: 0;
+    inset-inline: 0;
+    z-index: 950;
+    background-color: var(--color-white);
+    border-block-start: 1px solid var(--color-border);
+    box-shadow: 0 -4px 16px rgba(26, 29, 27, 0.08);
+    padding: var(--space-4) var(--container-gutter);
+  }
+
+  .consent-content {
+    max-width: var(--container-max-width);
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    align-items: center;
+  }
+
+  @media (min-width: 768px) {
+    .consent-content {
+      flex-direction: row;
+      justify-content: space-between;
+      gap: var(--space-6);
+    }
+  }
+
+  .consent-text {
+    font-size: var(--font-size-small);
+    color: var(--color-ink);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .consent-link {
+    color: var(--color-brass-text);
+    text-decoration: underline;
+    font-weight: 500;
+  }
+
+  .consent-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-shrink: 0;
+  }
+</style>
+
+<script>
+  function setupConsent() {
+    const banner = document.getElementById('consent-banner');
+    if (!banner) return;
+
+    const stored = localStorage.getItem('almagd_consent');
+    if (!stored) {
+      banner.hidden = false;
+    }
+
+    const acceptBtn = document.getElementById('consent-accept-btn');
+    const declineBtn = document.getElementById('consent-decline-btn');
+
+    function handleChoice(granted: boolean) {
+      localStorage.setItem('almagd_consent', granted ? 'granted' : 'denied');
+      banner!.hidden = true;
+      window.dispatchEvent(
+        new CustomEvent('consent-updated', { detail: { granted } })
+      );
+    }
+
+    acceptBtn?.addEventListener('click', () => handleChoice(true));
+    declineBtn?.addEventListener('click', () => handleChoice(false));
+  }
+
+  document.addEventListener('DOMContentLoaded', setupConsent);
+</script>

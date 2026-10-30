@@ -1,0 +1,217 @@
+---
+import ResponsiveImage from '../common/ResponsiveImage.astro';
+import Icon from '../primitives/Icon.astro';
+import { buildWhatsAppLink } from '../../lib/whatsapp';
+import type { Locale } from '../../lib/i18n';
+
+interface MenuItem {
+  id: string;
+  slug: string;
+  name: string;
+  altName?: Record<Locale, string>;
+  price?: number | null;
+  featured?: boolean;
+  image?: string;
+  status: string;
+}
+
+interface Props {
+  items: MenuItem[];
+  locale: Locale;
+  title?: string;
+}
+
+const { items = [], locale, title } = Astro.props;
+
+// Filter only published featured items that have an image
+const featuredItems = items.filter((item) => item.featured && item.image && item.status === 'published');
+
+const defaultTitle = {
+  id: 'Pilihan Menu Favorit',
+  en: 'Menu Highlights',
+  ar: 'أبرز اختيارات القائمة',
+}[locale];
+
+const labels = {
+  id: {
+    askPrice: 'Tanyakan harga',
+    inquireWa: 'Tanya via WhatsApp',
+  },
+  en: {
+    askPrice: 'Ask for price',
+    inquireWa: 'Ask on WhatsApp',
+  },
+  ar: {
+    askPrice: 'اسأل عن السعر',
+    inquireWa: 'استفسار عبر واتساب',
+  },
+}[locale];
+---
+
+{featuredItems.length > 0 && (
+  <section class="featured-menu-section" id="featured" aria-labelledby="featured-title">
+    <div class="featured-header">
+      <h2 id="featured-title" class="featured-title">{title || defaultTitle}</h2>
+    </div>
+
+    <div class="featured-grid">
+      {featuredItems.map((item) => {
+        const altName = item.altName ? (item.altName[locale] || item.altName.en || item.altName.id) : null;
+        const waLink = buildWhatsAppLink({
+          venue: 'njd_cafe',
+          locale,
+          context: 'item',
+          contextParam: item.name,
+        });
+
+        return (
+          <article class="featured-card">
+            {item.image && (
+              <div class="featured-card-image">
+                <ResponsiveImage
+                  src={item.image}
+                  alt={item.name}
+                  aspectRatio="1:1"
+                  width={400}
+                  height={400}
+                />
+              </div>
+            )}
+            <div class="featured-card-content">
+              <h3 class="featured-card-name">
+                <bdi dir="ltr">{item.name}</bdi>
+              </h3>
+              {altName && <p class="featured-card-alt">{altName}</p>}
+
+              <div class="featured-card-footer">
+                {item.price !== null && item.price !== undefined ? (
+                  <span class="featured-price" dir="ltr">Rp {item.price.toLocaleString('id-ID')}</span>
+                ) : (
+                  <span class="featured-price-ask">{labels.askPrice}</span>
+                )}
+
+                <a
+                  href={waLink}
+                  target="_blank"
+                  rel="noopener"
+                  class="featured-wa-btn"
+                  title={labels.inquireWa}
+                >
+                  <Icon name="whatsapp" size={16} />
+                </a>
+              </div>
+            </div>
+          </article>
+        );
+      })}
+    </div>
+  </section>
+)}
+
+<style>
+  .featured-menu-section {
+    padding-block: var(--space-6);
+  }
+
+  .featured-header {
+    margin-block-end: var(--space-5);
+  }
+
+  .featured-title {
+    font-family: var(--font-display);
+    font-size: var(--font-size-h2);
+    color: var(--color-pine);
+    margin: 0;
+  }
+
+  .featured-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+
+  @media (min-width: 640px) {
+    .featured-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .featured-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .featured-card {
+    background-color: var(--color-white);
+    border: 1px solid var(--color-stone);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .featured-card-image {
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    background-color: var(--color-stone);
+  }
+
+  .featured-card-content {
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  .featured-card-name {
+    font-size: var(--font-size-body);
+    font-weight: 600;
+    color: var(--color-pine);
+    margin: 0;
+  }
+
+  .featured-card-alt {
+    font-size: var(--font-size-small);
+    color: var(--color-muted);
+    margin: var(--space-1) 0 auto 0;
+  }
+
+  .featured-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-block-start: var(--space-3);
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--color-stone);
+  }
+
+  .featured-price {
+    font-size: var(--font-size-body);
+    font-weight: 700;
+    color: var(--color-pine-700);
+  }
+
+  .featured-price-ask {
+    font-size: var(--font-size-caption);
+    color: var(--color-brass-text);
+  }
+
+  .featured-wa-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-mist);
+    color: var(--color-pine);
+    border: 1px solid var(--color-border);
+    transition: all var(--transition-fast);
+  }
+
+  .featured-wa-btn:hover {
+    background-color: var(--color-wa);
+    color: var(--color-wa-text);
+  }
+</style>

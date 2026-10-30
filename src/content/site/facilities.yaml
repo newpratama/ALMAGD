@@ -1,0 +1,122 @@
+type: facilities_dict
+facilities:
+  - id: pool-outdoor
+    icon: pool
+    label:
+      id: Kolam Renang Luar Ruangan
+      en: Outdoor Swimming Pool
+      ar: مسبح خارجي
+  - id: pool-kids
+    icon: pool
+    label:
+      id: Kolam Anak
+      en: Kids Pool
+      ar: مسبح للأطفال
+  - id: wifi-free
+    icon: wifi
+    label:
+      id: Wi-Fi Gratis
+      en: Free Wi-Fi
+      ar: واي فاي مجاني
+  - id: parking-free
+    icon: parking
+    label:
+      id: Parkir Gratis
+      en: Free Parking
+      ar: موقف سيارات مجاني
+  - id: parking
+    icon: parking
+    label:
+      id: Area Parkir
+      en: Parking Area
+      ar: منطقة مواقف
+  - id: kitchen
+    icon: kitchen
+    label:
+      id: Dapur
+      en: Kitchen
+      ar: مطبخ
+  - id: bbq
+    icon: flame
+    label:
+      id: Fasilitas BBQ
+      en: BBQ Facilities
+      ar: مرافق شواء
+  - id: prayer-room
+    icon: moon
+    label:
+      id: Mushola
+      en: Prayer Room (Mushola)
+      ar: مصلى
+  - id: smoking-area
+    icon: cigarette
+    label:
+      id: Area Merokok
+      en: Smoking Area
+      ar: منطقة مخصصة للتدخين
+  - id: reception-24h
+    icon: clock
+    label:
+      id: Resepsionis 24 Jam
+      en: 24-Hour Front Desk
+      ar: مكتب استقبال على مدار 24 ساعة
+  - id: security
+    icon: shield
+    label:
+      id: Keamanan
+      en: Security
+      ar: أمن وحراسة
+  - id: balcony
+    icon: sun
+    label:
+      id: Balkon
+      en: Balcony
+      ar: شرفة
+  - id: mountain-view
+    icon: mountain
+    label:
+      id: Pemandangan Gunung
+      en: Mountain View
+      ar: إطلالة جبلية
+  - id: city-view
+    icon: building
+    label:
+      id: Pemandangan Kota
+      en: City View
+      ar: إطلالة على المدينة
+  - id: hot-water
+    icon: droplet
+    label:
+      id: Air Panas
+      en: Hot Water
+      ar: مياه ساخنة
+  - id: tv
+    icon: tv
+    label:
+      id: TV Layar Datar
+      en: Flat-screen TV
+      ar: تلفزيون بشاشة مسطحة
+  - id: work-desk
+    icon: desk
+    label:
+      id: Meja Kerja
+      en: Work Desk
+      ar: مكتب عمل
+  - id: refill-station
+    icon: coffee
+    label:
+      id: Dispenser Air Minum
+      en: Water Refill Station
+      ar: موزع مياه ومشروبات ساخنة
+  - id: restaurant-onsite
+    icon: utensils
+    label:
+      id: Resto di Lokasi
+      en: On-site Dining
+      ar: مطعم في الموقع
+  - id: family-friendly
+    icon: users
+    label:
+      id: Ramah Keluarga
+      en: Family Friendly
+      ar: مناسب للعائلات

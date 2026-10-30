@@ -1,0 +1,24 @@
+id: new-pratama--full-villa
+venueId: new-pratama
+slug: full-villa
+name: Full Villa
+kind: villa
+summary:
+  id: Opsi sewa vila penuh untuk keluarga besar atau rombongan.
+  en: Full villa rental option for large families or groups.
+  ar: خيار استئجار فيلا كاملة للعائلات الكبيرة أو المجموعات.
+sizeM2: null
+maxGuests: null
+bedrooms: null
+beds: null
+bathrooms: null
+features:
+  - kitchen
+images:
+  - /images/rooms/new-pratama--full-villa.jpg
+  - /images/venues/new-pratama-hero.jpg
+sortOrder: 1
+status: draft
+fieldStatus:
+  name: PUBLIC_SOURCE_ONLY
+  features: PUBLIC_SOURCE_ONLY

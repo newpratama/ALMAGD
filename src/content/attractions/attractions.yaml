@@ -1,0 +1,70 @@
+attractions:
+  - id: taman-safari
+    name: Taman Safari Indonesia
+    category: park
+    description:
+      id: Taman safari dan konservasi satwa populer di kawasan Puncak.
+      en: Renowned safari and animal conservation park in Puncak.
+      ar: حديقة سفاري ومحمية حيوانات شهيرة في منطقة بونشاك.
+    distances:
+      - venueId: villa-njd
+        km: 5.0
+        status: VERIFIED_MULTIPLE_SOURCES
+        source: Traveloka / Tiket.com
+    mapsUrl: null
+
+  - id: perkebunan-teh-cisarua
+    name: Perkebunan Teh Cisarua
+    category: nature
+    description:
+      id: Hamparan perkebunan teh hijau dengan udara pegunungan yang sejuk.
+      en: Expansive green tea plantations with fresh highland air.
+      ar: مزارع شاي خضراء شاسعة بهواء جبلي عليل.
+    distances:
+      - venueId: villa-njd
+        km: 2.7
+        status: PUBLIC_SOURCE_ONLY
+        source: Traveloka
+    mapsUrl: null
+
+  - id: cimory-mountain-view
+    name: Cimory Mountain View
+    category: food
+    description:
+      id: Destinasi kuliner dan rekreasi keluarga dengan panorama perbukitan.
+      en: Family dining and leisure spot overlooking scenic hills.
+      ar: وجهة ترفيهية ومطاعم عائلية بإطلالات تلال ساحرة.
+    distances:
+      - venueId: villa-njd
+        km: 6.3
+        status: PUBLIC_SOURCE_ONLY
+        source: Traveloka
+    mapsUrl: null
+
+  - id: agrowisata-gunung-mas
+    name: Agrowisata Gunung Mas
+    category: nature
+    description:
+      id: Wisata kebun teh dan aktivitas luar ruangan di ketinggian Puncak.
+      en: Tea estate tourism and outdoor activities in high Puncak.
+      ar: سياحة مزارع الشاي وأنشطة الهواء الطلق في مرتفعات بونشاك.
+    distances:
+      - venueId: villa-njd
+        km: 7.0
+        status: PUBLIC_SOURCE_ONLY
+        source: Traveloka
+    mapsUrl: null
+
+  - id: curug-cilember
+    name: Curug Cilember
+    category: nature
+    description:
+      id: Air terjun tujuh tingkat yang dikelilingi hutan pinus asri.
+      en: Seven-tiered waterfall nestled within serene pine forests.
+      ar: شلال من سبع طبقات محاط بغابات الصنوبر الهادئة.
+    distances:
+      - venueId: villa-njd
+        km: 8.0
+        status: PUBLIC_SOURCE_ONLY
+        source: Traveloka
+    mapsUrl: null

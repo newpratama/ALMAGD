@@ -1,0 +1,15 @@
+faqs:
+  - id: np-general
+    venueId: new-pratama
+    question:
+      id: Bagaimana cara menanyakan ketersediaan di New Pratama Villa?
+      en: How can I inquire about availability at New Pratama Villa?
+      ar: كيف يمكنني الاستفسار عن التوافر في New Pratama Villa؟
+    answer:
+      id: Anda dapat menghubungi tim New Pratama Villa langsung melalui WhatsApp untuk informasi pilihan menginap.
+      en: You can contact the New Pratama Villa team directly via WhatsApp for stay options and details.
+      ar: يمكنكم التواصل مع فريق New Pratama Villa مباشرة عبر واتساب للاستفسار عن خيارات الإقامة والتفاصيل.
+    answerStatus: OFFICIAL_SOURCE
+    factRefs:
+      - F-NP-06
+    sortOrder: 1

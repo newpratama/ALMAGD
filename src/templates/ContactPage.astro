@@ -1,0 +1,177 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+import Container from '../components/primitives/Container.astro';
+import HeroPage from '../components/sections/HeroPage.astro';
+import ContactCard from '../components/location/ContactCard.astro';
+import FAQAccordion from '../components/property/FAQAccordion.astro';
+import Icon from '../components/primitives/Icon.astro';
+import { type Locale, localizePath } from '../lib/i18n';
+import { getEntry } from 'astro:content';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+
+const villaNjdEntry = await getEntry('venues', 'villa-njd');
+const newPratamaEntry = await getEntry('venues', 'new-pratama');
+const njdCafeEntry = await getEntry('venues', 'njd-cafe');
+
+const generalFaqEntry = await getEntry('faqs', 'general');
+const faqs = generalFaqEntry?.data?.faqs || [];
+
+const currentPath = localizePath('/contact', locale);
+
+const copy = {
+  id: {
+    seoTitle: 'Kontak ALMAGD | Hubungi New Pratama Villa, Villa NJD & NJD Cafe',
+    seoDesc: 'Nomor telepon dan WhatsApp resmi New Pratama Villa, Villa NJD, dan NJD Cafe di Puncak, Bogor.',
+    h1: 'Hubungi Kami',
+    subtitle: 'Saluran Komunikasi Resmi ALMAGD',
+    lead: 'Setiap properti dalam Koleksi ALMAGD memiliki kontak langsung. Silakan hubungi tim reservasi masing-masing properti via WhatsApp untuk respon cepat.',
+    noticeTitle: 'Layanan Komunikasi Langsung',
+    noticeText: 'Kami tidak menggunakan perantara tidak resmi. Semua nomor telepon dan tautan WhatsApp yang tercantum di bawah ini adalah kontak resmi yang terhubung langsung ke staf properti.',
+    venuesTitle: 'Kontak Langsung per Properti',
+    crumbs: [{ label: 'Kontak' }],
+  },
+  en: {
+    seoTitle: 'Contact ALMAGD | Reach New Pratama Villa, Villa NJD & NJD Cafe',
+    seoDesc: 'Official phone and WhatsApp contact numbers for New Pratama Villa, Villa NJD, and NJD Cafe in Puncak, Bogor.',
+    h1: 'Contact Us',
+    subtitle: 'Official ALMAGD Communication Channels',
+    lead: 'Each property in The ALMAGD Collection maintains direct communication. Please reach out to each venue\'s team directly via WhatsApp for fast responses.',
+    noticeTitle: 'Direct Verified Communications',
+    noticeText: 'We do not operate through unverified third parties. All phone numbers and WhatsApp links listed below connect directly to our venue staff.',
+    venuesTitle: 'Direct Venue Contacts',
+    crumbs: [{ label: 'Contact' }],
+  },
+  ar: {
+    seoTitle: 'اتصلوا بالمجد | التواصل مع New Pratama Villa و Villa NJD و NJD Cafe',
+    seoDesc: 'أرقام الهواتف والواتساب الرسمية لـ New Pratama Villa و Villa NJD و NJD Cafe في بونشاك، بوغور.',
+    h1: 'تواصلوا معنا',
+    subtitle: 'قنوات التواصل الرسمية لمجموعة المجد',
+    lead: 'تحتفظ كل منشأة في مجموعة المجد بقنوات اتصال مباشرة ومستقلة. يرجى التواصل مع فريق المنشأة المعنية عبر واتساب لسرعة الرد.',
+    noticeTitle: 'قنوات تواصل مباشرة وموثقة',
+    noticeText: 'لا نعتمد أي وسطاء غير رسميين. جميع أرقام الهواتف وروابط واتساب الموضحة أدناه تتصل مباشرة بطواقم المنشآت المعتمدة.',
+    venuesTitle: 'قنوات التواصل المباشر لكل منشأة',
+    crumbs: [{ label: 'اتصلوا بنا' }],
+  },
+}[locale];
+---
+
+<PageLayout
+  title={copy.seoTitle}
+  description={copy.seoDesc}
+  locale={locale}
+  currentPath={currentPath}
+  breadcrumbs={copy.crumbs}
+>
+  <!-- Hero Section -->
+  <HeroPage
+    title={copy.h1}
+    subtitle={copy.subtitle}
+    lead={copy.lead}
+  />
+
+  <main class="contact-main-content">
+    <Container>
+      <!-- Direct Service Notice Card -->
+      <aside class="contact-notice-card" aria-labelledby="notice-title">
+        <span class="notice-icon" aria-hidden="true"><Icon name="shield" size={24} /></span>
+        <div>
+          <h2 id="notice-title" class="notice-title">{copy.noticeTitle}</h2>
+          <p class="notice-text">{copy.noticeText}</p>
+        </div>
+      </aside>
+
+      <!-- 3 Venue Cards -->
+      <section class="contact-cards-section" aria-labelledby="venue-contacts-title">
+        <h2 id="venue-contacts-title" class="section-heading">{copy.venuesTitle}</h2>
+        <div class="contact-cards-grid">
+          <ContactCard
+            venue={villaNjdEntry.data as any}
+            venueKey="villa_njd"
+            locale={locale}
+          />
+          <ContactCard
+            venue={newPratamaEntry.data as any}
+            venueKey="new_pratama"
+            locale={locale}
+          />
+          <ContactCard
+            venue={njdCafeEntry.data as any}
+            venueKey="njd_cafe"
+            locale={locale}
+          />
+        </div>
+      </section>
+
+      <!-- FAQs -->
+      {faqs.length > 0 && (
+        <FAQAccordion faqs={faqs} locale={locale} />
+      )}
+    </Container>
+  </main>
+</PageLayout>
+
+<style>
+  .contact-main-content {
+    padding-block: var(--space-6) var(--space-9);
+  }
+
+  .contact-notice-card {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-4);
+    background-color: var(--color-mist);
+    border: 1px solid var(--color-stone);
+    border-radius: var(--radius-md);
+    padding: var(--space-5);
+    margin-block-end: var(--space-7);
+    max-width: 800px;
+  }
+
+  .notice-icon {
+    color: var(--color-brass);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .notice-title {
+    font-size: var(--font-size-body);
+    font-weight: 600;
+    color: var(--color-pine);
+    margin: 0 0 var(--space-1) 0;
+  }
+
+  .notice-text {
+    font-size: var(--font-size-small);
+    color: var(--color-muted);
+    line-height: var(--line-height-body);
+    margin: 0;
+  }
+
+  .contact-cards-section {
+    margin-block-end: var(--space-8);
+  }
+
+  .section-heading {
+    font-family: var(--font-display);
+    font-size: var(--font-size-h2);
+    color: var(--color-pine);
+    margin: 0 0 var(--space-5) 0;
+  }
+
+  .contact-cards-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-5);
+  }
+
+  @media (min-width: 768px) {
+    .contact-cards-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+</style>

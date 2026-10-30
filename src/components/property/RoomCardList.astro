@@ -1,0 +1,378 @@
+---
+import ResponsiveImage from '../common/ResponsiveImage.astro';
+import Button from '../primitives/Button.astro';
+import Icon from '../primitives/Icon.astro';
+import RoomDetailDialog from './RoomDetailDialog.astro';
+import { buildWhatsAppLink, type VenueKey } from '../../lib/whatsapp';
+import type { Locale } from '../../lib/i18n';
+
+interface Room {
+  id: string;
+  venueId: string;
+  slug: string;
+  name: string;
+  kind: string;
+  summary: Record<Locale, string>;
+  sizeM2?: number | null;
+  maxGuests?: number | null;
+  bedrooms?: number | null;
+  beds?: Record<Locale, string>;
+  bathrooms?: number | null;
+  features: string[];
+  images: string[];
+  status: string;
+}
+
+interface Props {
+  rooms: Room[];
+  venueKey: VenueKey;
+  locale: Locale;
+  title?: string;
+  subtitle?: string;
+}
+
+const { rooms = [], venueKey, locale, title, subtitle } = Astro.props;
+
+const defaultTitles = {
+  id: 'Pilihan Menginap',
+  en: 'Stay Options',
+  ar: 'خيارات الإقامة',
+};
+
+const defaultSubtitles = {
+  id: 'Pilih tipe kamar atau vila yang sesuai dengan rencana liburan Anda.',
+  en: 'Select the room or villa option that fits your travel plans.',
+  ar: 'اختر نوع الغرفة أو الفيلا التي تناسب خطط إقامتكم.',
+};
+
+const sectionTitle = title || defaultTitles[locale];
+const sectionSubtitle = subtitle || defaultSubtitles[locale];
+
+const labels = {
+  id: {
+    viewDetails: 'Lihat Detail',
+    inquireWa: 'Tanya via WhatsApp',
+    bedrooms: 'Kamar Tidur',
+    bathrooms: 'Kamar Mandi',
+  },
+  en: {
+    viewDetails: 'View Details',
+    inquireWa: 'Ask on WhatsApp',
+    bedrooms: 'Bedrooms',
+    bathrooms: 'Bathrooms',
+  },
+  ar: {
+    viewDetails: 'عرض التفاصيل',
+    inquireWa: 'استفسار عبر واتساب',
+    bedrooms: 'غرف نوم',
+    bathrooms: 'دورات مياه',
+  },
+}[locale];
+---
+
+{rooms.length > 0 && (
+  <section class="rooms-section" id="rooms" aria-labelledby="rooms-title">
+    <div class="rooms-header">
+      <h2 id="rooms-title" class="rooms-title">{sectionTitle}</h2>
+      <p class="rooms-subtitle">{sectionSubtitle}</p>
+    </div>
+
+    <div class="room-grid">
+      {rooms.map((room) => {
+        const summary = room.summary[locale] || room.summary.en || room.summary.id;
+        const bedsLabel = room.beds ? (room.beds[locale] || room.beds.en || room.beds.id) : null;
+        const heroImg = room.images && room.images.length > 0 ? room.images[0] : '/images/placeholders/room-standard.jpg';
+        const waLink = buildWhatsAppLink({
+          venue: venueKey,
+          locale,
+          context: 'room',
+          contextParam: room.name,
+        });
+
+        return (
+          <article class="room-card" data-room-slug={room.slug}>
+            <div class="room-card-image">
+              <ResponsiveImage
+                src={heroImg}
+                alt={room.name}
+                aspectRatio="4:3"
+                width={600}
+                height={450}
+              />
+            </div>
+
+            <div class="room-card-content">
+              <h3 class="room-card-title">
+                <bdi dir="ltr">{room.name}</bdi>
+              </h3>
+
+              <p class="room-card-summary">{summary}</p>
+
+              <div class="room-card-meta">
+                {room.bedrooms && (
+                  <span class="meta-item">
+                    <Icon name="home" size={16} />
+                    <span>{room.bedrooms} {labels.bedrooms}</span>
+                  </span>
+                )}
+                {bedsLabel && (
+                  <span class="meta-item">
+                    <Icon name="bed" size={16} />
+                    <span>{bedsLabel}</span>
+                  </span>
+                )}
+                {room.bathrooms && (
+                  <span class="meta-item">
+                    <Icon name="bath" size={16} />
+                    <span>{room.bathrooms} {labels.bathrooms}</span>
+                  </span>
+                )}
+              </div>
+
+              <div class="room-card-actions">
+                <button
+                  type="button"
+                  class="btn-room-details"
+                  data-open-dialog={`dialog-${room.slug}`}
+                  data-room-name={room.name}
+                >
+                  <Icon name="info" size={16} />
+                  <span>{labels.viewDetails}</span>
+                </button>
+
+                <Button
+                  variant="whatsapp"
+                  size="sm"
+                  href={waLink}
+                  external
+                  data-wa-source="room_card"
+                  data-room-name={room.name}
+                >
+                  <Icon name="whatsapp" size={16} />
+                  <span>{labels.inquireWa}</span>
+                </Button>
+              </div>
+            </div>
+          </article>
+        );
+      })}
+    </div>
+
+    {/* Dialogs rendered alongside cards */}
+    {rooms.map((room) => (
+      <RoomDetailDialog room={room} venueKey={venueKey} locale={locale} />
+    ))}
+  </section>
+)}
+
+<script>
+  function setupRoomDialogs() {
+    let lastActiveTrigger: HTMLElement | null = null;
+
+    // Handle Open Buttons
+    document.querySelectorAll('[data-open-dialog]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const targetId = btn.getAttribute('data-open-dialog');
+        if (!targetId) return;
+        const dialog = document.getElementById(targetId) as HTMLDialogElement | null;
+        if (dialog && typeof dialog.showModal === 'function') {
+          lastActiveTrigger = btn as HTMLElement;
+          dialog.showModal();
+
+          // Dispatch room_detail_open analytics event
+          const roomName = btn.getAttribute('data-room-name') || '';
+          window.dispatchEvent(new CustomEvent('almagd:room_detail_open', {
+            detail: { room: roomName }
+          }));
+        }
+      });
+    });
+
+    // Handle Close Buttons
+    document.querySelectorAll('[data-close-dialog]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const targetId = btn.getAttribute('data-close-dialog');
+        if (!targetId) return;
+        const dialog = document.getElementById(targetId) as HTMLDialogElement | null;
+        if (dialog && typeof dialog.close === 'function') {
+          dialog.close();
+          if (lastActiveTrigger) {
+            lastActiveTrigger.focus();
+            lastActiveTrigger = null;
+          }
+        }
+      });
+    });
+
+    // Handle Backdrop Click
+    document.querySelectorAll<HTMLDialogElement>('.room-dialog').forEach((dialog) => {
+      dialog.addEventListener('click', (event) => {
+        const rect = dialog.getBoundingClientRect();
+        const isInDialog = (
+          rect.top <= event.clientY &&
+          event.clientY <= rect.top + rect.height &&
+          rect.left <= event.clientX &&
+          event.clientX <= rect.left + rect.width
+        );
+        if (!isInDialog) {
+          dialog.close();
+          if (lastActiveTrigger) {
+            lastActiveTrigger.focus();
+            lastActiveTrigger = null;
+          }
+        }
+      });
+
+      dialog.addEventListener('close', () => {
+        if (lastActiveTrigger) {
+          lastActiveTrigger.focus();
+          lastActiveTrigger = null;
+        }
+      });
+    });
+  }
+
+  // Setup on page load
+  setupRoomDialogs();
+  document.addEventListener('astro:page-load', setupRoomDialogs);
+</script>
+
+<style>
+  .rooms-section {
+    padding-block: var(--space-6);
+  }
+
+  .rooms-header {
+    margin-block-end: var(--space-5);
+  }
+
+  .rooms-title {
+    font-family: var(--font-display);
+    font-size: var(--font-size-h2);
+    color: var(--color-pine);
+    margin-block-end: var(--space-2);
+  }
+
+  .rooms-subtitle {
+    font-size: var(--font-size-small);
+    color: var(--color-muted);
+  }
+
+  .room-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-5);
+  }
+
+  @media (min-width: 640px) {
+    .room-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .room-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .room-card {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--color-white);
+    border: 1px solid var(--color-stone);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  }
+
+  .room-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .room-card-image {
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background-color: var(--color-stone);
+  }
+
+  .room-card-content {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-4);
+    flex: 1;
+    gap: var(--space-3);
+  }
+
+  .room-card-title {
+    font-family: var(--font-display);
+    font-size: var(--font-size-h3);
+    color: var(--color-pine);
+    margin: 0;
+  }
+
+  .room-card-summary {
+    font-size: var(--font-size-small);
+    color: var(--color-muted);
+    line-height: 1.5;
+    margin: 0;
+    flex: 1;
+  }
+
+  .room-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-3);
+    padding-block: var(--space-2);
+    border-block: 1px solid var(--color-stone);
+    font-size: var(--font-size-caption);
+    color: var(--color-ink);
+  }
+
+  .meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    color: var(--color-muted);
+  }
+
+  .meta-item span {
+    color: var(--color-ink);
+  }
+
+  .room-card-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-block-start: auto;
+  }
+
+  .btn-room-details {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: 44px;
+    padding-inline: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    background-color: var(--color-mist);
+    color: var(--color-pine);
+    font-size: var(--font-size-small);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    flex: 1;
+  }
+
+  .btn-room-details:hover {
+    background-color: var(--color-stone);
+    border-color: var(--color-brass-300);
+  }
+
+  .room-card-actions :global(.btn) {
+    flex: 1;
+    min-height: 44px;
+  }
+</style>

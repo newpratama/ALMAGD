@@ -1,0 +1,98 @@
+id: njd-cafe
+slug: njd-cafe
+type: cafe
+collection: dining
+name: NJD Cafe
+shortName: NJD Cafe
+typeLabel:
+  id: Kafe & Resto · Cisarua
+  en: Cafe & Dining · Cisarua
+  ar: مقهى ومطعم · تشيساروا
+endorsement:
+  id: by ALMAGD
+  en: by ALMAGD
+  ar: من المجد
+status: published
+sortOrder: 3
+summary:
+  id: Kafe dan resto yang menyajikan aneka sajian lokal, kopi, dan minuman segar di Cisarua.
+  en: Cafe and dining serving local favourites, coffee, and refreshments in Cisarua.
+  ar: مقهى ومطعم يقدّم أطباقاً محلية وقهوة ومشروبات منعشة في تشيساروا.
+description:
+  id: NJD Cafe merupakan bagian dari Koleksi ALMAGD. Jelajahi aneka menu makanan dan minuman, serta hubungi tim untuk informasi kunjungan.
+  en: NJD Cafe is part of The ALMAGD Collection. Explore our food and beverage menu, and contact the team for visiting details.
+  ar: NJD Cafe جزء من مجموعة المجد. استكشفوا قائمة المأكولات والمشروبات وتواصلوا مع الفريق للاستفسار عن الزيارة.
+highlights:
+  - icon: coffee
+    label:
+      id: Menu makanan & minuman
+      en: Food & beverage menu
+      ar: قائمة مأكولات ومشروبات
+    factRef: F-CAFE-03
+  - icon: message-circle
+    label:
+      id: Pesanan via WhatsApp
+      en: Inquiries via WhatsApp
+      ar: استفسارات عبر واتساب
+    factRef: F-CAFE-02
+address:
+  street: Jl. Ciburial RT.01/RW.05
+  village: Desa Tugu Utara
+  district: Kec. Cisarua
+  regency: Kab. Bogor
+  province: Jawa Barat
+  postalCode: "16750"
+  country: Indonesia
+geo:
+  lat: -6.682935
+  lng: 106.956431
+mapsUrl: https://www.google.com/maps/search/?api=1&query=NJD+Cafe+Cisarua+Bogor
+directionsUrl: https://www.google.com/maps/dir/?api=1&destination=-6.682935,106.956431
+placeId: null
+staticMap: null
+phone: "+6281116618075"
+whatsapp: "6281116618075"
+email: null
+socials: []
+otaLinks: []
+checkIn: null
+checkOut: null
+openingHours: []
+servesCuisine:
+  - id: Indonesia
+    en: Indonesian
+    ar: إندونيسي
+  - id: Barat
+    en: Western
+    ar: غربي
+  - id: Timur Tengah
+    en: Middle Eastern
+    ar: شرق أوسطي
+acceptsWalkIns: null
+facilities: []
+policies: []
+heroImage: /images/venues/njd-cafe-hero.jpg
+cardImage: /images/venues/njd-cafe-ambience.jpg
+gallery:
+  - /images/venues/njd-cafe-hero.jpg
+  - /images/venues/njd-cafe-ambience.jpg
+faqIds:
+  - cafe-faq-01
+relatedVenueIds:
+  - villa-njd
+  - new-pratama
+ratingIds: []
+seo:
+  title:
+    id: NJD Cafe | Menu & Kuliner Puncak by ALMAGD
+    en: NJD Cafe | Puncak Dining & Menu by ALMAGD
+    ar: NJD Cafe | مطاعم وقائمة طعام بونشاك من المجد
+  description:
+    id: Jelajahi aneka makanan, kopi, dan minuman segar di NJD Cafe, Cisarua. Hubungi tim untuk informasi menu.
+    en: Explore food, coffee, and refreshing drinks at NJD Cafe, Cisarua. Contact the team for menu details.
+    ar: استكشفوا المأكولات والقهوة والمشروبات المنعشة في NJD Cafe، تشيساروا. تواصلوا مع الفريق لتفاصيل القائمة.
+fieldStatus:
+  name: USER_PROVIDED
+  phone: USER_PROVIDED
+  whatsapp: USER_PROVIDED
+  menuCatalog: USER_PROVIDED

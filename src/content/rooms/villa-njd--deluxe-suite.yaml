@@ -1,0 +1,30 @@
+id: villa-njd--deluxe-suite
+venueId: villa-njd
+slug: deluxe-suite
+name: Deluxe Suite
+kind: room
+summary:
+  id: Tipe suite nyaman untuk pengalaman menginap istimewa.
+  en: Suite option designed for a comfortable stay experience.
+  ar: جناح مريح مصمم لتجربة إقامة مميزة.
+sizeM2: null
+maxGuests: null
+bedrooms: 1
+beds:
+  id: 1 tempat tidur besar
+  en: 1 large bed
+  ar: سرير كبير
+bathrooms: 1
+features:
+  - hot-water
+  - tv
+  - work-desk
+images:
+  - /images/rooms/villa-njd--deluxe-suite.jpg
+  - /images/rooms/villa-njd-bathroom.jpg
+sortOrder: 3
+status: draft
+fieldStatus:
+  name: PUBLIC_SOURCE_ONLY
+  sizeM2: PUBLIC_SOURCE_ONLY
+  features: PUBLIC_SOURCE_ONLY

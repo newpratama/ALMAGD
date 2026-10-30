@@ -1,0 +1,108 @@
+id: new-pratama
+slug: new-pratama
+type: villa
+collection: stays
+name: New Pratama Villa
+shortName: New Pratama
+typeLabel:
+  id: Kompleks Vila · Cisarua
+  en: Villa Complex · Cisarua
+  ar: مجمع فلل · تشيساروا
+endorsement:
+  id: by ALMAGD
+  en: by ALMAGD
+  ar: من المجد
+status: published
+sortOrder: 2
+summary:
+  id: Kompleks vila di kawasan Puncak untuk keluarga dan rombongan.
+  en: Villa complex in the Puncak area for families and groups.
+  ar: مجمع فلل في منطقة بونشاك للعائلات والمجموعات.
+description:
+  id: New Pratama Villa merupakan bagian dari Koleksi ALMAGD di kawasan Puncak, Cisarua, Bogor. Jelajahi foto dan informasi yang tersedia, lalu hubungi tim reservasi untuk mendiskusikan pilihan menginap Anda.
+  en: New Pratama Villa is part of The ALMAGD Collection in Puncak, Cisarua, Bogor. Explore available photos and details, then contact the reservations team to discuss your stay options.
+  ar: New Pratama Villa جزء من مجموعة المجد في منطقة بونشاك، تشيساروا، بوغور. شاهدوا الصور والمعلومات المتاحة، ثم تواصلوا مع فريق الحجز لمناقشة خيارات الإقامة.
+highlights:
+  - icon: map-pin
+    label:
+      id: Kawasan Puncak, Cisarua
+      en: Puncak area, Cisarua
+      ar: منطقة بونشاك، تشيساروا
+    factRef: F-NP-04
+  - icon: home
+    label:
+      id: Pilihan sewa vila & kamar
+      en: Full villa & room options
+      ar: خيارات تأجير فيلا كاملة وبالغرفة
+    factRef: F-NP-02
+address:
+  street: Jl. Sukamaju 1, RT.01/RW.08
+  village: Desa Tugu Selatan
+  district: Kec. Cisarua
+  regency: Kab. Bogor
+  province: Jawa Barat
+  postalCode: "16750"
+  country: Indonesia
+geo:
+  lat: -6.690876
+  lng: 106.957810
+mapsUrl: https://www.google.com/maps/place/villa+new+pratama/@-6.690876,106.9578099,17z/data=!3m1!4b1!4m6!3m5!1s0x2e69b6624472934f:0x29a594537038914b!8m2!3d-6.690876!4d106.9578099!16s%2Fg%2F11b_2qsbf6
+directionsUrl: https://www.google.com/maps/dir/?api=1&destination=-6.690876,106.957810
+placeId: 0x2e69b6624472934f:0x29a594537038914b
+staticMap: null
+phone: "+6285117588248"
+whatsapp: "6285117588248"
+email: null
+socials:
+  - platform: instagram
+    url: https://www.instagram.com/newpratamavilla/
+    handle: "@newpratamavilla"
+  - platform: tiktok
+    url: https://www.tiktok.com/@newpratama88
+    handle: "@newpratama88"
+otaLinks:
+  - platform: agoda
+    url: https://www.agoda.com/id-id/new-pratama-villa/hotel/puncak-id.html
+    verified: true
+  - platform: tiket
+    url: https://www.tiket.com/en-id/hotel/indonesia/new-pratama-908001787299930653
+    verified: true
+  - platform: trip_com
+    url: https://www.trip.com/hotels/cisarua-hotel-detail-105342935/new-pratama/
+    verified: true
+checkIn: null
+checkOut: null
+openingHours: []
+servesCuisine: []
+acceptsWalkIns: null
+facilities: []
+policies: []
+heroImage: /images/venues/new-pratama-hero.jpg
+cardImage: /images/venues/new-pratama-hero.jpg
+gallery:
+  - /images/venues/new-pratama-hero.jpg
+  - /images/rooms/new-pratama--full-villa.jpg
+  - /images/rooms/new-pratama--villa-kamar.jpg
+faqIds:
+  - np-faq-01
+  - np-faq-02
+relatedVenueIds:
+  - villa-njd
+  - njd-cafe
+ratingIds: []
+seo:
+  title:
+    id: New Pratama Villa | Penginapan Puncak by ALMAGD
+    en: New Pratama Villa | Puncak Stays by ALMAGD
+    ar: New Pratama Villa | إقامة بونشاك من المجد
+  description:
+    id: Kenali New Pratama Villa di kawasan Puncak, Cisarua, Bogor. Hubungi tim reservasi untuk informasi ketersediaan.
+    en: Discover New Pratama Villa in Puncak, Cisarua, Bogor. Contact the team for stay information and availability.
+    ar: تعرّفوا على New Pratama Villa في بونشاك، تشيساروا، بوغور. تواصلوا مع الفريق للاستفسار عن التوافر.
+fieldStatus:
+  name: VERIFIED_MULTIPLE_SOURCES
+  address: PUBLIC_SOURCE_ONLY
+  phone: OFFICIAL_SOURCE
+  whatsapp: OFFICIAL_SOURCE
+  socials: OFFICIAL_SOURCE
+  otaLinks: VERIFIED

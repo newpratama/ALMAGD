@@ -1,0 +1,132 @@
+---
+import { type Locale, localizePath, isRTL } from '../../lib/i18n';
+import Icon from '../primitives/Icon.astro';
+
+interface Crumb {
+  label: string;
+  href?: string;
+}
+
+interface Props {
+  crumbs: Crumb[];
+  locale: Locale;
+  class?: string;
+}
+
+const { crumbs, locale, class: className = '' } = Astro.props;
+const rtl = isRTL(locale);
+
+const homeLabel = {
+  id: 'Beranda',
+  en: 'Home',
+  ar: 'الرئيسية',
+}[locale];
+
+const allCrumbs: Crumb[] = [
+  { label: homeLabel, href: localizePath('/', locale) },
+  ...crumbs,
+];
+
+const parentCrumb = allCrumbs.length > 1 ? allCrumbs[allCrumbs.length - 2] : null;
+---
+
+<nav class:list={['breadcrumbs-nav', className]} aria-label="Breadcrumb">
+  <!-- Desktop / Tablet: Full trail -->
+  <ol class="breadcrumb-trail">
+    {
+      allCrumbs.map((c, index) => {
+        const isLast = index === allCrumbs.length - 1;
+        return (
+          <li class="breadcrumb-item">
+            {isLast ? (
+              <span class="breadcrumb-current" aria-current="page">
+                {c.label}
+              </span>
+            ) : (
+              <a href={c.href} class="breadcrumb-link">
+                {c.label}
+              </a>
+            )}
+            {!isLast && (
+              <span class="breadcrumb-separator" aria-hidden="true">
+                {rtl ? '‹' : '›'}
+              </span>
+            )}
+          </li>
+        );
+      })
+    }
+  </ol>
+
+  <!-- Mobile: Back link only -->
+  {
+    parentCrumb && (
+      <a href={parentCrumb.href} class="mobile-back-link">
+        <Icon name={rtl ? 'arrow-right' : 'arrow-left'} size={16} />
+        <span>{parentCrumb.label}</span>
+      </a>
+    )
+  }
+</nav>
+
+<style>
+  .breadcrumbs-nav {
+    padding-block: var(--space-3);
+    font-size: var(--font-size-small);
+  }
+
+  .breadcrumb-trail {
+    display: none;
+    align-items: center;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  @media (min-width: 768px) {
+    .breadcrumb-trail {
+      display: flex;
+    }
+    .mobile-back-link {
+      display: none;
+    }
+  }
+
+  .breadcrumb-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .breadcrumb-link {
+    color: var(--color-muted);
+    text-decoration: none;
+  }
+
+  .breadcrumb-link:hover {
+    color: var(--color-pine);
+    text-decoration: underline;
+  }
+
+  .breadcrumb-separator {
+    color: var(--color-border);
+    font-weight: bold;
+  }
+
+  .breadcrumb-current {
+    color: var(--color-pine);
+    font-weight: 600;
+  }
+
+  .mobile-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--color-pine);
+    font-weight: 500;
+    text-decoration: none;
+    min-height: var(--touch-target-min);
+  }
+</style>

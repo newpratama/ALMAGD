@@ -1,0 +1,74 @@
+---
+import Icon from '../primitives/Icon.astro';
+import type { Locale } from '../../lib/i18n';
+
+interface Highlight {
+  icon: string;
+  label: Record<Locale, string>;
+  factRef?: string;
+}
+
+interface Props {
+  highlights?: Highlight[];
+  locale: Locale;
+}
+
+const { highlights = [], locale } = Astro.props;
+---
+
+{highlights.length > 0 && (
+  <div class="highlight-bar" role="region" aria-label="Highlights">
+    <ul class="highlight-list" role="list">
+      {highlights.map((item) => {
+        const text = item.label[locale] || item.label.en || item.label.id;
+        return (
+          <li class="highlight-item">
+            <span class="highlight-icon" aria-hidden="true">
+              <Icon name={item.icon || 'check'} size={20} />
+            </span>
+            <span class="highlight-text">{text}</span>
+          </li>
+        );
+      })}
+    </ul>
+  </div>
+)}
+
+<style>
+  .highlight-bar {
+    padding-block: var(--space-4);
+  }
+
+  .highlight-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .highlight-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    background-color: var(--color-stone);
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-small);
+    font-weight: 500;
+    color: var(--color-pine-700);
+  }
+
+  .highlight-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-brass);
+    flex-shrink: 0;
+  }
+
+  .highlight-text {
+    line-height: 1.3;
+  }
+</style>

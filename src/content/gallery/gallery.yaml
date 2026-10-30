@@ -1,0 +1,108 @@
+images:
+  - id: njd-exterior-01
+    file: /images/venues/villa-njd-hero.jpg
+    venueId: villa-njd
+    topic: exterior
+    alt:
+      id: Tampak depan bangunan Villa NJD dengan latar pemandangan alam Puncak
+      en: Front exterior view of Villa NJD building with Puncak nature backdrop
+      ar: الواجهة الخارجية لمبنى Villa NJD مع الإطلالة الطبيعية على مرتفعات بونشاك
+    orientation: landscape
+    width: 1920
+    height: 1080
+    focalPoint:
+      x: 50
+      y: 50
+    featured: true
+    rightsConfirmed: true
+    sortOrder: 1
+
+  - id: njd-pool-01
+    file: /images/venues/villa-njd-pool.jpg
+    venueId: villa-njd
+    topic: pool
+    alt:
+      id: Kolam renang luar ruangan Villa NJD dengan latar pemandangan hijau
+      en: Outdoor swimming pool at Villa NJD with scenic mountain backdrop
+      ar: المسبح الخارجي في Villa NJD مع الإطلالة الجبلية الساحرة
+    orientation: landscape
+    width: 1920
+    height: 1080
+    focalPoint:
+      x: 50
+      y: 50
+    featured: true
+    rightsConfirmed: true
+    sortOrder: 2
+
+  - id: np-exterior-01
+    file: /images/venues/new-pratama-hero.jpg
+    venueId: new-pratama
+    topic: exterior
+    alt:
+      id: Tampak depan vila bata merah 2 lantai yang khas di New Pratama Villa
+      en: Distinctive two-story red brick villa facade at New Pratama Villa
+      ar: واجهة فيلا مميزة من طابقين بالطوب الأحمر في New Pratama Villa
+    orientation: portrait
+    width: 1200
+    height: 1600
+    focalPoint:
+      x: 50
+      y: 50
+    featured: true
+    rightsConfirmed: true
+    sortOrder: 3
+
+  - id: np-balcony-01
+    file: /images/rooms/new-pratama--full-villa.jpg
+    venueId: new-pratama
+    topic: room
+    alt:
+      id: Balkon santai dengan pemandangan pegunungan di New Pratama Villa
+      en: Scenic mountain-view balcony at New Pratama Villa
+      ar: شرفة مريحة بإطلالة جبلية ساحرة في New Pratama Villa
+    orientation: portrait
+    width: 810
+    height: 1080
+    focalPoint:
+      x: 50
+      y: 50
+    featured: true
+    rightsConfirmed: true
+    sortOrder: 4
+
+  - id: cafe-interior-01
+    file: /images/venues/njd-cafe-hero.jpg
+    venueId: njd-cafe
+    topic: interior
+    alt:
+      id: Suasana santai dan pemandangan terbuka di NJD Cafe
+      en: Relaxing dining atmosphere and mountain view at NJD Cafe
+      ar: أجواء الاسترخاء والإطلالة المفتوحة في NJD Cafe
+    orientation: landscape
+    width: 1920
+    height: 1080
+    focalPoint:
+      x: 50
+      y: 50
+    featured: true
+    rightsConfirmed: true
+    sortOrder: 5
+
+  - id: njd-lounge-01
+    file: /images/venues/villa-njd-lounge.jpg
+    venueId: villa-njd
+    topic: interior
+    alt:
+      id: Area publik dan bersantai di Villa NJD
+      en: Public lounge area at Villa NJD
+      ar: صالة الاستراحة والمساحة المشتركة في Villa NJD
+    orientation: landscape
+    width: 1920
+    height: 1080
+    focalPoint:
+      x: 50
+      y: 50
+    featured: true
+    rightsConfirmed: true
+    sortOrder: 6

@@ -1,0 +1,29 @@
+---
+interface Props {
+  class?: string;
+  size?: 'normal' | 'narrow' | 'wide';
+}
+
+const { class: className = '', size = 'normal' } = Astro.props;
+---
+
+<div class:list={['container', `container-${size}`, className]}>
+  <slot />
+</div>
+
+<style>
+  .container {
+    width: 100%;
+    margin-inline: auto;
+    padding-inline: var(--container-gutter);
+  }
+  .container-normal {
+    max-width: var(--container-max-width);
+  }
+  .container-narrow {
+    max-width: 800px;
+  }
+  .container-wide {
+    max-width: 1400px;
+  }
+</style>

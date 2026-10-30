@@ -1,0 +1,158 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+import Container from '../components/primitives/Container.astro';
+import Button from '../components/primitives/Button.astro';
+import Icon from '../components/primitives/Icon.astro';
+import HeroPage from '../components/sections/HeroPage.astro';
+import GalleryFilter from '../components/gallery/GalleryFilter.astro';
+import GalleryGrid from '../components/gallery/GalleryGrid.astro';
+import Lightbox from '../components/gallery/Lightbox.astro';
+import { type Locale, localizePath } from '../lib/i18n';
+import { getEntry } from 'astro:content';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+
+const galleryEntry = await getEntry('gallery', 'gallery');
+const rawImages = (galleryEntry?.data?.images || [])
+  .sort((a: any, b: any) => (a.sortOrder || 0) - (b.sortOrder || 0));
+
+const currentPath = localizePath('/gallery', locale);
+
+const copy = {
+  id: {
+    seoTitle: 'Galeri Foto | Koleksi New Pratama Villa, Villa NJD & NJD Cafe',
+    seoDesc: 'Jelajahi foto suasana, fasilitas, dan keindahan New Pratama Villa, Villa NJD, dan NJD Cafe di Puncak, Bogor.',
+    h1: 'Galeri Foto ALMAGD',
+    subtitle: 'Koleksi Visual Properti Kami',
+    lead: 'Lihat dokumentasi suasana, pemandangan pegunungan, dan fasilitas di seluruh properti The ALMAGD Collection di kawasan Puncak, Cisarua, Bogor.',
+    ctaTitle: 'Tertarik Menginap atau Berkunjung?',
+    ctaSubtitle: 'Pilih properti yang ingin Anda tanyakan atau hubungi tim reservasi kami via WhatsApp.',
+    ctaBtn: 'Hubungi Tim Reservasi',
+    crumbs: [{ label: 'Galeri' }],
+  },
+  en: {
+    seoTitle: 'Photo Gallery | The ALMAGD Collection in Puncak',
+    seoDesc: 'Explore photos of New Pratama Villa, Villa NJD, and NJD Cafe in Puncak, Bogor.',
+    h1: 'ALMAGD Photo Gallery',
+    subtitle: 'Visual Tour of Our Properties',
+    lead: 'Explore photos and views of our stays and dining venue across The ALMAGD Collection in Puncak, Cisarua, Bogor.',
+    ctaTitle: 'Interested in Staying or Visiting?',
+    ctaSubtitle: 'Select a property to ask about or contact our reservations team directly on WhatsApp.',
+    ctaBtn: 'Contact Reservations Team',
+    crumbs: [{ label: 'Gallery' }],
+  },
+  ar: {
+    seoTitle: 'معرض الصور | مجموعة المجد في بونشاك',
+    seoDesc: 'شاهدوا صور وأجواء New Pratama Villa و Villa NJD و NJD Cafe في بونشاك، بوغور.',
+    h1: 'معرض صور المجد',
+    subtitle: 'جولة بصرية في منشآتنا',
+    lead: 'استكشفوا صور الأجواء والإطلالات الجبلية والمرافق في جميع منشآت مجموعة المجد بمنطقة بونشاك، تشيساروا، بوغور.',
+    ctaTitle: 'هل ترغبون في الإقامة أو الزيارة؟',
+    ctaSubtitle: 'تواصلوا مع فريق الحجز عبر واتساب لاختيار المنشأة ومناقشة تفاصيل زيارتكم.',
+    ctaBtn: 'التواصل مع فريق الحجز',
+    crumbs: [{ label: 'معرض الصور' }],
+  },
+}[locale];
+---
+
+<PageLayout
+  title={copy.seoTitle}
+  description={copy.seoDesc}
+  locale={locale}
+  currentPath={currentPath}
+  breadcrumbs={copy.crumbs}
+>
+  <!-- Hero Section -->
+  <HeroPage
+    title={copy.h1}
+    subtitle={copy.subtitle}
+    lead={copy.lead}
+  />
+
+  <!-- Main Gallery Area -->
+  <main class="gallery-main-content">
+    <Container>
+      <!-- Venue Filters -->
+      <GalleryFilter locale={locale} />
+
+      <!-- Photo Grid -->
+      <GalleryGrid images={rawImages} locale={locale} />
+    </Container>
+  </main>
+
+  <!-- Lightbox Modal -->
+  <Lightbox locale={locale} />
+
+  <!-- CTA Section -->
+  <section class="gallery-cta-section">
+    <Container>
+      <div class="gallery-cta-card">
+        <h2 class="gallery-cta-title">{copy.ctaTitle}</h2>
+        <p class="gallery-cta-subtitle">{copy.ctaSubtitle}</p>
+        <div class="gallery-cta-action">
+          <Button
+            variant="whatsapp"
+            size="lg"
+            id="gallery-open-chooser"
+          >
+            <Icon name="whatsapp" size={22} />
+            <span>{copy.ctaBtn}</span>
+          </Button>
+        </div>
+      </div>
+    </Container>
+  </section>
+</PageLayout>
+
+<script>
+  function setupGalleryCta() {
+    const btn = document.getElementById('gallery-open-chooser');
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+      window.dispatchEvent(new CustomEvent('open-whatsapp-chooser'));
+    });
+  }
+  setupGalleryCta();
+  document.addEventListener('astro:page-load', setupGalleryCta);
+</script>
+
+<style>
+  .gallery-main-content {
+    padding-block: var(--space-6) var(--space-8);
+  }
+
+  .gallery-cta-section {
+    padding-block: var(--space-7) var(--space-9);
+    background-color: var(--color-mist);
+    border-top: 1px solid var(--color-stone);
+  }
+
+  .gallery-cta-card {
+    text-align: center;
+    max-width: 600px;
+    margin-inline: auto;
+  }
+
+  .gallery-cta-title {
+    font-family: var(--font-display);
+    font-size: var(--font-size-h2);
+    color: var(--color-pine);
+    margin: 0 0 var(--space-2) 0;
+  }
+
+  .gallery-cta-subtitle {
+    font-size: var(--font-size-body);
+    color: var(--color-muted);
+    line-height: var(--line-height-body);
+    margin: 0 0 var(--space-5) 0;
+  }
+
+  .gallery-cta-action {
+    display: flex;
+    justify-content: center;
+  }
+</style>

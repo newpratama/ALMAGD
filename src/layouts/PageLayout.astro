@@ -1,0 +1,77 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import SiteHeader from '../components/layout/SiteHeader.astro';
+import SiteFooter from '../components/layout/SiteFooter.astro';
+import Breadcrumbs from '../components/layout/Breadcrumbs.astro';
+import FloatingWhatsApp from '../components/layout/FloatingWhatsApp.astro';
+import Container from '../components/primitives/Container.astro';
+import type { Locale } from '../lib/i18n';
+import type { VenueKey } from '../lib/whatsapp';
+
+interface Crumb {
+  label: string;
+  href?: string;
+}
+
+interface Props {
+  title: string;
+  description: string;
+  locale: Locale;
+  currentPath: string;
+  crumbs?: Crumb[];
+  venueKey?: VenueKey;
+  ogImage?: string;
+  hasStickyBar?: boolean;
+  jsonLd?: Record<string, any> | null;
+}
+
+const {
+  title,
+  description,
+  locale,
+  currentPath,
+  crumbs,
+  venueKey,
+  ogImage,
+  hasStickyBar = false,
+  jsonLd = null,
+} = Astro.props;
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  locale={locale}
+  currentPath={currentPath}
+  ogImage={ogImage}
+  jsonLd={jsonLd}
+>
+  <SiteHeader slot="header" locale={locale} currentPath={currentPath} />
+
+  {
+    crumbs && crumbs.length > 0 && (
+      <Container>
+        <Breadcrumbs crumbs={crumbs} locale={locale} />
+      </Container>
+    )
+  }
+
+  <main id="main-content" class:list={[{ 'has-sticky-bar': hasStickyBar }]}>
+    <slot />
+  </main>
+
+  <FloatingWhatsApp locale={locale} venueKey={venueKey} />
+
+  <SiteFooter slot="footer" locale={locale} currentPath={currentPath} />
+</BaseLayout>
+
+<style>
+  main {
+    flex: 1;
+    width: 100%;
+  }
+
+  main.has-sticky-bar {
+    padding-block-end: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+</style>

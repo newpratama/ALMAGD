@@ -1,0 +1,390 @@
+---
+import Icon from '../primitives/Icon.astro';
+import Button from '../primitives/Button.astro';
+import LanguageSwitcher from './LanguageSwitcher.astro';
+import { type Locale, localizePath } from '../../lib/i18n';
+
+interface Props {
+  locale: Locale;
+  currentPath: string;
+}
+
+const { locale, currentPath } = Astro.props;
+
+const copy = {
+  id: {
+    about: 'Tentang Kami',
+    stays: 'Penginapan',
+    newPratama: 'New Pratama Villa',
+    villaNjd: 'Villa NJD',
+    allStays: 'Semua Penginapan',
+    dining: 'Kuliner',
+    njdCafe: 'NJD Cafe',
+    menu: 'Menu',
+    gallery: 'Galeri',
+    location: 'Lokasi & Akses',
+    contact: 'Kontak',
+    contactUs: 'Hubungi Kami via WhatsApp',
+    close: 'Tutup menu',
+    dashboard: 'Panel Kontrol',
+  },
+  en: {
+    about: 'About',
+    stays: 'Stays',
+    newPratama: 'New Pratama Villa',
+    villaNjd: 'Villa NJD',
+    allStays: 'All Stays',
+    dining: 'Dining',
+    njdCafe: 'NJD Cafe',
+    menu: 'Menu',
+    gallery: 'Gallery',
+    location: 'Location & Directions',
+    contact: 'Contact',
+    contactUs: 'Chat via WhatsApp',
+    close: 'Close menu',
+    dashboard: 'Control Panel',
+  },
+  ar: {
+    about: 'عن المجموعة',
+    stays: 'الإقامات',
+    newPratama: 'New Pratama Villa',
+    villaNjd: 'Villa NJD',
+    allStays: 'جميع الإقامات',
+    dining: 'المطاعم',
+    njdCafe: 'NJD Cafe',
+    menu: 'القائمة',
+    gallery: 'المعرض',
+    location: 'الموقع والوصول',
+    contact: 'التواصل',
+    contactUs: 'تواصلوا معنا عبر واتساب',
+    close: 'إغلاق القائمة',
+    dashboard: 'لوحة التحكم',
+  },
+}[locale];
+
+const adminUrl = import.meta.env.PUBLIC_ADMIN_URL || '/admin/login';
+---
+
+<div id="mobile-nav-drawer" class="mobile-nav-drawer" aria-hidden="true">
+  <div class="mobile-nav-backdrop" data-close-mobile-nav></div>
+  <div class="mobile-nav-panel">
+    <div class="mobile-nav-header">
+      <a href={localizePath('/', locale)} class="mobile-nav-brand" aria-label={locale === 'ar' ? 'المجد للضيافة' : 'ALMAGD Hospitality'}>
+        <img
+          src="/images/logo-almagd.png"
+          alt={locale === 'ar' ? 'المجد' : 'ALMAGD'}
+          width="120"
+          height="42"
+          class="mobile-nav-logo-img"
+        />
+      </a>
+      <button type="button" class="mobile-nav-close" data-close-mobile-nav aria-label={copy.close}>
+        <Icon name="close" size={24} />
+      </button>
+    </div>
+
+    <nav class="mobile-nav-links" aria-label="Mobile Navigation">
+      <ul class="nav-menu">
+        <li>
+          <a href={localizePath('/about', locale)} class="nav-item">
+            {copy.about}
+          </a>
+        </li>
+        <li class="nav-group">
+          <span class="nav-group-title">{copy.stays}</span>
+          <ul class="nav-submenu">
+            <li>
+              <a href={localizePath('/properties/new-pratama', locale)} class="subnav-item">
+                {copy.newPratama}
+              </a>
+            </li>
+            <li>
+              <a href={localizePath('/properties/villa-njd', locale)} class="subnav-item">
+                {copy.villaNjd}
+              </a>
+            </li>
+            <li>
+              <a href={localizePath('/properties', locale)} class="subnav-item subnav-all">
+                {copy.allStays}
+              </a>
+            </li>
+          </ul>
+        </li>
+        <li class="nav-group">
+          <span class="nav-group-title">{copy.dining}</span>
+          <ul class="nav-submenu">
+            <li>
+              <a href={localizePath('/dining/njd-cafe', locale)} class="subnav-item">
+                {copy.njdCafe}
+              </a>
+            </li>
+            <li>
+              <a href={localizePath('/dining/njd-cafe/menu', locale)} class="subnav-item">
+                {copy.menu}
+              </a>
+            </li>
+          </ul>
+        </li>
+        <li>
+          <a href={localizePath('/gallery', locale)} class="nav-item">
+            {copy.gallery}
+          </a>
+        </li>
+        <li>
+          <a href={localizePath('/location', locale)} class="nav-item">
+            {copy.location}
+          </a>
+        </li>
+        <li>
+          <a href={localizePath('/contact', locale)} class="nav-item">
+            {copy.contact}
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="mobile-nav-footer">
+      <LanguageSwitcher currentLocale={locale} currentPath={currentPath} variant="mobile" />
+
+      <Button variant="whatsapp" class="mobile-wa-btn" id="mobile-nav-wa-trigger">
+        <Icon name="whatsapp" size={20} />
+        <span>{copy.contactUs}</span>
+      </Button>
+
+      <Button
+        variant="secondary"
+        class="mobile-admin-btn"
+        href={adminUrl}
+        target="_blank"
+        rel="noopener"
+      >
+        <Icon name="shield" size={18} />
+        <span>{copy.dashboard}</span>
+      </Button>
+
+      <div class="mobile-socials">
+        <a href="https://www.instagram.com/njdvilla/" target="_blank" rel="noopener" class="social-link" aria-label="Villa NJD Instagram">
+          @njdvilla
+        </a>
+        <a href="https://www.instagram.com/newpratamavilla/" target="_blank" rel="noopener" class="social-link" aria-label="New Pratama Villa Instagram">
+          @newpratamavilla
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .mobile-nav-drawer {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    display: flex;
+    justify-content: flex-end;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-normal);
+  }
+
+  .mobile-nav-drawer.is-open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .mobile-nav-backdrop {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(21, 43, 36, 0.6);
+    backdrop-filter: blur(4px);
+  }
+
+  .mobile-nav-panel {
+    position: relative;
+    width: 85%;
+    max-width: 380px;
+    height: 100%;
+    background-color: var(--color-white);
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-dialog);
+    transform: translateX(100%);
+    transition: transform var(--transition-normal);
+    overflow-y: auto;
+  }
+
+  :global([dir="rtl"]) .mobile-nav-panel {
+    transform: translateX(-100%);
+  }
+
+  .mobile-nav-drawer.is-open .mobile-nav-panel {
+    transform: translateX(0);
+  }
+
+  .mobile-nav-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-4) var(--space-5);
+    border-block-end: 1px solid var(--color-border);
+  }
+
+  .mobile-nav-brand {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+  }
+
+  .mobile-nav-logo-img {
+    height: 38px;
+    width: auto;
+    max-width: 130px;
+    object-fit: contain;
+    display: block;
+  }
+
+  .mobile-nav-close {
+    min-width: var(--touch-target-min);
+    min-height: var(--touch-target-min);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 0;
+    color: var(--color-ink);
+    cursor: pointer;
+  }
+
+  .mobile-nav-links {
+    flex: 1;
+    padding: var(--space-4) var(--space-5);
+  }
+
+  .nav-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-pine);
+    text-decoration: none;
+  }
+
+  .nav-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .nav-group-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-muted);
+    margin-block-start: var(--space-2);
+  }
+
+  .nav-submenu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding-inline-start: var(--space-3);
+  }
+
+  .subnav-item {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+
+  .subnav-all {
+    color: var(--color-brass-text);
+    font-weight: 600;
+  }
+
+  .mobile-nav-footer {
+    padding: var(--space-5);
+    background-color: var(--color-mist);
+    border-block-start: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .mobile-wa-btn {
+    width: 100%;
+  }
+
+  .mobile-admin-btn {
+    width: 100%;
+    border-color: var(--color-border);
+    background-color: var(--color-white);
+    color: var(--color-ink);
+  }
+
+  .mobile-socials {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+    font-size: var(--font-size-small);
+  }
+
+  .social-link {
+    color: var(--color-muted);
+    text-decoration: none;
+  }
+</style>
+
+<script>
+  function setupMobileNav() {
+    const drawer = document.getElementById('mobile-nav-drawer');
+    if (!drawer) return;
+
+    const closeButtons = drawer.querySelectorAll('[data-close-mobile-nav]');
+    const waTrigger = document.getElementById('mobile-nav-wa-trigger');
+
+    function closeNav() {
+      drawer?.classList.remove('is-open');
+      drawer?.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
+    closeButtons.forEach((btn) => btn.addEventListener('click', closeNav));
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && drawer?.classList.contains('is-open')) {
+        closeNav();
+      }
+    });
+
+    waTrigger?.addEventListener('click', () => {
+      closeNav();
+      window.dispatchEvent(new CustomEvent('open-whatsapp-chooser'));
+    });
+
+    window.addEventListener('open-mobile-nav', () => {
+      drawer?.classList.add('is-open');
+      drawer?.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', setupMobileNav);
+</script>

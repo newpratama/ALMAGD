@@ -1,0 +1,138 @@
+---
+import { getEntry } from 'astro:content';
+import Icon from '../primitives/Icon.astro';
+import type { Locale } from '../../lib/i18n';
+
+interface Props {
+  facilityIds?: string[];
+  locale: Locale;
+  title?: string;
+  subtitle?: string;
+}
+
+const { facilityIds = [], locale, title, subtitle } = Astro.props;
+
+const facilitiesEntry = await getEntry('site', 'facilities');
+const dict = facilitiesEntry?.data?.facilities || [];
+
+const activeFacilities = facilityIds
+  .map((id) => dict.find((item: any) => item.id === id))
+  .filter(Boolean);
+
+const defaultTitles = {
+  id: 'Fasilitas Terverifikasi',
+  en: 'Verified Facilities',
+  ar: 'المرافق الموثقة',
+};
+
+const defaultSubtitles = {
+  id: 'Hanya fasilitas yang telah diverifikasi ditampilkan.',
+  en: 'Only verified facilities are displayed.',
+  ar: 'يتم عرض المرافق الموثقة والمعتمدة فقط.',
+};
+
+const sectionTitle = title || defaultTitles[locale];
+const sectionSubtitle = subtitle || defaultSubtitles[locale];
+---
+
+{activeFacilities.length > 0 && (
+  <section class="facility-section" id="facilities" aria-labelledby="facilities-title">
+    <div class="facility-header">
+      <h2 id="facilities-title" class="facility-title">{sectionTitle}</h2>
+      <p class="facility-subtitle">{sectionSubtitle}</p>
+    </div>
+
+    <ul class="facility-grid" role="list">
+      {activeFacilities.map((fac: any) => {
+        const label = fac.label[locale] || fac.label.en || fac.label.id;
+        return (
+          <li class="facility-item">
+            <span class="facility-icon-wrap" aria-hidden="true">
+              <Icon name={fac.icon || 'check'} size={24} />
+            </span>
+            <span class="facility-label">{label}</span>
+          </li>
+        );
+      })}
+    </ul>
+  </section>
+)}
+
+<style>
+  .facility-section {
+    padding-block: var(--space-6);
+  }
+
+  .facility-header {
+    margin-block-end: var(--space-5);
+  }
+
+  .facility-title {
+    font-family: var(--font-display);
+    font-size: var(--font-size-h2);
+    color: var(--color-pine);
+    margin-block-end: var(--space-2);
+  }
+
+  .facility-subtitle {
+    font-size: var(--font-size-small);
+    color: var(--color-muted);
+  }
+
+  .facility-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  @media (min-width: 640px) {
+    .facility-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .facility-grid {
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-5);
+    }
+  }
+
+  .facility-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background-color: var(--color-mist);
+    border: 1px solid var(--color-stone);
+    border-radius: var(--radius-md);
+    transition: border-color var(--transition-fast);
+  }
+
+  .facility-item:hover {
+    border-color: var(--color-brass-300);
+  }
+
+  .facility-icon-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-sm);
+    background-color: var(--color-stone);
+    color: var(--color-pine);
+    flex-shrink: 0;
+  }
+
+  .facility-label {
+    font-size: var(--font-size-body);
+    font-weight: 500;
+    color: var(--color-ink);
+    text-align: start;
+    line-height: 1.4;
+  }
+</style>

@@ -1,0 +1,386 @@
+---
+import { type Locale, localizePath } from '../../lib/i18n';
+import LanguageSwitcher from './LanguageSwitcher.astro';
+import Icon from '../primitives/Icon.astro';
+
+interface Props {
+  locale: Locale;
+  currentPath: string;
+}
+
+const { locale, currentPath } = Astro.props;
+
+const copy = {
+  id: {
+    tagline: 'Udara Sejuk, Sambutan Hangat.',
+    descriptor: 'Vila, penginapan & kuliner di Puncak, Bogor',
+    staysTitle: 'Penginapan',
+    newPratama: 'New Pratama Villa',
+    villaNjd: 'Villa NJD',
+    allStays: 'Semua Penginapan',
+    diningTitle: 'Kuliner',
+    njdCafe: 'NJD Cafe',
+    menu: 'Menu NJD Cafe',
+    brandTitle: 'ALMAGD',
+    about: 'Tentang Kami',
+    gallery: 'Galeri',
+    location: 'Lokasi & Akses',
+    contact: 'Kontak',
+    contactTitle: 'Hubungi Langsung',
+    privacy: 'Kebijakan Privasi',
+    rights: 'Hak cipta dilindungi undang-undang.',
+    endorsed: 'Koleksi ALMAGD',
+    dashboard: 'Panel Kontrol',
+  },
+  en: {
+    tagline: 'Cool Air. Warm Welcome.',
+    descriptor: 'Villas, stays & dining in Puncak, Bogor',
+    staysTitle: 'Stays',
+    newPratama: 'New Pratama Villa',
+    villaNjd: 'Villa NJD',
+    allStays: 'All Stays',
+    diningTitle: 'Dining',
+    njdCafe: 'NJD Cafe',
+    menu: 'NJD Cafe Menu',
+    brandTitle: 'ALMAGD',
+    about: 'About',
+    gallery: 'Gallery',
+    location: 'Location & Directions',
+    contact: 'Contact',
+    contactTitle: 'Direct Contacts',
+    privacy: 'Privacy Policy',
+    rights: 'All rights reserved.',
+    endorsed: 'The ALMAGD Collection',
+    dashboard: 'Control Panel',
+  },
+  ar: {
+    tagline: 'هواءٌ عليل… وترحيبٌ دافئ',
+    descriptor: 'فلل وإقامات ومطاعم في بونشاك، بوغور',
+    staysTitle: 'الإقامات',
+    newPratama: 'New Pratama Villa',
+    villaNjd: 'Villa NJD',
+    allStays: 'جميع الإقامات',
+    diningTitle: 'المطاعم',
+    njdCafe: 'NJD Cafe',
+    menu: 'قائمة طعام NJD Cafe',
+    brandTitle: 'المجد',
+    about: 'عن المجموعة',
+    gallery: 'المعرض',
+    location: 'الموقع والوصول',
+    contact: 'التواصل',
+    contactTitle: 'أرقام التواصل المباشرة',
+    privacy: 'سياسة الخصوصية',
+    rights: 'جميع الحقوق محفوظة.',
+    endorsed: 'مجموعة المجد',
+    dashboard: 'لوحة التحكم',
+  },
+}[locale];
+
+const adminUrl = import.meta.env.PUBLIC_ADMIN_URL || '/admin/login';
+---
+
+<footer class="site-footer" id="site-footer">
+  <div class="footer-container">
+    <!-- Top Grid -->
+    <div class="footer-grid">
+      <!-- Col 1: Brand & Tagline -->
+      <div class="footer-col footer-col-brand">
+        <a href={localizePath('/', locale)} class="footer-brand-link" aria-label={locale === 'ar' ? 'المجد للضيافة - الصفحة الرئيسية' : 'ALMAGD Hospitality - Home'}>
+          <img
+            src="/images/logo-almagd-light.png"
+            alt={locale === 'ar' ? 'المجد' : 'ALMAGD'}
+            width="144"
+            height="50"
+            class="footer-logo-img"
+            loading="lazy"
+            decoding="async"
+          />
+        </a>
+        <p class="footer-tagline">{copy.tagline}</p>
+        <p class="footer-descriptor">{copy.descriptor}</p>
+      </div>
+
+      <!-- Col 2: Stays -->
+      <div class="footer-col">
+        <h3 class="footer-col-title">{copy.staysTitle}</h3>
+        <ul class="footer-links">
+          <li>
+            <a href={localizePath('/properties/new-pratama', locale)}>{copy.newPratama}</a>
+          </li>
+          <li>
+            <a href={localizePath('/properties/villa-njd', locale)}>{copy.villaNjd}</a>
+          </li>
+          <li>
+            <a href={localizePath('/properties', locale)}>{copy.allStays}</a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Col 3: Dining -->
+      <div class="footer-col">
+        <h3 class="footer-col-title">{copy.diningTitle}</h3>
+        <ul class="footer-links">
+          <li>
+            <a href={localizePath('/dining/njd-cafe', locale)}>{copy.njdCafe}</a>
+          </li>
+          <li>
+            <a href={localizePath('/dining/njd-cafe/menu', locale)}>{copy.menu}</a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Col 4: ALMAGD Collection -->
+      <div class="footer-col">
+        <h3 class="footer-col-title">{copy.brandTitle}</h3>
+        <ul class="footer-links">
+          <li>
+            <a href={localizePath('/about', locale)}>{copy.about}</a>
+          </li>
+          <li>
+            <a href={localizePath('/gallery', locale)}>{copy.gallery}</a>
+          </li>
+          <li>
+            <a href={localizePath('/location', locale)}>{copy.location}</a>
+          </li>
+          <li>
+            <a href={localizePath('/contact', locale)}>{copy.contact}</a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Col 5: Venue Contacts -->
+      <div class="footer-col footer-col-contacts">
+        <h3 class="footer-col-title">{copy.contactTitle}</h3>
+        <ul class="footer-contacts">
+          <li>
+            <span class="venue-name">New Pratama Villa</span>
+            <a href="tel:+6285117588248" dir="ltr" class="phone-link">+62 851-1758-8248</a>
+          </li>
+          <li>
+            <span class="venue-name">Villa NJD</span>
+            <a href="tel:+6281333035141" dir="ltr" class="phone-link">+62 813-3303-5141</a>
+          </li>
+          <li>
+            <span class="venue-name">NJD Cafe</span>
+            <a href="tel:+6281116618075" dir="ltr" class="phone-link">+62 811-1661-8075</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <hr class="footer-divider" />
+
+    <!-- Bottom Bar -->
+    <div class="footer-bottom">
+      <div class="footer-legal">
+        <p class="copyright-text">
+          &copy; {new Date().getFullYear()} ALMAGD Hospitality. {copy.rights}
+        </p>
+        <a href={localizePath('/privacy', locale)} class="legal-link">{copy.privacy}</a>
+        <span class="legal-separator" aria-hidden="true">·</span>
+        <a href={adminUrl} target="_blank" rel="noopener" class="legal-link legal-admin-link">
+          <Icon name="shield" size={13} />
+          <span>{copy.dashboard}</span>
+        </a>
+      </div>
+
+      <div class="footer-switcher">
+        <LanguageSwitcher currentLocale={locale} currentPath={currentPath} variant="footer" />
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background-color: var(--color-pine);
+    color: var(--color-mist);
+    padding-block-start: var(--space-9);
+    padding-block-end: var(--space-6);
+    margin-block-start: auto;
+  }
+
+  .footer-container {
+    max-width: var(--container-max-width);
+    margin-inline: auto;
+    padding-inline: var(--container-gutter);
+  }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-7);
+    margin-block-end: var(--space-8);
+  }
+
+  @media (min-width: 640px) {
+    .footer-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .footer-grid {
+      grid-template-columns: 2fr 1fr 1fr 1fr 1.5fr;
+      gap: var(--space-6);
+    }
+  }
+
+  .footer-col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .footer-brand-link {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    transition: opacity var(--transition-fast);
+  }
+
+  .footer-brand-link:hover {
+    opacity: 0.9;
+  }
+
+  .footer-logo-img {
+    height: 48px;
+    width: auto;
+    max-width: 160px;
+    object-fit: contain;
+    display: block;
+  }
+
+  .footer-tagline {
+    font-size: 1rem;
+    color: var(--color-brass-300);
+    font-style: italic;
+    margin: 0;
+  }
+
+  .footer-descriptor {
+    font-size: var(--font-size-small);
+    color: var(--color-border);
+    margin: 0;
+  }
+
+  .footer-col-title {
+    font-size: var(--font-size-small);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-brass-300);
+    margin: 0;
+  }
+
+  .footer-links,
+  .footer-contacts {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .footer-links a {
+    color: var(--color-mist);
+    text-decoration: none;
+    font-size: var(--font-size-small);
+    transition: color var(--transition-fast);
+  }
+
+  .footer-links a:hover {
+    color: var(--color-white);
+    text-decoration: underline;
+  }
+
+  .footer-contacts li {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: var(--font-size-small);
+  }
+
+  .venue-name {
+    font-weight: 600;
+    color: var(--color-white);
+  }
+
+  .phone-link {
+    color: var(--color-mist);
+    text-decoration: none;
+  }
+
+  .phone-link:hover {
+    color: var(--color-brass-300);
+  }
+
+  .footer-divider {
+    border: 0;
+    height: 1px;
+    background-color: rgba(255, 255, 255, 0.15);
+    margin-block: var(--space-6);
+  }
+
+  .footer-bottom {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+    font-size: var(--font-size-caption);
+  }
+
+  @media (min-width: 768px) {
+    .footer-bottom {
+      flex-direction: row;
+      justify-content: space-between;
+    }
+  }
+
+  .footer-legal {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  @media (min-width: 768px) {
+    .footer-legal {
+      flex-direction: row;
+      gap: var(--space-4);
+    }
+  }
+
+  .copyright-text {
+    margin: 0;
+    color: var(--color-border);
+  }
+
+  .legal-link {
+    color: var(--color-mist);
+    text-decoration: underline;
+  }
+
+  .legal-link:hover {
+    color: var(--color-white);
+  }
+
+  .legal-separator {
+    color: var(--color-border);
+    opacity: 0.5;
+  }
+
+  .legal-admin-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    opacity: 0.85;
+    text-decoration: none;
+  }
+
+  .legal-admin-link:hover {
+    opacity: 1;
+    text-decoration: underline;
+  }
+</style>

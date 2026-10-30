@@ -1,0 +1,85 @@
+---
+interface Props {
+  id?: string;
+  class?: string;
+  bg?: 'mist' | 'white' | 'stone' | 'pine';
+  padding?: 'normal' | 'large' | 'compact' | 'none';
+  'aria-labelledby'?: string;
+}
+
+const {
+  id,
+  class: className = '',
+  bg = 'mist',
+  padding = 'normal',
+  'aria-labelledby': ariaLabelledBy,
+} = Astro.props;
+---
+
+<section
+  id={id}
+  class:list={[
+    'section',
+    `section-bg-${bg}`,
+    `section-pad-${padding}`,
+    className,
+    { 'dark-surface': bg === 'pine' },
+  ]}
+  aria-labelledby={ariaLabelledBy}
+>
+  <slot />
+</section>
+
+<style>
+  .section {
+    position: relative;
+    width: 100%;
+  }
+
+  /* Backgrounds */
+  .section-bg-mist {
+    background-color: var(--color-mist);
+    color: var(--color-ink);
+  }
+  .section-bg-white {
+    background-color: var(--color-white);
+    color: var(--color-ink);
+  }
+  .section-bg-stone {
+    background-color: var(--color-stone);
+    color: var(--color-ink);
+  }
+  .section-bg-pine {
+    background-color: var(--color-pine);
+    color: var(--color-white);
+  }
+
+  .section-bg-pine :global(h1),
+  .section-bg-pine :global(h2),
+  .section-bg-pine :global(h3) {
+    color: var(--color-white);
+  }
+
+  /* Paddings */
+  .section-pad-none {
+    padding-block: 0;
+  }
+  .section-pad-compact {
+    padding-block: var(--space-6);
+  }
+  .section-pad-normal {
+    padding-block: var(--space-8);
+  }
+  .section-pad-large {
+    padding-block: var(--space-10);
+  }
+
+  @media (max-width: 767px) {
+    .section-pad-normal {
+      padding-block: var(--space-6);
+    }
+    .section-pad-large {
+      padding-block: var(--space-7);
+    }
+  }
+</style>

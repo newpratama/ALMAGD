@@ -1,0 +1,276 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+import HeroPage from '../components/sections/HeroPage.astro';
+import Container from '../components/primitives/Container.astro';
+import CollectionGrid from '../components/sections/CollectionGrid.astro';
+import Button from '../components/primitives/Button.astro';
+import Icon from '../components/primitives/Icon.astro';
+import { type Locale, localizePath } from '../lib/i18n';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+
+const currentPath = localizePath('/about', locale);
+
+const copy = {
+  id: {
+    seoTitle: 'Tentang ALMAGD | Merek Induk Keramahan Puncak',
+    seoDesc: 'Kenali ALMAGD sebagai merek induk New Pratama Villa, Villa NJD, dan NJD Cafe di kawasan Puncak, Bogor.',
+    h1: 'Tentang ALMAGD',
+    subtitle: 'Koleksi ALMAGD',
+    lead: 'ALMAGD adalah merek induk bagi New Pratama Villa, Villa NJD, dan NJD Cafe di kawasan Puncak, Bogor, Indonesia.',
+    aboutTitle: 'Siapa Kami',
+    p1: 'ALMAGD menaungi dua tempat menginap mandiri dan NJD Cafe di kawasan Puncak, Cisarua, Bogor. Setiap properti dikelola dengan perhatian tulus untuk memberikan pengalaman yang nyaman bagi keluarga, pasangan, dan rombongan.',
+    p2: 'Dua tempat menginap dan satu tempat bersantap, masing-masing dengan halaman informasi dan kontak langsung. Kami mengutamakan kejelasan informasi, kemudahan komunikasi langsung, dan sambutan yang hangat bagi setiap tamu.',
+    valuesTitle: 'Prinsip Layanan Kami',
+    val1Title: 'Kejelasan Informasi',
+    val1Desc: 'Kami menyajikan fakta dan informasi fasilitas yang jujur dan apa adanya.',
+    val2Title: 'Komunikasi Langsung',
+    val2Desc: 'Semua pertanyaan terhubung langsung ke tim masing-masing properti melalui WhatsApp.',
+    val3Title: 'Sambutan Hangat',
+    val3Desc: 'Suasana sejuk khas pegunungan Puncak dipadukan dengan keramahan tim yang peduli.',
+    ctaTitle: 'Ada Pertanyaan untuk Tim Kami?',
+    ctaBody: 'Pilih properti yang ingin Anda tanyakan atau hubungi kami langsung.',
+    ctaBtn: 'Hubungi Kami via WhatsApp',
+    crumbs: [{ label: 'Tentang Kami' }],
+  },
+  en: {
+    seoTitle: 'About ALMAGD | Hospitality Group in Puncak, Bogor',
+    seoDesc: 'Learn about ALMAGD as the parent brand of New Pratama Villa, Villa NJD, and NJD Cafe in Puncak, Bogor.',
+    h1: 'About ALMAGD',
+    subtitle: 'The ALMAGD Collection',
+    lead: 'ALMAGD is the parent brand representing New Pratama Villa, Villa NJD, and NJD Cafe in Puncak, Bogor, Indonesia.',
+    aboutTitle: 'Who We Are',
+    p1: 'ALMAGD brings together two distinct stays and NJD Cafe in the refreshing highland area of Puncak, Cisarua, Bogor. Each property is cared for with genuine warmth to offer a comfortable and honest experience for families, couples, and groups.',
+    p2: 'Two places to stay and one dining destination, each with dedicated information and direct contacts. We focus on clarity of information, effortless direct communication, and a welcoming highland hospitality.',
+    valuesTitle: 'Our Values',
+    val1Title: 'Information Clarity',
+    val1Desc: 'We share verified facts and amenities without exaggerated claims.',
+    val2Title: 'Direct Communication',
+    val2Desc: 'Inquiries go directly to the property team via WhatsApp without intermediary delays.',
+    val3Title: 'Warm Welcome',
+    val3Desc: 'The cool mountain air of Puncak is met with the genuine care of our local team.',
+    ctaTitle: 'Have Questions for Our Team?',
+    ctaBody: 'Select the venue you wish to ask about or reach out to us directly.',
+    ctaBtn: 'Chat via WhatsApp',
+    crumbs: [{ label: 'About' }],
+  },
+  ar: {
+    seoTitle: 'عن المجد | مجموعة الضيافة في بونشاك، بوغور',
+    seoDesc: 'تعرّفوا على المجد كعلامة أم لـ New Pratama Villa و Villa NJD و NJD Cafe في بونشاك، بوغور.',
+    h1: 'عن المجد',
+    subtitle: 'مجموعة المجد',
+    lead: 'المجد هي العلامة الأم التي تظلل New Pratama Villa و Villa NJD و NJD Cafe في بونشاك، بوغور، إندونيسيا.',
+    aboutTitle: 'من نحن',
+    p1: 'تجمع المجد بين مكانين للإقامة و NJD Cafe في مرتفعات بونشاك، تشيساروا، بوغور. تُدار كل منشأة بعناية صادقة لتوفير تجربة مريحة للعائلات والأزواج والمجموعات.',
+    p2: 'مكانان للإقامة ووجهة للطعام، لكل منها صفحة معلومات مستقلة وتواصل مباشر. نركز على وضوح المعلومات، وسهولة التواصل المباشر، والترحيب الدافئ بكل ضيف.',
+    valuesTitle: 'مبادئ ضيافتنا',
+    val1Title: 'وضوح المعلومات',
+    val1Desc: 'نقدم معلومات موثقة ومطابقة للواقع دون مبالغة في الأوصاف.',
+    val2Title: 'تواصل مباشر',
+    val2Desc: 'تصل جميع استفساراتكم مباشرة إلى فريق المنشأة المعنية عبر واتساب.',
+    val3Title: 'ترحيب دافئ',
+    val3Desc: 'هواء بونشاك العليل يلتقي بحفاوة واهتمام فريق الضيافة الحقيقي.',
+    ctaTitle: 'هل لديكم استفسار لفريقنا؟',
+    ctaBody: 'اختاروا المنشأة التي ترغبون في الاستفسار عنها أو تواصلوا معنا مباشرة.',
+    ctaBtn: 'تواصلوا معنا عبر واتساب',
+    crumbs: [{ label: 'عن المجموعة' }],
+  },
+}[locale];
+---
+
+<PageLayout
+  title={copy.seoTitle}
+  description={copy.seoDesc}
+  locale={locale}
+  currentPath={currentPath}
+  crumbs={copy.crumbs}
+>
+  <!-- Hero Section with Breadcrumbs and H1 -->
+  <HeroPage
+    title={copy.h1}
+    subtitle={copy.subtitle}
+    lead={copy.lead}
+    bg="mist"
+  />
+
+  <!-- Who We Are -->
+  <section class="about-overview-section" aria-labelledby="who-we-are-heading">
+    <Container size="narrow">
+      <h2 id="who-we-are-heading" class="section-title">{copy.aboutTitle}</h2>
+      <div class="prose-body">
+        <p>{copy.p1}</p>
+        <p>{copy.p2}</p>
+      </div>
+    </Container>
+  </section>
+
+  <!-- Values Grid -->
+  <section class="about-values-section" aria-labelledby="values-heading">
+    <Container>
+      <div class="values-header">
+        <h2 id="values-heading" class="section-title">{copy.valuesTitle}</h2>
+      </div>
+      <div class="values-grid">
+        <div class="value-card">
+          <div class="value-icon">
+            <Icon name="check" size={24} />
+          </div>
+          <h3 class="value-title">{copy.val1Title}</h3>
+          <p class="value-desc">{copy.val1Desc}</p>
+        </div>
+
+        <div class="value-card">
+          <div class="value-icon">
+            <Icon name="message-circle" size={24} />
+          </div>
+          <h3 class="value-title">{copy.val2Title}</h3>
+          <p class="value-desc">{copy.val2Desc}</p>
+        </div>
+
+        <div class="value-card">
+          <div class="value-icon">
+            <Icon name="sun" size={24} />
+          </div>
+          <h3 class="value-title">{copy.val3Title}</h3>
+          <p class="value-desc">{copy.val3Desc}</p>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <!-- Collection Grid -->
+  <CollectionGrid locale={locale} />
+
+  <!-- Final CTA -->
+  <section class="about-cta-section" aria-labelledby="about-cta-heading">
+    <Container size="narrow">
+      <div class="about-cta-card">
+        <h2 id="about-cta-heading" class="cta-title">{copy.ctaTitle}</h2>
+        <p class="cta-body">{copy.ctaBody}</p>
+        <div class="cta-action">
+          <Button variant="whatsapp" size="lg" id="about-whatsapp-btn">
+            {copy.ctaBtn}
+          </Button>
+        </div>
+      </div>
+    </Container>
+  </section>
+</PageLayout>
+
+<script>
+  function setupAboutCta() {
+    const btn = document.getElementById('about-whatsapp-btn');
+    btn?.addEventListener('click', () => {
+      window.dispatchEvent(new CustomEvent('open-whatsapp-chooser'));
+    });
+  }
+  document.addEventListener('DOMContentLoaded', setupAboutCta);
+</script>
+
+<style>
+  .about-overview-section {
+    padding-block: var(--space-8);
+    background-color: var(--color-white);
+    border-block-end: 1px solid var(--color-border);
+  }
+
+  .section-title {
+    font-size: var(--font-size-h2);
+    margin-block-end: var(--space-4);
+  }
+
+  .prose-body {
+    font-size: 1.125rem;
+    line-height: 1.7;
+    color: var(--color-ink);
+  }
+
+  .prose-body p {
+    margin-block-end: var(--space-4);
+  }
+
+  .about-values-section {
+    padding-block: var(--space-9);
+    background-color: var(--color-mist);
+    border-block-end: 1px solid var(--color-border);
+  }
+
+  .values-header {
+    text-align: center;
+    margin-block-end: var(--space-8);
+  }
+
+  .values-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+
+  @media (min-width: 768px) {
+    .values-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .value-card {
+    background-color: var(--color-white);
+    padding: var(--space-6);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .value-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-sm);
+    background-color: var(--color-tea-100);
+    color: var(--color-pine);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .value-title {
+    font-size: 1.25rem;
+    margin: 0;
+  }
+
+  .value-desc {
+    font-size: var(--font-size-body);
+    color: var(--color-muted);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  .about-cta-section {
+    padding-block: var(--space-9);
+    background-color: var(--color-stone);
+  }
+
+  .about-cta-card {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+  }
+
+  .cta-title {
+    font-size: var(--font-size-h2);
+    margin: 0;
+  }
+
+  .cta-body {
+    font-size: 1.125rem;
+    color: var(--color-muted);
+    max-width: 54ch;
+    margin: 0;
+  }
+</style>

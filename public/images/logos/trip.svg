@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 28" fill="none" role="img" aria-label="Trip.com">
+  <rect width="100" height="28" rx="4" fill="#2681FF"/>
+  <circle cx="15" cy="14" r="7" fill="#FFFFFF"/>
+  <circle cx="15" cy="14" r="3.5" fill="#FF5E00"/>
+  <text x="26" y="18" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="800" letter-spacing="-0.2">Trip.com</text>
+</svg>

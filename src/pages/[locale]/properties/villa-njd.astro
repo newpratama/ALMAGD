@@ -1,0 +1,15 @@
+---
+import VillaNjdPage from '../../../templates/VillaNjdPage.astro';
+import type { Locale } from '../../../lib/i18n';
+
+export function getStaticPaths() {
+  return [
+    { params: { locale: 'en' } },
+    { params: { locale: 'ar' } },
+  ];
+}
+
+const { locale } = Astro.params;
+---
+
+<VillaNjdPage locale={locale as Locale} />

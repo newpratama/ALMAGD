@@ -1,0 +1,281 @@
+---
+import Button from '../primitives/Button.astro';
+import Icon from '../primitives/Icon.astro';
+import SocialStrip from './SocialStrip.astro';
+import { buildWhatsAppLink, type VenueKey } from '../../lib/whatsapp';
+import { type Locale, localizePath } from '../../lib/i18n';
+
+interface Venue {
+  id: string;
+  name: string;
+  typeLabel: Record<Locale, string>;
+  endorsement: Record<Locale, string>;
+  address: {
+    street?: string;
+    village?: string;
+    district?: string;
+    regency?: string;
+    province?: string;
+    postalCode?: string;
+    country: string;
+  };
+  geo?: { lat: number; lng: number } | null;
+  mapsUrl?: string | null;
+  phone?: string | null;
+  whatsapp?: string | null;
+  socials?: Array<{ platform: string; url: string; handle: string }>;
+  otaLinks?: Array<{ platform: string; url: string; verified: boolean }>;
+}
+
+interface Props {
+  venue: Venue;
+  venueKey: VenueKey;
+  locale: Locale;
+}
+
+const { venue, venueKey, locale } = Astro.props;
+
+const typeLabel = venue.typeLabel[locale] || venue.typeLabel.en || venue.typeLabel.id;
+const endorsement = venue.endorsement[locale] || venue.endorsement.en || venue.endorsement.id;
+
+const waLink = buildWhatsAppLink({
+  venue: venueKey,
+  locale,
+});
+
+const venueUrl = venue.id === 'njd-cafe'
+  ? localizePath('/dining/njd-cafe', locale)
+  : localizePath(`/properties/${venue.id}`, locale);
+
+const labels = {
+  id: {
+    waBtn: 'Hubungi via WhatsApp',
+    callBtn: 'Telepon Langsung',
+    mapsBtn: 'Buka di Google Maps',
+    viewVenue: 'Kunjungi Halaman',
+    address: 'Alamat:',
+  },
+  en: {
+    waBtn: 'Chat on WhatsApp',
+    callBtn: 'Call Directly',
+    mapsBtn: 'Open in Google Maps',
+    viewVenue: 'Visit Page',
+    address: 'Address:',
+  },
+  ar: {
+    waBtn: 'تواصلوا عبر واتساب',
+    callBtn: 'اتصال مباشر',
+    mapsBtn: 'فتح في خرائط Google',
+    viewVenue: 'زيارة الصفحة',
+    address: 'العنوان:',
+  },
+}[locale];
+
+const addressParts = [
+  venue.address.street,
+  venue.address.village,
+  venue.address.district,
+  venue.address.regency,
+  venue.address.province,
+  venue.address.postalCode,
+  venue.address.country,
+].filter(Boolean);
+
+const mapsUrl = venue.mapsUrl || (venue.geo
+  ? `https://www.google.com/maps/search/?api=1&query=${venue.geo.lat},${venue.geo.lng}`
+  : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venue.name + ', Cisarua, Bogor')}`);
+---
+
+<article class="contact-venue-card" id={`contact-${venue.id}`}>
+  <div class="card-header">
+    <div class="card-title-group">
+      <span class="card-eyebrow">{typeLabel} · {endorsement}</span>
+      <h3 class="card-name">{venue.name}</h3>
+    </div>
+    <a href={venueUrl} class="card-page-link">
+      <span>{labels.viewVenue}</span>
+      <Icon name="arrow-right" size={16} flipInRtl />
+    </a>
+  </div>
+
+  <div class="card-body">
+    <div class="address-block">
+      <span class="address-icon" aria-hidden="true"><Icon name="map-pin" size={18} /></span>
+      <address class="address-text" dir="ltr">
+        {addressParts.join(', ')}
+      </address>
+    </div>
+
+    <div class="actions-block">
+      <Button
+        variant="whatsapp"
+        size="md"
+        href={waLink}
+        external
+        data-wa-source="contact_card"
+      >
+        <Icon name="whatsapp" size={18} />
+        <span>{labels.waBtn}</span>
+      </Button>
+
+      {venue.phone && (
+        <a href={`tel:${venue.phone}`} class="call-btn" dir="ltr">
+          <Icon name="phone" size={16} />
+          <span>{venue.phone}</span>
+        </a>
+      )}
+
+      <a
+        href={mapsUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="maps-btn"
+        aria-label={`${labels.mapsBtn}: ${venue.name}`}
+      >
+        <Icon name="google-maps" size={18} />
+        <span>{labels.mapsBtn}</span>
+        <Icon name="external" size={12} />
+      </a>
+    </div>
+
+    {venue.socials && venue.socials.length > 0 && (
+      <div class="socials-block">
+        <SocialStrip socials={venue.socials} venueName={venue.name} locale={locale} />
+      </div>
+    )}
+  </div>
+</article>
+
+<style>
+  .contact-venue-card {
+    background-color: var(--color-white);
+    border: 1px solid var(--color-stone);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5) var(--space-6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3);
+    border-bottom: 1px solid var(--color-stone);
+    padding-bottom: var(--space-4);
+  }
+
+  .card-eyebrow {
+    display: block;
+    font-size: var(--font-size-caption);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-brass-text);
+    font-weight: 600;
+  }
+
+  .card-name {
+    font-family: var(--font-display);
+    font-size: var(--font-size-h3);
+    color: var(--color-pine);
+    margin: var(--space-1) 0 0 0;
+  }
+
+  .card-page-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: var(--font-size-small);
+    font-weight: 600;
+    color: var(--color-pine);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+    flex-shrink: 0;
+  }
+
+  .card-page-link:hover {
+    color: var(--color-brass);
+  }
+
+  .card-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .address-block {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+
+  .address-icon {
+    color: var(--color-brass);
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .address-text {
+    font-style: normal;
+    font-size: var(--font-size-small);
+    color: var(--color-ink);
+    line-height: 1.5;
+  }
+
+  .actions-block {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .call-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 44px;
+    padding-inline: var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    background-color: var(--color-mist);
+    color: var(--color-pine);
+    font-size: var(--font-size-small);
+    font-weight: 600;
+    text-decoration: none;
+    transition: all var(--transition-fast);
+  }
+
+  .call-btn:hover {
+    background-color: var(--color-stone);
+    border-color: var(--color-brass-300);
+  }
+
+  .maps-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 44px;
+    padding-inline: var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    background-color: var(--color-white);
+    color: var(--color-pine);
+    font-size: var(--font-size-small);
+    font-weight: 600;
+    text-decoration: none;
+    transition: all var(--transition-fast);
+  }
+
+  .maps-btn:hover {
+    background-color: var(--color-mist);
+    border-color: var(--color-brass-300);
+    box-shadow: var(--shadow-1);
+  }
+
+  .socials-block {
+    border-top: 1px dashed var(--color-stone);
+    padding-top: var(--space-3);
+  }
+</style>

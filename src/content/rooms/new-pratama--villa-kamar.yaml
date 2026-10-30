@@ -1,0 +1,22 @@
+id: new-pratama--villa-kamar
+venueId: new-pratama
+slug: villa-kamar
+name: Villa Kamar
+kind: room
+summary:
+  id: Opsi sewa per kamar di kompleks New Pratama Villa.
+  en: Per-room rental option within New Pratama Villa complex.
+  ar: خيار الاستئجار بالغرفة داخل مجمع New Pratama Villa.
+sizeM2: null
+maxGuests: null
+bedrooms: 1
+beds: null
+bathrooms: 1
+features: []
+images:
+  - /images/rooms/new-pratama--villa-kamar.jpg
+  - /images/venues/new-pratama-hero.jpg
+sortOrder: 2
+status: draft
+fieldStatus:
+  name: PUBLIC_SOURCE_ONLY

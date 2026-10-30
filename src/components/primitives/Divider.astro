@@ -1,0 +1,35 @@
+---
+interface Props {
+  variant?: 'subtle' | 'brass' | 'section';
+  class?: string;
+}
+
+const { variant = 'subtle', class: className = '' } = Astro.props;
+---
+
+<hr class:list={['divider', `divider-${variant}`, className]} />
+
+<style>
+  .divider {
+    border: 0;
+    margin-block: var(--space-6);
+  }
+
+  .divider-subtle {
+    height: 1px;
+    background-color: var(--color-border);
+  }
+
+  .divider-brass {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--color-brass), transparent);
+    width: 60%;
+    margin-inline: auto;
+  }
+
+  .divider-section {
+    height: 1px;
+    background-color: var(--color-border);
+    margin-block: var(--space-8);
+  }
+</style>

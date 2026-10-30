@@ -1,0 +1,175 @@
+---
+import Container from '../primitives/Container.astro';
+import ResponsiveImage from '../common/ResponsiveImage.astro';
+import Button from '../primitives/Button.astro';
+import Icon from '../primitives/Icon.astro';
+import { type Locale, localizePath } from '../../lib/i18n';
+
+interface Props {
+  venue: any;
+  locale: Locale;
+  reversed?: boolean;
+}
+
+const { venue, locale, reversed = false } = Astro.props;
+
+const venueUrl =
+  venue.collection === 'dining'
+    ? localizePath(`/dining/${venue.slug}`, locale)
+    : localizePath(`/properties/${venue.slug}`, locale);
+
+const ctaLabel = {
+  id: venue.collection === 'dining' ? 'Jelajahi NJD Cafe & Menu' : `Lihat ${venue.name}`,
+  en: venue.collection === 'dining' ? 'Explore NJD Cafe & Menu' : `View ${venue.name}`,
+  ar: venue.collection === 'dining' ? 'استكشفوا NJD Cafe والقائمة' : `اطّلعوا على ${venue.name}`,
+}[locale];
+---
+
+<section class="venue-feature" aria-labelledby={`feature-${venue.id}`}>
+  <Container>
+    <div class:list={['feature-grid', { 'is-reversed': reversed }]}>
+      <!-- Media -->
+      <div class="feature-media">
+        <ResponsiveImage
+          src={venue.heroImage}
+          alt={venue.name}
+          aspectRatio="4:3"
+        />
+      </div>
+
+      <!-- Content -->
+      <div class="feature-content">
+        <div class="feature-meta">
+          <span class="feature-type">{venue.typeLabel[locale] || venue.typeLabel.id}</span>
+          <span class="feature-endorsement">{venue.endorsement[locale] || venue.endorsement.id}</span>
+        </div>
+
+        <h2 id={`feature-${venue.id}`} class="feature-title">
+          {venue.name}
+        </h2>
+
+        <p class="feature-description">
+          {venue.description[locale] || venue.description.id}
+        </p>
+
+        {
+          venue.highlights && venue.highlights.length > 0 && (
+            <ul class="feature-highlights">
+              {venue.highlights.map((h: any) => (
+                <li class="highlight-item">
+                  <Icon name={h.icon || 'check'} size={18} class="highlight-icon" />
+                  <span>{h.label[locale] || h.label.id}</span>
+                </li>
+              ))}
+            </ul>
+          )
+        }
+
+        <div class="feature-actions">
+          <Button href={venueUrl} variant="primary">
+            {ctaLabel}
+          </Button>
+        </div>
+      </div>
+    </div>
+  </Container>
+</section>
+
+<style>
+  .venue-feature {
+    padding-block: var(--space-9);
+    background-color: var(--color-mist);
+    border-block-end: 1px solid var(--color-border);
+  }
+
+  .feature-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+    align-items: center;
+  }
+
+  @media (min-width: 1024px) {
+    .feature-grid {
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-8);
+    }
+
+    .feature-grid.is-reversed .feature-media {
+      order: 2;
+    }
+    .feature-grid.is-reversed .feature-content {
+      order: 1;
+    }
+  }
+
+  .feature-media {
+    width: 100%;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-1);
+  }
+
+  .feature-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .feature-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-size: var(--font-size-small);
+  }
+
+  .feature-type {
+    font-weight: 600;
+    color: var(--color-tea);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .feature-endorsement {
+    color: var(--color-muted);
+    font-style: italic;
+  }
+
+  .feature-title {
+    font-size: var(--font-size-h2);
+    margin: 0;
+  }
+
+  .feature-description {
+    font-size: 1.125rem;
+    color: var(--color-muted);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  .feature-highlights {
+    list-style: none;
+    padding: 0;
+    margin-block: var(--space-2);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .highlight-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-body);
+    color: var(--color-ink);
+    font-weight: 500;
+  }
+
+  .highlight-icon {
+    color: var(--color-tea);
+  }
+
+  .feature-actions {
+    margin-block-start: var(--space-3);
+  }
+</style>

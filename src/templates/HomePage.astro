@@ -1,0 +1,164 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+import HeroHome from '../components/sections/HeroHome.astro';
+import IntroBlock from '../components/sections/IntroBlock.astro';
+import CollectionGrid from '../components/sections/CollectionGrid.astro';
+import VenueFeature from '../components/sections/VenueFeature.astro';
+import Button from '../components/primitives/Button.astro';
+import Container from '../components/primitives/Container.astro';
+import { type Locale } from '../lib/i18n';
+import { getEntry } from 'astro:content';
+
+import { buildOrganizationSchema } from '../lib/schema';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+
+const siteEntry = await getEntry('site', 'site');
+const site = siteEntry.data as any;
+
+const villaNjd = (await getEntry('venues', 'villa-njd')).data;
+const newPratama = (await getEntry('venues', 'new-pratama')).data;
+const njdCafe = (await getEntry('venues', 'njd-cafe')).data;
+
+const currentPath = locale === 'id' ? '/' : `/${locale}`;
+const jsonLd = buildOrganizationSchema();
+
+const seo = {
+  id: {
+    title: 'ALMAGD | Koleksi Penginapan & Kuliner di Puncak, Bogor',
+    desc: 'Kenali New Pratama Villa, Villa NJD, dan NJD Cafe di kawasan sejuk Puncak, Cisarua, Bogor. Udara Sejuk, Sambutan Hangat.',
+  },
+  en: {
+    title: 'ALMAGD | Stays & Dining Collection in Puncak, Bogor',
+    desc: 'Discover New Pratama Villa, Villa NJD, and NJD Cafe in the refreshing highlands of Puncak, Cisarua, Bogor. Cool Air. Warm Welcome.',
+  },
+  ar: {
+    title: 'المجد | مجموعة الإقامات والمطاعم في بونشاك، بوغور',
+    desc: 'تعرّفوا على New Pratama Villa و Villa NJD و NJD Cafe في مرتفعات بونشاك، تشيساروا، بوغور. هواءٌ عليل… وترحيبٌ دافئ.',
+  },
+}[locale];
+
+const introCopy = {
+  id: {
+    eyebrow: 'Koleksi ALMAGD',
+    title: 'Tiga Tempat dalam Satu Semangat Keramahan',
+    body: 'ALMAGD menaungi dua tempat menginap dan NJD Cafe di kawasan Puncak, Cisarua, Bogor. Setiap properti dikelola dengan perhatian tulus untuk memberikan pengalaman yang nyaman bagi keluarga, pasangan, dan rombongan.',
+  },
+  en: {
+    eyebrow: 'The ALMAGD Collection',
+    title: 'Three Places, One Spirit of Hospitality',
+    body: 'ALMAGD brings together two unique stays and NJD Cafe in Puncak, Cisarua, Bogor. Each property is cared for with genuine warmth to offer a comfortable and honest experience for families, couples, and groups.',
+  },
+  ar: {
+    eyebrow: 'مجموعة المجد',
+    title: 'ثلاث وجهات بروح ضيافة واحدة',
+    body: 'تجمع المجد بين مكانين للإقامة و NJD Cafe في منطقة بونشاك، تشيساروا، بوغور. تُدار كل منشأة بعناية صادقة لتوفير تجربة مريحة للعائلات والأزواج والمجموعات.',
+  },
+}[locale];
+
+const finalCta = {
+  id: {
+    title: 'Sudah Menentukan Pilihan?',
+    body: 'Hubungi tim tempat yang Anda pilih untuk menanyakan ketersediaan dan detail kunjungan Anda.',
+    btn: 'Hubungi Kami via WhatsApp',
+  },
+  en: {
+    title: 'Found Your Place?',
+    body: 'Contact your chosen venue to inquire about availability and details for your upcoming stay or visit.',
+    btn: 'Chat on WhatsApp',
+  },
+  ar: {
+    title: 'هل اخترتم وجهتكم؟',
+    body: 'تواصلوا مع فريق الوجهة التي تفضلونها للاستفسار عن التوافر وتفاصيل إقامتكم أو زيارتكم.',
+    btn: 'تواصلوا معنا عبر واتساب',
+  },
+}[locale];
+---
+
+<PageLayout
+  title={seo.title}
+  description={seo.desc}
+  locale={locale}
+  currentPath={currentPath}
+  jsonLd={jsonLd}
+>
+  <!-- Hero Section (Single H1) -->
+  <HeroHome locale={locale} />
+
+  <!-- Intro Block -->
+  <IntroBlock
+    eyebrow={introCopy.eyebrow}
+    title={introCopy.title}
+    body={introCopy.body}
+    centered={true}
+  />
+
+  <!-- Collection Grid (3 Destinations) -->
+  <CollectionGrid locale={locale} />
+
+  <!-- Features in Order: Villa NJD, New Pratama, NJD Cafe -->
+  <VenueFeature venue={villaNjd} locale={locale} reversed={false} />
+  <VenueFeature venue={newPratama} locale={locale} reversed={true} />
+  <VenueFeature venue={njdCafe} locale={locale} reversed={false} />
+
+  <!-- Final CTA Section -->
+  <section class="home-final-cta" aria-labelledby="final-cta-heading">
+    <Container size="narrow">
+      <div class="final-cta-card">
+        <h2 id="final-cta-heading" class="final-cta-title">{finalCta.title}</h2>
+        <p class="final-cta-body">{finalCta.body}</p>
+        <div class="final-cta-action">
+          <Button variant="whatsapp" size="lg" id="final-cta-btn">
+            {finalCta.btn}
+          </Button>
+        </div>
+      </div>
+    </Container>
+  </section>
+</PageLayout>
+
+<script>
+  function setupHomeCta() {
+    const btn = document.getElementById('final-cta-btn');
+    btn?.addEventListener('click', () => {
+      window.dispatchEvent(new CustomEvent('open-whatsapp-chooser'));
+    });
+  }
+  document.addEventListener('DOMContentLoaded', setupHomeCta);
+</script>
+
+<style>
+  .home-final-cta {
+    padding-block: var(--space-9);
+    background-color: var(--color-stone);
+  }
+
+  .final-cta-card {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+  }
+
+  .final-cta-title {
+    font-size: var(--font-size-h2);
+    margin: 0;
+  }
+
+  .final-cta-body {
+    font-size: 1.125rem;
+    color: var(--color-muted);
+    max-width: 54ch;
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  .final-cta-action {
+    margin-block-start: var(--space-3);
+  }
+</style>

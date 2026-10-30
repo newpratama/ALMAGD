@@ -1,0 +1,150 @@
+---
+interface Props {
+  variant?: 'primary' | 'secondary' | 'ghost' | 'whatsapp' | 'ota';
+  size?: 'sm' | 'md' | 'lg';
+  href?: string;
+  target?: string;
+  rel?: string;
+  type?: 'button' | 'submit' | 'reset';
+  class?: string;
+  id?: string;
+  disabled?: boolean;
+  'aria-label'?: string;
+  [key: string]: any;
+}
+
+const {
+  variant = 'primary',
+  size = 'md',
+  href,
+  target,
+  rel,
+  type = 'button',
+  class: className = '',
+  disabled = false,
+  'aria-label': ariaLabel,
+  ...rest
+} = Astro.props;
+
+const isLink = typeof href === 'string';
+const safeRel = target === '_blank' ? (rel ? `${rel} noopener` : 'noopener') : rel;
+---
+
+{
+  isLink ? (
+    <a
+      href={href}
+      target={target}
+      rel={safeRel}
+      class:list={['btn', `btn-${variant}`, `btn-${size}`, className]}
+      aria-label={ariaLabel}
+      {...rest}
+    >
+      <slot />
+    </a>
+  ) : (
+    <button
+      type={type}
+      class:list={['btn', `btn-${variant}`, `btn-${size}`, className]}
+      disabled={disabled}
+      aria-label={ariaLabel}
+      {...rest}
+    >
+      <slot />
+    </button>
+  )
+}
+
+<style>
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: var(--touch-target-min);
+    padding-inline: var(--space-5);
+    padding-block: var(--space-3);
+    font-size: var(--font-size-body);
+    font-weight: 600;
+    line-height: 1.2;
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+    text-align: center;
+  }
+
+  /* Sizes */
+  .btn-sm {
+    min-height: 36px;
+    padding-inline: var(--space-3);
+    padding-block: var(--space-2);
+    font-size: var(--font-size-small);
+  }
+
+  .btn-md {
+    min-height: var(--touch-target-min);
+    padding-inline: var(--space-5);
+    padding-block: var(--space-3);
+    font-size: var(--font-size-body);
+  }
+
+  .btn-lg {
+    min-height: 48px;
+    padding-inline: var(--space-6);
+    padding-block: var(--space-4);
+    font-size: 1.125rem;
+  }
+
+  /* Variants */
+  .btn-primary {
+    background-color: var(--color-pine);
+    color: var(--color-white);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background-color: var(--color-pine-700);
+    color: var(--color-white);
+  }
+
+  .btn-secondary {
+    background-color: transparent;
+    color: var(--color-pine);
+    border-color: var(--color-pine);
+  }
+  .btn-secondary:hover:not(:disabled) {
+    background-color: var(--color-tea-100);
+  }
+
+  .btn-ghost {
+    background-color: transparent;
+    color: var(--color-pine);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    background-color: var(--color-tea-100);
+  }
+
+  .btn-whatsapp {
+    background-color: var(--color-wa);
+    color: var(--color-wa-text);
+  }
+  .btn-whatsapp:hover:not(:disabled) {
+    background-color: #20bd5a;
+    color: var(--color-wa-text);
+  }
+
+  .btn-ota {
+    background-color: var(--color-white);
+    color: var(--color-ink);
+    border-color: var(--color-border);
+  }
+  .btn-ota:hover:not(:disabled) {
+    background-color: var(--color-stone);
+    border-color: var(--color-muted);
+  }
+
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+</style>

@@ -1,0 +1,128 @@
+---
+import { LOCALES, type Locale, localizePath } from '../../lib/i18n';
+
+interface Props {
+  currentLocale: Locale;
+  currentPath: string;
+  variant?: 'header' | 'footer' | 'mobile';
+  class?: string;
+}
+
+const { currentLocale, currentPath, variant = 'header', class: className = '' } = Astro.props;
+
+const localeLabels: Record<Locale, { full: string; short: string }> = {
+  id: { full: 'Bahasa Indonesia', short: 'ID' },
+  en: { full: 'English', short: 'EN' },
+  ar: { full: 'العربية', short: 'AR' },
+};
+---
+
+<nav
+  class:list={['lang-switcher', `lang-switcher-${variant}`, className]}
+  aria-label="Language selection"
+>
+  <ul class="lang-list">
+    {
+      LOCALES.map((loc) => {
+        const isCurrent = loc === currentLocale;
+        const targetUrl = localizePath(currentPath, loc);
+        const label = variant === 'footer' ? localeLabels[loc].full : localeLabels[loc].short;
+
+        return (
+          <li class="lang-item">
+            <a
+              href={targetUrl}
+              hreflang={loc}
+              lang={loc}
+              dir={loc === 'ar' ? 'rtl' : 'ltr'}
+              class:list={['lang-link', { active: isCurrent }]}
+              aria-current={isCurrent ? 'true' : undefined}
+            >
+              {label}
+            </a>
+          </li>
+        );
+      })
+    }
+  </ul>
+</nav>
+
+<style>
+  .lang-switcher {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .lang-list {
+    display: flex;
+    align-items: center;
+    list-style: none;
+    gap: var(--space-1);
+    margin: 0;
+    padding: 0;
+  }
+
+  .lang-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--touch-target-min);
+    padding-inline: var(--space-3);
+    font-size: var(--font-size-small);
+    font-weight: 600;
+    color: var(--color-ink);
+    border-radius: var(--radius-sm);
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+  }
+
+  .lang-link:hover {
+    color: var(--color-pine-700);
+    background-color: var(--color-tea-100);
+  }
+
+  .lang-link.active {
+    color: var(--color-pine);
+    background-color: rgba(30, 59, 50, 0.08);
+  }
+
+  /* Footer Variant */
+  .lang-switcher-footer .lang-link {
+    color: var(--color-mist);
+    padding-inline: var(--space-4);
+  }
+
+  .lang-switcher-footer .lang-link:hover {
+    color: var(--color-white);
+    background-color: var(--color-pine-700);
+  }
+
+  .lang-switcher-footer .lang-link.active {
+    color: var(--color-brass-300);
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  /* Mobile Variant */
+  .lang-switcher-mobile {
+    width: 100%;
+  }
+
+  .lang-switcher-mobile .lang-list {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    background-color: var(--color-stone);
+    padding: var(--space-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .lang-switcher-mobile .lang-link {
+    width: 100%;
+    text-align: center;
+  }
+
+  .lang-switcher-mobile .lang-link.active {
+    background-color: var(--color-white);
+    color: var(--color-pine);
+    box-shadow: var(--shadow-1);
+  }
+</style>

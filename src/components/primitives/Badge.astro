@@ -1,0 +1,58 @@
+---
+interface Props {
+  variant?: 'pine' | 'tea' | 'brass' | 'stone' | 'success' | 'outline';
+  class?: string;
+}
+
+const { variant = 'tea', class: className = '' } = Astro.props;
+---
+
+<span class:list={['badge', `badge-${variant}`, className]}>
+  <slot />
+</span>
+
+<style>
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding-inline: var(--space-2);
+    padding-block: 2px;
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+    line-height: 1.4;
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+  }
+
+  .badge-pine {
+    background-color: var(--color-pine);
+    color: var(--color-white);
+  }
+
+  .badge-tea {
+    background-color: var(--color-tea-100);
+    color: var(--color-pine);
+  }
+
+  .badge-brass {
+    background-color: rgba(184, 135, 59, 0.15);
+    color: var(--color-brass-text);
+  }
+
+  .badge-stone {
+    background-color: var(--color-stone);
+    color: var(--color-muted);
+  }
+
+  .badge-success {
+    background-color: rgba(46, 125, 79, 0.15);
+    color: var(--color-success);
+  }
+
+  .badge-outline {
+    background-color: transparent;
+    border: 1px solid var(--color-border);
+    color: var(--color-muted);
+  }
+</style>

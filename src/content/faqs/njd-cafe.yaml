@@ -1,0 +1,15 @@
+faqs:
+  - id: cafe-menu
+    venueId: njd-cafe
+    question:
+      id: Di mana saya bisa melihat menu NJD Cafe?
+      en: Where can I see the NJD Cafe menu?
+      ar: أين نطّلع على قائمة NJD Cafe؟
+    answer:
+      id: Buka halaman Menu NJD Cafe untuk melihat item dan harga yang dipublikasikan.
+      en: Open the NJD Cafe Menu page to see published items and prices.
+      ar: تفضلوا بزيارة صفحة قائمة NJD Cafe للاطّلاع على الأصناف والأسعار المنشورة.
+    answerStatus: USER_PROVIDED
+    factRefs:
+      - F-CAFE-12
+    sortOrder: 1

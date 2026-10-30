@@ -1,0 +1,57 @@
+faqs:
+  - id: njd-check-in
+    venueId: villa-njd
+    question:
+      id: Kapan waktu check-in dan check-out Villa NJD?
+      en: What are Villa NJD's check-in and check-out times?
+      ar: ما مواعيد الوصول والمغادرة في Villa NJD؟
+    answer:
+      id: Check-in pukul 14.00–23.59; check-out paling lambat pukul 12.00.
+      en: Check-in is 2:00 pm–11:59 pm; check-out is by 12:00 pm.
+      ar: الوصول من الساعة 14:00 حتى 23:59، والمغادرة حتى الساعة 12:00.
+    answerStatus: VERIFIED_MULTIPLE_SOURCES
+    factRefs:
+      - F-NJD-16
+    sortOrder: 1
+  - id: njd-pets
+    venueId: villa-njd
+    question:
+      id: Apakah hewan peliharaan diperbolehkan di Villa NJD?
+      en: Are pets allowed at Villa NJD?
+      ar: هل يسمح بالحيوانات الأليفة في Villa NJD؟
+    answer:
+      id: Hewan peliharaan tidak diperbolehkan.
+      en: Pets are not allowed.
+      ar: لا يُسمح باصطحاب الحيوانات الأليفة.
+    answerStatus: VERIFIED_MULTIPLE_SOURCES
+    factRefs:
+      - F-NJD-20
+    sortOrder: 2
+  - id: njd-wifi
+    venueId: villa-njd
+    question:
+      id: Apakah WiFi tersedia di Villa NJD?
+      en: Is WiFi available at Villa NJD?
+      ar: هل يتوفر WiFi في Villa NJD؟
+    answer:
+      id: WiFi gratis tersedia.
+      en: Free WiFi is available.
+      ar: يتوفر WiFi مجاني.
+    answerStatus: VERIFIED_MULTIPLE_SOURCES
+    factRefs:
+      - F-NJD-24
+    sortOrder: 3
+  - id: njd-pool
+    venueId: villa-njd
+    question:
+      id: Apakah Villa NJD memiliki kolam renang?
+      en: Does Villa NJD have a pool?
+      ar: هل يوجد مسبح في Villa NJD؟
+    answer:
+      id: Tersedia kolam renang luar ruangan.
+      en: There is an outdoor swimming pool.
+      ar: يتوفر مسبح خارجي.
+    answerStatus: VERIFIED_MULTIPLE_SOURCES
+    factRefs:
+      - F-NJD-23
+    sortOrder: 4

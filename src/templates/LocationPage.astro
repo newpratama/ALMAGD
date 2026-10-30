@@ -1,0 +1,257 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+import Container from '../components/primitives/Container.astro';
+import HeroPage from '../components/sections/HeroPage.astro';
+import MapCard from '../components/location/MapCard.astro';
+import AttractionList from '../components/location/AttractionList.astro';
+import Icon from '../components/primitives/Icon.astro';
+import { type Locale, localizePath } from '../lib/i18n';
+import { getEntry } from 'astro:content';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+
+const villaNjdEntry = await getEntry('venues', 'villa-njd');
+const newPratamaEntry = await getEntry('venues', 'new-pratama');
+const njdCafeEntry = await getEntry('venues', 'njd-cafe');
+
+const attractionsEntry = await getEntry('attractions', 'attractions');
+const attractions = attractionsEntry?.data?.attractions || [];
+
+const currentPath = localizePath('/location', locale);
+
+const copy = {
+  id: {
+    seoTitle: 'Lokasi & Akses | Menuju Properti ALMAGD di Puncak, Bogor',
+    seoDesc: 'Petunjuk arah dan lokasi New Pratama Villa, Villa NJD, dan NJD Cafe di kawasan Puncak, Cisarua, Bogor.',
+    h1: 'Lokasi & Akses',
+    subtitle: 'Kawasan Puncak, Cisarua, Bogor',
+    lead: 'Seluruh properti The ALMAGD Collection berada di kawasan sejuk pegunungan Puncak, Cisarua, Bogor. Temukan rincian alamat dan destinasi wisata di sekitarnya.',
+    njdTitle: 'Lokasi Villa NJD',
+    npTitle: 'Lokasi New Pratama Villa',
+    cafeTitle: 'Lokasi NJD Cafe',
+    crumbs: [{ label: 'Lokasi' }],
+  },
+  en: {
+    seoTitle: 'Location & Access | Reaching ALMAGD Properties in Puncak',
+    seoDesc: 'Directions and location details for New Pratama Villa, Villa NJD, and NJD Cafe in Puncak, Cisarua, Bogor.',
+    h1: 'Location & Access',
+    subtitle: 'Puncak Highlands, Cisarua, Bogor',
+    lead: 'All properties in The ALMAGD Collection are located in the scenic mountain area of Puncak, Cisarua, Bogor. Find verified addresses and nearby attractions below.',
+    njdTitle: 'Villa NJD Location',
+    npTitle: 'New Pratama Villa Location',
+    cafeTitle: 'NJD Cafe Location',
+    crumbs: [{ label: 'Location' }],
+  },
+  ar: {
+    seoTitle: 'الموقع والوصول | منشآت المجد في بونشاك، بوغور',
+    seoDesc: 'تفاصيل الموقع والوصول إلى New Pratama Villa و Villa NJD و NJD Cafe في بونشاك، تشيساروا، بوغور.',
+    h1: 'الموقع والوصول',
+    subtitle: 'مرتفعات بونشاك، تشيساروا، بوغور',
+    lead: 'تقع جميع منشآت مجموعة المجد في منطقة بونشاك الجبلية الخلابة في تشيساروا، بوغور. إليكم تفاصيل العناوين المعتمدة والمعالم السياحية القريبة.',
+    njdTitle: 'موقع Villa NJD',
+    npTitle: 'موقع New Pratama Villa',
+    cafeTitle: 'موقع NJD Cafe',
+    crumbs: [{ label: 'الموقع' }],
+  },
+}[locale];
+---
+
+<PageLayout
+  title={copy.seoTitle}
+  description={copy.seoDesc}
+  locale={locale}
+  currentPath={currentPath}
+  breadcrumbs={copy.crumbs}
+>
+  <!-- Hero Section -->
+  <HeroPage
+    title={copy.h1}
+    subtitle={copy.subtitle}
+    lead={copy.lead}
+  />
+
+  <main class="location-main-content">
+    <Container>
+      <!-- 1. Villa NJD Map & Address -->
+      <section class="location-venue-block" id="loc-villa-njd">
+        <div class="venue-loc-header">
+          <span class="venue-loc-eyebrow">{villaNjdEntry.data.typeLabel[locale]} · {villaNjdEntry.data.endorsement[locale]}</span>
+          <h2 class="venue-loc-title">{copy.njdTitle}</h2>
+        </div>
+        <MapCard
+          venueId="villa-njd"
+          venueName={villaNjdEntry.data.name}
+          typeLabel={villaNjdEntry.data.typeLabel[locale]}
+          endorsement={villaNjdEntry.data.endorsement[locale]}
+          summary={villaNjdEntry.data.summary[locale]}
+          cardImage={villaNjdEntry.data.cardImage || villaNjdEntry.data.heroImage}
+          address={villaNjdEntry.data.address}
+          geo={villaNjdEntry.data.geo}
+          mapsUrl={villaNjdEntry.data.mapsUrl}
+          directionsUrl={villaNjdEntry.data.directionsUrl}
+          phone={villaNjdEntry.data.phone}
+          whatsapp={villaNjdEntry.data.whatsapp}
+          otaLinks={villaNjdEntry.data.otaLinks}
+          locale={locale}
+        />
+      </section>
+
+      <!-- 2. New Pratama Villa Map & Address -->
+      <section class="location-venue-block" id="loc-new-pratama">
+        <div class="venue-loc-header">
+          <span class="venue-loc-eyebrow">{newPratamaEntry.data.typeLabel[locale]} · {newPratamaEntry.data.endorsement[locale]}</span>
+          <h2 class="venue-loc-title">{copy.npTitle}</h2>
+        </div>
+        <MapCard
+          venueId="new-pratama"
+          venueName={newPratamaEntry.data.name}
+          typeLabel={newPratamaEntry.data.typeLabel[locale]}
+          endorsement={newPratamaEntry.data.endorsement[locale]}
+          summary={newPratamaEntry.data.summary[locale]}
+          cardImage={newPratamaEntry.data.cardImage || newPratamaEntry.data.heroImage}
+          address={newPratamaEntry.data.address}
+          geo={newPratamaEntry.data.geo}
+          mapsUrl={newPratamaEntry.data.mapsUrl}
+          directionsUrl={newPratamaEntry.data.directionsUrl}
+          phone={newPratamaEntry.data.phone}
+          whatsapp={newPratamaEntry.data.whatsapp}
+          otaLinks={newPratamaEntry.data.otaLinks}
+          locale={locale}
+        />
+      </section>
+
+      <!-- 3. NJD Cafe Map & Address -->
+      <section class="location-venue-block" id="loc-njd-cafe">
+        <div class="venue-loc-header">
+          <span class="venue-loc-eyebrow">{njdCafeEntry.data.typeLabel[locale]} · {njdCafeEntry.data.endorsement[locale]}</span>
+          <h2 class="venue-loc-title">{copy.cafeTitle}</h2>
+        </div>
+        <MapCard
+          venueId="njd-cafe"
+          venueName={njdCafeEntry.data.name}
+          typeLabel={njdCafeEntry.data.typeLabel[locale]}
+          endorsement={njdCafeEntry.data.endorsement[locale]}
+          summary={njdCafeEntry.data.summary[locale]}
+          cardImage={njdCafeEntry.data.cardImage || njdCafeEntry.data.heroImage}
+          address={njdCafeEntry.data.address}
+          geo={njdCafeEntry.data.geo}
+          mapsUrl={njdCafeEntry.data.mapsUrl}
+          directionsUrl={njdCafeEntry.data.directionsUrl}
+          phone={njdCafeEntry.data.phone}
+          whatsapp={njdCafeEntry.data.whatsapp}
+          otaLinks={njdCafeEntry.data.otaLinks}
+          locale={locale}
+        />
+      </section>
+
+      <!-- Nearby Attractions -->
+      <AttractionList
+        attractions={attractions}
+        locale={locale}
+        venueId="villa-njd"
+      />
+    </Container>
+  </main>
+</PageLayout>
+
+<style>
+  .location-main-content {
+    padding-block: var(--space-6) var(--space-8);
+  }
+
+  .location-venue-block {
+    margin-block-end: var(--space-8);
+  }
+
+  .venue-loc-header {
+    margin-block-end: var(--space-3);
+  }
+
+  .venue-loc-eyebrow {
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+    color: var(--color-brass-text);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: block;
+    margin-block-end: var(--space-1);
+  }
+
+  .venue-loc-title {
+    font-family: var(--font-display);
+    font-size: var(--font-size-h2);
+    color: var(--color-pine);
+    margin: 0;
+  }
+
+  .other-locations-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-5);
+    margin-block-end: var(--space-7);
+  }
+
+  @media (min-width: 640px) {
+    .other-locations-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .loc-card {
+    background-color: var(--color-mist);
+    border: 1px solid var(--color-stone);
+    border-radius: var(--radius-md);
+    padding: var(--space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .loc-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .loc-icon {
+    color: var(--color-brass);
+    flex-shrink: 0;
+  }
+
+  .loc-name {
+    font-family: var(--font-display);
+    font-size: var(--font-size-h3);
+    color: var(--color-pine);
+    margin: 0;
+  }
+
+  .loc-address {
+    font-style: normal;
+    font-size: var(--font-size-small);
+    color: var(--color-ink);
+    line-height: 1.5;
+  }
+
+  .loc-address p {
+    margin: 0;
+  }
+
+  .loc-phone {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-small);
+    color: var(--color-pine);
+    font-weight: 600;
+    margin-block-start: auto;
+  }
+
+  .loc-phone a {
+    color: var(--color-pine);
+    text-decoration: underline;
+  }
+</style>

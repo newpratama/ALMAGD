@@ -1,0 +1,142 @@
+---
+import Icon from '../primitives/Icon.astro';
+import type { Locale } from '../../lib/i18n';
+
+interface Policy {
+  key: string;
+  value: Record<Locale, string>;
+}
+
+interface Props {
+  policies?: Policy[];
+  locale: Locale;
+  title?: string;
+  subtitle?: string;
+}
+
+const { policies = [], locale, title, subtitle } = Astro.props;
+
+const defaultTitles = {
+  id: 'Ketentuan Menginap',
+  en: 'Good to Know',
+  ar: 'معلومات تهمك',
+};
+
+const defaultSubtitles = {
+  id: 'Kebijakan penting sebelum kedatangan Anda.',
+  en: 'Key policies and information for your stay.',
+  ar: 'سياسات ومعلومات هامة لإقامتكم.',
+};
+
+const sectionTitle = title || defaultTitles[locale];
+const sectionSubtitle = subtitle || defaultSubtitles[locale];
+
+function getPolicyIcon(key: string): string {
+  switch (key) {
+    case 'checkIn':
+    case 'checkOut':
+      return 'clock';
+    case 'pets':
+      return 'info';
+    default:
+      return 'info';
+  }
+}
+---
+
+{policies.length > 0 && (
+  <section class="policy-section" id="policies" aria-labelledby="policies-title">
+    <div class="policy-header">
+      <h2 id="policies-title" class="policy-title">{sectionTitle}</h2>
+      <p class="policy-subtitle">{sectionSubtitle}</p>
+    </div>
+
+    <ul class="policy-grid" role="list">
+      {policies.map((p) => {
+        const text = p.value[locale] || p.value.en || p.value.id;
+        const iconName = getPolicyIcon(p.key);
+        return (
+          <li class="policy-card">
+            <span class="policy-icon" aria-hidden="true">
+              <Icon name={iconName} size={22} />
+            </span>
+            <div class="policy-content">
+              <p class="policy-text">{text}</p>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  </section>
+)}
+
+<style>
+  .policy-section {
+    padding-block: var(--space-6);
+  }
+
+  .policy-header {
+    margin-block-end: var(--space-5);
+  }
+
+  .policy-title {
+    font-family: var(--font-display);
+    font-size: var(--font-size-h2);
+    color: var(--color-pine);
+    margin-block-end: var(--space-2);
+  }
+
+  .policy-subtitle {
+    font-size: var(--font-size-small);
+    color: var(--color-muted);
+  }
+
+  .policy-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  @media (min-width: 640px) {
+    .policy-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-5);
+    }
+  }
+
+  .policy-card {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-4);
+    padding: var(--space-5);
+    background-color: var(--color-mist);
+    border: 1px solid var(--color-stone);
+    border-radius: var(--radius-md);
+  }
+
+  .policy-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    background-color: var(--color-stone);
+    color: var(--color-brass);
+    flex-shrink: 0;
+  }
+
+  .policy-content {
+    flex: 1;
+  }
+
+  .policy-text {
+    margin: 0;
+    font-size: var(--font-size-body);
+    color: var(--color-ink);
+    line-height: 1.5;
+  }
+</style>

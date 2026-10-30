@@ -1,0 +1,476 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+import HeroPage from '../components/sections/HeroPage.astro';
+import Container from '../components/primitives/Container.astro';
+import ResponsiveImage from '../components/common/ResponsiveImage.astro';
+import Button from '../components/primitives/Button.astro';
+import Icon from '../components/primitives/Icon.astro';
+import { type Locale, localizePath } from '../lib/i18n';
+import { getEntry } from 'astro:content';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+
+const villaNjd = (await getEntry('venues', 'villa-njd')).data;
+const newPratama = (await getEntry('venues', 'new-pratama')).data;
+const njdCafe = (await getEntry('venues', 'njd-cafe')).data;
+
+const currentPath = localizePath('/properties', locale);
+
+const copy = {
+  id: {
+    seoTitle: 'Penginapan di Puncak | New Pratama Villa & Villa NJD by ALMAGD',
+    seoDesc: 'Temukan pilihan penginapan di kawasan sejuk Puncak, Cisarua. Villa NJD dan New Pratama Villa dalam Koleksi ALMAGD.',
+    h1: 'Penginapan Kami di Puncak',
+    lead: 'Dua pilihan menginap di kawasan sejuk Puncak, Cisarua, Bogor. Pilih properti yang sesuai dengan rencana liburan keluarga atau rombongan Anda.',
+    viewBtn: 'Lihat Penginapan',
+    compareTitle: 'Perbandingan Sekilas',
+    areaLabel: 'Kawasan',
+    typeLabel: 'Tipe Properti',
+    verifiedFacilities: 'Fasilitas Terverifikasi',
+    inquiryLabel: 'Informasi & Pemesanan',
+    njdArea: 'Desa Tugu Utara, Cisarua',
+    njdType: 'Penginapan bergaya vila dengan kamar berpemandangan',
+    njdFacilities: 'Kolam renang luar ruangan, Wi-Fi gratis, parkir gratis',
+    npArea: 'Desa Tugu Selatan, Cisarua',
+    npType: 'Kompleks vila dengan opsi sewa penuh atau per kamar',
+    npFacilities: 'Area kompleks vila, hubungi tim untuk detail fasilitas',
+    diningTitle: 'Juga dari ALMAGD: Kuliner di NJD Cafe',
+    diningDesc: 'Selain penginapan, kunjungi NJD Cafe untuk aneka sajian lokal, kopi, dan minuman segar di Cisarua.',
+    diningBtn: 'Lihat Menu & Kafe',
+    ctaTitle: 'Belum Yakin Memilih?',
+    ctaBody: 'Diskusikan rencana menginap Anda dengan tim kami melalui WhatsApp untuk mendapatkan rekomendasi yang tepat.',
+    ctaBtn: 'Hubungi Kami via WhatsApp',
+    crumbs: [{ label: 'Penginapan' }],
+  },
+  en: {
+    seoTitle: 'Stays in Puncak | New Pratama Villa & Villa NJD by ALMAGD',
+    seoDesc: 'Explore our stays in the cool highlands of Puncak, Cisarua. Villa NJD and New Pratama Villa in The ALMAGD Collection.',
+    h1: 'Our Stays in Puncak',
+    lead: 'Two distinct stay options in the refreshing highlands of Puncak, Cisarua, Bogor. Choose the setting that suits your family or group plans.',
+    viewBtn: 'View Property',
+    compareTitle: 'Compare at a Glance',
+    areaLabel: 'Location',
+    typeLabel: 'Property Type',
+    verifiedFacilities: 'Verified Amenities',
+    inquiryLabel: 'Inquiries & Booking',
+    njdArea: 'Tugu Utara Village, Cisarua',
+    njdType: 'Villa-style stay with rooms and scenic views',
+    njdFacilities: 'Outdoor swimming pool, free Wi-Fi, free parking',
+    npArea: 'Tugu Selatan Village, Cisarua',
+    npType: 'Villa complex with full-villa and per-room options',
+    npFacilities: 'Villa complex grounds, contact team for amenity details',
+    diningTitle: 'Also by ALMAGD: Dining at NJD Cafe',
+    diningDesc: 'Beyond stays, explore NJD Cafe for local favourites, coffee, and refreshments in Cisarua.',
+    diningBtn: 'View Menu & Cafe',
+    ctaTitle: 'Need Help Choosing?',
+    ctaBody: 'Chat with our team on WhatsApp to discuss your dates, group size, and stay preferences.',
+    ctaBtn: 'Chat via WhatsApp',
+    crumbs: [{ label: 'Stays' }],
+  },
+  ar: {
+    seoTitle: 'أماكن الإقامة في بونشاك | New Pratama Villa و Villa NJD من المجد',
+    seoDesc: 'اكتشفوا خيارات الإقامة في مرتفعات بونشاك، تشيساروا. Villa NJD و New Pratama Villa ضمن مجموعة المجد.',
+    h1: 'أماكن إقامتنا في بونشاك',
+    lead: 'خياران مميزان للإقامة في مرتفعات بونشاك العليلة، تشيساروا، بوغور. اختاروا المكان الأنسب لخطط عائلتكم أو مجموعتكم.',
+    viewBtn: 'اطّلعوا على مكان الإقامة',
+    compareTitle: 'مقارنة سريعة',
+    areaLabel: 'المنطقة',
+    typeLabel: 'نوع المنشأة',
+    verifiedFacilities: 'المرافق الموثقة',
+    inquiryLabel: 'الاستفسار والحجز',
+    njdArea: 'قرية توغو أوتارا، تشيساروا',
+    njdType: 'إقامة بطراز فيلا وغرف بإطلالات طبيعية',
+    njdFacilities: 'مسبح خارجي، واي فاي مجاني، مواقف مجانية',
+    npArea: 'قرية توغو سيلاتان، تشيساروا',
+    npType: 'مجمع فلل بخيارات استئجار كامل وبالغرفة',
+    npFacilities: 'مجمع فلل، تواصلوا مع الفريق لتفاصيل المرافق',
+    diningTitle: 'أيضاً من المجد: تجربة الطعام في NJD Cafe',
+    diningDesc: 'إلى جانب الإقامة، زوروا NJD Cafe للاستمتاع بالأطباق المحلية والقهوة والمشروبات المنعشة في تشيساروا.',
+    diningBtn: 'اطّلعوا على القائمة والمقهى',
+    ctaTitle: 'مترددون في الاختيار؟',
+    ctaBody: 'تواصلوا مع فريقنا عبر واتساب لمناقشة التواريخ وعدد الضيوف والحصول على المشورة المناسبة.',
+    ctaBtn: 'تواصلوا معنا عبر واتساب',
+    crumbs: [{ label: 'الإقامات' }],
+  },
+}[locale];
+
+const stays = [villaNjd, newPratama];
+---
+
+<PageLayout
+  title={copy.seoTitle}
+  description={copy.seoDesc}
+  locale={locale}
+  currentPath={currentPath}
+  crumbs={copy.crumbs}
+>
+  <HeroPage
+    title={copy.h1}
+    lead={copy.lead}
+    bg="mist"
+  />
+
+  <!-- Stays Cards -->
+  <section class="stays-list-section" aria-labelledby="stays-list-heading">
+    <Container>
+      <h2 id="stays-list-heading" class="sr-only">{copy.h1}</h2>
+      <div class="stays-grid">
+        {
+          stays.map((s) => {
+            const url = localizePath(`/properties/${s.slug}`, locale);
+            return (
+              <article class="stay-card">
+                <div class="stay-media">
+                  <ResponsiveImage
+                    src={s.cardImage}
+                    alt={s.name}
+                    aspectRatio="4:3"
+                  />
+                </div>
+                <div class="stay-body">
+                  <div class="stay-meta">
+                    <span class="stay-type">{s.typeLabel[locale] || s.typeLabel.id}</span>
+                    <span class="stay-endorsement">{s.endorsement[locale] || s.endorsement.id}</span>
+                  </div>
+                  <h3 class="stay-title">{s.name}</h3>
+                  <p class="stay-summary">{s.summary[locale] || s.summary.id}</p>
+                  <div class="stay-action">
+                    <Button href={url} variant="primary">
+                      {copy.viewBtn}
+                    </Button>
+                  </div>
+                </div>
+              </article>
+            );
+          })
+        }
+      </div>
+    </Container>
+  </section>
+
+  <!-- Comparison Section -->
+  <section class="compare-section" aria-labelledby="compare-heading">
+    <Container>
+      <div class="compare-header">
+        <h2 id="compare-heading" class="section-title">{copy.compareTitle}</h2>
+      </div>
+
+      <div class="compare-table-wrapper">
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th scope="col" class="th-feature">الخاصية</th>
+              <th scope="col">{villaNjd.name}</th>
+              <th scope="col">{newPratama.name}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">{copy.areaLabel}</th>
+              <td>{copy.njdArea}</td>
+              <td>{copy.npArea}</td>
+            </tr>
+            <tr>
+              <th scope="row">{copy.typeLabel}</th>
+              <td>{copy.njdType}</td>
+              <td>{copy.npType}</td>
+            </tr>
+            <tr>
+              <th scope="row">{copy.verifiedFacilities}</th>
+              <td>{copy.njdFacilities}</td>
+              <td>{copy.npFacilities}</td>
+            </tr>
+            <tr>
+              <th scope="row">{copy.inquiryLabel}</th>
+              <td>
+                <Button href={localizePath('/properties/villa-njd', locale)} variant="ghost" size="sm">
+                  {copy.viewBtn}
+                </Button>
+              </td>
+              <td>
+                <Button href={localizePath('/properties/new-pratama', locale)} variant="ghost" size="sm">
+                  {copy.viewBtn}
+                </Button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </Container>
+  </section>
+
+  <!-- Also by ALMAGD: Cafe Link -->
+  <section class="dining-cross-section" aria-labelledby="dining-cross-heading">
+    <Container>
+      <div class="dining-cross-card">
+        <div class="dining-cross-media">
+          <ResponsiveImage
+            src={njdCafe.cardImage}
+            alt={njdCafe.name}
+            aspectRatio="4:3"
+          />
+        </div>
+        <div class="dining-cross-content">
+          <h2 id="dining-cross-heading" class="cross-title">{copy.diningTitle}</h2>
+          <p class="cross-desc">{copy.diningDesc}</p>
+          <div class="cross-action">
+            <Button href={localizePath('/dining/njd-cafe/menu', locale)} variant="secondary">
+              {copy.diningBtn}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <!-- CTA -->
+  <section class="properties-cta" aria-labelledby="properties-cta-heading">
+    <Container size="narrow">
+      <div class="prop-cta-card">
+        <h2 id="properties-cta-heading" class="cta-title">{copy.ctaTitle}</h2>
+        <p class="cta-body">{copy.ctaBody}</p>
+        <div class="cta-action">
+          <Button variant="whatsapp" size="lg" id="prop-whatsapp-btn">
+            {copy.ctaBtn}
+          </Button>
+        </div>
+      </div>
+    </Container>
+  </section>
+</PageLayout>
+
+<script>
+  function setupPropCta() {
+    const btn = document.getElementById('prop-whatsapp-btn');
+    btn?.addEventListener('click', () => {
+      window.dispatchEvent(new CustomEvent('open-whatsapp-chooser'));
+    });
+  }
+  document.addEventListener('DOMContentLoaded', setupPropCta);
+</script>
+
+<style>
+  .stays-list-section {
+    padding-block: var(--space-9);
+    background-color: var(--color-mist);
+  }
+
+  .stays-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-8);
+  }
+
+  @media (min-width: 768px) {
+    .stays-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .stay-card {
+    background-color: var(--color-white);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-1);
+    display: flex;
+    flex-direction: column;
+    transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+  }
+
+  .stay-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-2);
+  }
+
+  .stay-media {
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .stay-body {
+    padding: var(--space-6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    flex: 1;
+  }
+
+  .stay-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: var(--font-size-caption);
+  }
+
+  .stay-type {
+    font-weight: 600;
+    color: var(--color-tea);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .stay-endorsement {
+    color: var(--color-muted);
+    font-style: italic;
+  }
+
+  .stay-title {
+    font-size: 1.5rem;
+    margin: 0;
+    color: var(--color-pine);
+  }
+
+  .stay-summary {
+    font-size: 1.0625rem;
+    color: var(--color-muted);
+    line-height: 1.6;
+    margin: 0;
+    flex: 1;
+  }
+
+  .stay-action {
+    margin-block-start: var(--space-4);
+  }
+
+  /* Compare Table */
+  .compare-section {
+    padding-block: var(--space-9);
+    background-color: var(--color-white);
+    border-block-start: 1px solid var(--color-border);
+    border-block-end: 1px solid var(--color-border);
+  }
+
+  .compare-header {
+    text-align: center;
+    margin-block-end: var(--space-7);
+  }
+
+  .section-title {
+    font-size: var(--font-size-h2);
+    margin: 0;
+  }
+
+  .compare-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: start;
+    font-size: var(--font-size-body);
+  }
+
+  .compare-table th,
+  .compare-table td {
+    padding: var(--space-4);
+    border-block-end: 1px solid var(--color-border);
+    vertical-align: top;
+  }
+
+  .compare-table thead th {
+    background-color: var(--color-mist);
+    color: var(--color-pine);
+    font-size: 1.125rem;
+    font-weight: 600;
+  }
+
+  .th-feature {
+    width: 25%;
+    color: var(--color-muted);
+  }
+
+  .compare-table tbody th {
+    font-weight: 600;
+    color: var(--color-pine);
+    background-color: rgba(246, 243, 236, 0.4);
+  }
+
+  .compare-table tbody td {
+    color: var(--color-ink);
+    line-height: 1.5;
+  }
+
+  /* Dining Cross Card */
+  .dining-cross-section {
+    padding-block: var(--space-9);
+    background-color: var(--color-mist);
+  }
+
+  .dining-cross-card {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+    background-color: var(--color-white);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+    align-items: center;
+  }
+
+  @media (min-width: 768px) {
+    .dining-cross-card {
+      grid-template-columns: 1fr 1.2fr;
+    }
+  }
+
+  .dining-cross-media {
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .dining-cross-content {
+    padding: var(--space-6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .cross-title {
+    font-size: var(--font-size-h3);
+    margin: 0;
+  }
+
+  .cross-desc {
+    font-size: var(--font-size-body);
+    color: var(--color-muted);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  .cross-action {
+    margin-block-start: var(--space-3);
+  }
+
+  /* CTA */
+  .properties-cta {
+    padding-block: var(--space-9);
+    background-color: var(--color-stone);
+  }
+
+  .prop-cta-card {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+  }
+
+  .cta-title {
+    font-size: var(--font-size-h2);
+    margin: 0;
+  }
+
+  .cta-body {
+    font-size: 1.125rem;
+    color: var(--color-muted);
+    max-width: 54ch;
+    margin: 0;
+  }
+</style>

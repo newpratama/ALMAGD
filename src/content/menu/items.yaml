@@ -1,0 +1,692 @@
+type: menu_items
+items:
+  - id: m001
+    slug: aqua-besar
+    name: Aqua Besar
+    altName:
+      id: Air mineral botol besar
+      en: Aqua water — large bottle
+      ar: مياه Aqua — عبوة كبيرة
+    categoryId: water-soft-drinks
+    price: 10000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 1
+    status: published
+
+  - id: m002
+    slug: aqua-tanggung
+    name: Aqua Tanggung
+    altName:
+      id: Air mineral botol sedang
+      en: Aqua water — medium bottle
+      ar: مياه Aqua — عبوة متوسطة
+    categoryId: water-soft-drinks
+    price: 7000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 2
+    status: published
+
+  - id: m003
+    slug: teh-tarik-panas
+    name: Teh Tarik Panas
+    altName:
+      id: Teh tarik panas
+      en: Hot teh tarik
+      ar: تيه تاريك ساخن
+    categoryId: tea
+    price: 10000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 3
+    status: published
+
+  - id: m004
+    slug: ice-teh-tarik
+    name: Ice Teh Tarik
+    altName:
+      id: Teh tarik dingin
+      en: Iced teh tarik
+      ar: تيه تاريك مثلج
+    categoryId: tea
+    price: 15000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 4
+    status: published
+
+  - id: m005
+    slug: matcha-hot
+    name: Matcha Hot
+    altName:
+      id: Minuman matcha hangat
+      en: Hot matcha
+      ar: ماتشا ساخنة
+    categoryId: chocolate-matcha-milk
+    price: 10000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 5
+    status: published
+
+  - id: m006
+    slug: coklat-hot
+    name: Coklat Hot
+    altName:
+      id: Minuman cokelat hangat
+      en: Hot chocolate
+      ar: شوكولاتة ساخنة
+    categoryId: chocolate-matcha-milk
+    price: 10000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 6
+    status: published
+
+  - id: m007
+    slug: es-teh-manis
+    name: Es Teh Manis
+    altName:
+      id: Es teh manis
+      en: Sweet iced tea
+      ar: شاي مثلج محلى
+    categoryId: tea
+    price: 10000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 7
+    status: published
+
+  - id: m008
+    slug: teh-panas
+    name: Teh Panas
+    altName:
+      id: Teh hangat
+      en: Hot tea
+      ar: شاي ساخن
+    categoryId: tea
+    price: 10000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 8
+    status: published
+
+  - id: m009
+    slug: kapal-api-hot
+    name: Kapal Api Hot
+    altName:
+      id: Kopi Kapal Api panas
+      en: Hot Kapal Api coffee
+      ar: قهوة Kapal Api ساخنة
+    categoryId: coffee
+    price: 10000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 9
+    status: published
+
+  - id: m010
+    slug: ice-thai-tea
+    name: Ice Thai Tea
+    altName:
+      id: Thai tea dingin
+      en: Iced Thai tea
+      ar: شاي تايلندي مثلج
+    categoryId: tea
+    price: 20000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 10
+    status: published
+
+  - id: m011
+    slug: strawberry-milo-milk
+    name: Strawberry Milo Milk
+    altName:
+      id: Susu Milo rasa stroberi
+      en: Strawberry Milo milk
+      ar: حليب Milo بالفراولة
+    categoryId: chocolate-matcha-milk
+    price: 20000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 11
+    status: published
+
+  - id: m012
+    slug: ice-coklat-milk
+    name: Ice Coklat Milk
+    altName:
+      id: Susu cokelat dingin
+      en: Iced chocolate milk
+      ar: حليب بالشوكولاتة مثلج
+    categoryId: chocolate-matcha-milk
+    price: 20000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 12
+    status: published
+
+  - id: m013
+    slug: lemon-yakult
+    name: Lemon Yakult
+    altName:
+      id: Minuman Yakult rasa lemon
+      en: Lemon Yakult
+      ar: مشروب Yakult بالليمون
+    categoryId: mocktails-refreshers
+    price: 20000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 13
+    status: published
+
+  - id: m014
+    slug: ice-milk-tea
+    name: Ice Milk Tea
+    altName:
+      id: Teh susu dingin
+      en: Iced milk tea
+      ar: شاي بالحليب مثلج
+    categoryId: tea
+    price: 20000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 14
+    status: published
+
+  - id: m015
+    slug: milo-dino
+    name: Milo Dino
+    categoryId: chocolate-matcha-milk
+    price: 20000
+    currency: IDR
+    availability: unavailable
+    featured: false
+    notes: "HOLD MD-54"
+    sortOrder: 15
+    status: hidden
+
+  - id: m016
+    slug: es-kopi
+    name: Es Kopi
+    altName:
+      id: Es kopi
+      en: Iced coffee
+      ar: قهوة مثلجة
+    categoryId: coffee
+    price: null
+    currency: IDR
+    availability: available
+    featured: false
+    notes: "Price missing - ask for price"
+    sortOrder: 16
+    status: published
+
+  - id: m017
+    slug: es-tebu
+    name: Es Tebu
+    altName:
+      id: Sari tebu dingin
+      en: Iced sugarcane juice
+      ar: عصير قصب مثلج
+    categoryId: juices
+    price: 20000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 17
+    status: published
+
+  - id: m018
+    slug: ice-red-velvet
+    name: Ice Red Velvet
+    altName:
+      id: Minuman red velvet dingin
+      en: Iced red velvet drink
+      ar: مشروب ريد فيلفت مثلج
+    categoryId: chocolate-matcha-milk
+    price: 20000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 18
+    status: published
+
+  - id: m019
+    slug: taro-ice
+    name: Taro Ice
+    altName:
+      id: Minuman taro dingin
+      en: Iced taro drink
+      ar: مشروب تارو مثلج
+    categoryId: chocolate-matcha-milk
+    price: 20000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 19
+    status: published
+
+  - id: m020
+    slug: aneka-jus
+    name: Aneka Jus
+    altName:
+      id: Aneka jus segar
+      en: Assorted juices
+      ar: عصائر متنوعة
+    categoryId: juices
+    price: 18000
+    currency: IDR
+    availability: available
+    featured: false
+    notes: "Flavours pending MD-57"
+    sortOrder: 20
+    status: published
+
+  - id: m021
+    slug: mie-goreng
+    name: Mie Goreng
+    altName:
+      id: Mi goreng khas Indonesia
+      en: Fried noodles
+      ar: نودلز مقلية
+    categoryId: noodles
+    price: 25000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 21
+    status: published
+
+  - id: m022
+    slug: spaghetti-bolognese
+    name: Spaghetti Bolognese
+    altName:
+      id: Spageti saus Bolognese
+      en: Spaghetti Bolognese
+      ar: سباغيتي بولونيز
+    categoryId: western
+    price: 35000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 22
+    status: published
+
+  - id: m023
+    slug: spaghetti-creamy
+    name: Spaghetti Creamy
+    categoryId: western
+    price: null
+    currency: IDR
+    availability: unavailable
+    featured: false
+    notes: "HOLD MD-55 suspicious price"
+    sortOrder: 23
+    status: hidden
+
+  - id: m024
+    slug: mojito
+    name: Mojito
+    categoryId: mocktails-refreshers
+    price: 20000
+    currency: IDR
+    availability: unavailable
+    featured: false
+    notes: "HOLD pending non-alcoholic clarification"
+    sortOrder: 24
+    status: hidden
+
+  - id: m025
+    slug: cappuccino-hot
+    name: Cappuccino Hot
+    altName:
+      id: Kapucino hangat
+      en: Hot cappuccino
+      ar: كابتشينو ساخن
+    categoryId: coffee
+    price: 10000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 25
+    status: published
+
+  - id: m026
+    slug: koleja
+    name: Koleja
+    categoryId: uncategorised
+    price: 7000
+    currency: IDR
+    availability: unavailable
+    featured: false
+    notes: "HOLD MD-54 unknown word"
+    sortOrder: 26
+    status: hidden
+
+  - id: m027
+    slug: bakso-bakar
+    name: Bakso Bakar
+    altName:
+      id: Bakso bakar tusuk
+      en: Grilled meatballs
+      ar: كرات لحم مشوية
+    categoryId: snacks
+    price: 20000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 27
+    status: published
+
+  - id: m028
+    slug: nasi-goreng
+    name: Nasi Goreng
+    altName:
+      id: Nasi goreng khas Indonesia
+      en: Fried rice
+      ar: أرز مقلي
+    categoryId: rice
+    price: 25000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 28
+    status: published
+
+  - id: m029
+    slug: pizza
+    name: Pizza
+    altName:
+      id: Piza hangat
+      en: Pizza
+      ar: بيتزا
+    categoryId: western
+    price: 50000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 29
+    status: published
+
+  - id: m030
+    slug: chicken-wings
+    name: Chicken Wings
+    altName:
+      id: Sayap ayam goreng
+      en: Chicken wings
+      ar: أجنحة دجاج
+    categoryId: snacks
+    price: 20000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 30
+    status: published
+
+  - id: m031
+    slug: kwetiaw-goreng
+    name: Kwetiaw Goreng
+    altName:
+      id: Kwetiau goreng
+      en: Stir-fried flat rice noodles
+      ar: نودلز أرز عريضة مقلية
+    categoryId: noodles
+    price: 25000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 31
+    status: published
+
+  - id: m032
+    slug: bihun-goreng
+    name: Bihun Goreng
+    altName:
+      id: Bihun goreng
+      en: Fried rice vermicelli
+      ar: شعيرية أرز مقلية
+    categoryId: noodles
+    price: 25000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 32
+    status: published
+
+  - id: m033
+    slug: sambosa
+    name: Sambosa
+    altName:
+      id: Sambosa renyah
+      en: Sambosa
+      ar: سمبوسة
+    categoryId: middle-eastern
+    price: 20000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 33
+    status: published
+
+  - id: m034
+    slug: roti-pataer
+    name: Roti Pataer
+    categoryId: middle-eastern
+    price: 25000
+    currency: IDR
+    availability: unavailable
+    featured: false
+    notes: "HOLD MD-54 typo"
+    sortOrder: 34
+    status: hidden
+
+  - id: m035
+    slug: nasi-ayam-bakar-goreng
+    name: Nasi Ayam Bakar/Goreng
+    altName:
+      id: Nasi dengan ayam bakar atau goreng
+      en: Rice with grilled or fried chicken
+      ar: أرز مع دجاج مشوي أو مقلي
+    categoryId: rice
+    price: null
+    currency: IDR
+    availability: available
+    featured: false
+    notes: "Price missing - ask for price"
+    sortOrder: 35
+    status: published
+
+  - id: m036
+    slug: vietnam-drip
+    name: Vietnam Drip
+    altName:
+      id: Kopi tetes ala Vietnam
+      en: Vietnamese drip coffee
+      ar: قهوة بالتقطير الفيتنامي
+    categoryId: coffee
+    price: null
+    currency: IDR
+    availability: available
+    featured: false
+    notes: "Price missing - ask for price"
+    sortOrder: 36
+    status: published
+
+  - id: m037
+    slug: kentang-goreng
+    name: Kentang Goreng
+    altName:
+      id: Kentang goreng gurih
+      en: French fries
+      ar: بطاطس مقلية
+    categoryId: snacks
+    price: 20000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 37
+    status: published
+
+  - id: m038
+    slug: nugget
+    name: Nugget
+    altName:
+      id: Naget goreng renyah
+      en: Nuggets
+      ar: ناجتس
+    categoryId: snacks
+    price: 20000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 38
+    status: published
+
+  - id: m039
+    slug: indomie
+    name: Indomie
+    altName:
+      id: Olahan mi instan Indomie
+      en: Indomie noodles
+      ar: إندومي
+    categoryId: noodles
+    price: 15000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 39
+    status: published
+
+  - id: m040
+    slug: iga-bakar-nasi
+    name: Iga Bakar + Nasi
+    altName:
+      id: Iga bakar disajikan dengan nasi
+      en: Grilled ribs served with rice
+      ar: أضلاع مشوية مع أرز
+    categoryId: signature-mains
+    price: 75000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 40
+    status: published
+
+  - id: m041
+    slug: sop-iga-nasi
+    name: Sop Iga + Nasi
+    altName:
+      id: Sup iga disajikan dengan nasi
+      en: Rib soup served with rice
+      ar: حساء أضلاع مع أرز
+    categoryId: signature-mains
+    price: 75000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 41
+    status: published
+
+  - id: m042
+    slug: gemat
+    name: Gemat
+    categoryId: uncategorised
+    price: 20000
+    currency: IDR
+    availability: unavailable
+    featured: false
+    notes: "HOLD MD-54 unknown word"
+    sortOrder: 42
+    status: hidden
+
+  - id: m043
+    slug: kebab
+    name: Kebab
+    altName:
+      id: Kebab khas Timur Tengah
+      en: Kebab
+      ar: كباب
+    categoryId: middle-eastern
+    price: 20000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 43
+    status: published
+
+  - id: m044
+    slug: burger
+    name: Burger
+    altName:
+      id: Burger
+      en: Burger
+      ar: برغر
+    categoryId: western
+    price: 20000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 44
+    status: published
+
+  - id: m045
+    slug: roti-bakar
+    name: Roti Bakar
+    altName:
+      id: Roti panggang manis
+      en: Toast
+      ar: خبز محمص
+    categoryId: sweet-bites
+    price: 20000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 45
+    status: published
+
+  - id: m046
+    slug: pisang-goreng
+    name: Pisang Goreng
+    altName:
+      id: Pisang goreng renyah
+      en: Fried banana
+      ar: موز مقلي
+    categoryId: sweet-bites
+    price: 20000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 46
+    status: published
+
+  - id: m047
+    slug: pisang-bakar
+    name: Pisang Bakar
+    altName:
+      id: Pisang bakar manis
+      en: Grilled banana
+      ar: موز مشوي
+    categoryId: sweet-bites
+    price: 20000
+    currency: IDR
+    availability: available
+    featured: false
+    sortOrder: 47
+    status: published

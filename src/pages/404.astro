@@ -1,0 +1,116 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Container from '../components/primitives/Container.astro';
+import Button from '../components/primitives/Button.astro';
+import Icon from '../components/primitives/Icon.astro';
+---
+
+<BaseLayout
+  title="404 — Halaman Tidak Ditemukan | ALMAGD Hospitality"
+  description="Halaman yang Anda tuju tidak ditemukan atau telah dipindahkan."
+  locale="id"
+>
+  <main class="not-found-main">
+    <Container>
+      <div class="not-found-card">
+        <span class="not-found-code" aria-hidden="true">404</span>
+
+        <div class="not-found-content">
+          <h1 class="not-found-title">Halaman Tidak Ditemukan</h1>
+          <p class="not-found-text">
+            Halaman yang Anda tuju mungkin telah dipindahkan atau tautan yang dimasukkan salah.
+          </p>
+
+          <div class="not-found-multilingual" lang="en">
+            <p><strong>Page Not Found:</strong> The requested page could not be located.</p>
+          </div>
+
+          <div class="not-found-multilingual ar" lang="ar" dir="rtl">
+            <p><strong>الصفحة غير موجودة:</strong> تعذر العثور على الصفحة المطلوبة.</p>
+          </div>
+        </div>
+
+        <div class="not-found-actions">
+          <Button variant="primary" size="lg" href="/">
+            <Icon name="home" size={20} />
+            <span>Kembali ke Beranda (Home)</span>
+          </Button>
+
+          <Button variant="secondary" size="lg" href="/properties">
+            <span>Akomodasi (Stays)</span>
+          </Button>
+
+          <Button variant="secondary" size="lg" href="/dining/njd-cafe">
+            <span>NJD Cafe</span>
+          </Button>
+        </div>
+      </div>
+    </Container>
+  </main>
+</BaseLayout>
+
+<style>
+  .not-found-main {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-block: var(--space-8);
+  }
+
+  .not-found-card {
+    text-align: center;
+    max-width: 640px;
+    margin-inline: auto;
+    padding: var(--space-6);
+  }
+
+  .not-found-code {
+    font-family: var(--font-display);
+    font-size: 6rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--color-brass-300);
+    display: block;
+    margin-block-end: var(--space-3);
+  }
+
+  .not-found-title {
+    font-family: var(--font-display);
+    font-size: var(--font-size-h1);
+    color: var(--color-pine);
+    margin: 0 0 var(--space-3) 0;
+  }
+
+  .not-found-text {
+    font-size: var(--font-size-body);
+    color: var(--color-ink);
+    line-height: 1.5;
+    margin: 0 0 var(--space-4) 0;
+  }
+
+  .not-found-multilingual {
+    padding: var(--space-3);
+    background-color: var(--color-mist);
+    border-radius: var(--radius-sm);
+    margin-block-end: var(--space-3);
+    font-size: var(--font-size-small);
+    color: var(--color-muted);
+  }
+
+  .not-found-multilingual p {
+    margin: 0;
+  }
+
+  .not-found-multilingual.ar {
+    font-family: var(--font-arabic);
+  }
+
+  .not-found-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-3);
+    margin-block-start: var(--space-6);
+  }
+</style>

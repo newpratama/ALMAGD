@@ -1,0 +1,54 @@
+---
+import Icon from './Icon.astro';
+
+interface Props {
+  href: string;
+  external?: boolean;
+  class?: string;
+  underline?: boolean;
+  [key: string]: any;
+}
+
+const { href, external = false, class: className = '', underline = true, ...rest } = Astro.props;
+const isExternal = external || href.startsWith('http');
+---
+
+<a
+  href={href}
+  target={isExternal ? '_blank' : undefined}
+  rel={isExternal ? 'noopener' : undefined}
+  class:list={['custom-link', { 'link-underline': underline }, className]}
+  {...rest}
+>
+  <slot />
+  {
+    isExternal && (
+      <Icon name="external" size={14} class="external-icon" />
+    )
+  }
+</a>
+
+<style>
+  .custom-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--color-brass-text);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color var(--transition-fast);
+  }
+
+  .link-underline {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .custom-link:hover {
+    color: var(--color-pine);
+  }
+
+  .external-icon {
+    display: inline-block;
+  }
+</style>

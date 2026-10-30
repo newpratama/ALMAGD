@@ -1,0 +1,15 @@
+---
+import PrivacyPage from '../../templates/PrivacyPage.astro';
+import type { Locale } from '../../lib/i18n';
+
+export function getStaticPaths() {
+  return [
+    { params: { locale: 'en' } },
+    { params: { locale: 'ar' } },
+  ];
+}
+
+const { locale } = Astro.params;
+---
+
+<PrivacyPage locale={locale as Locale} />

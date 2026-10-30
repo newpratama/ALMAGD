@@ -1,0 +1,45 @@
+nav.home: الرئيسية
+nav.about: عن المجموعة
+nav.stays: الإقامات
+nav.allStays: جميع الإقامات
+nav.dining: المطاعم
+nav.menu: القائمة
+nav.gallery: المعرض
+nav.location: الموقع والوصول
+nav.contact: التواصل
+nav.privacy: سياسة الخصوصية
+nav.contactUs: تواصلوا معنا
+nav.close: إغلاق
+nav.menuToggle: فتح القائمة
+nav.back: رجوع
+
+cta.whatsapp: استفسروا عبر واتساب
+cta.availability: استفسروا عن التوافر
+cta.bookOn: احجزوا عبر {platform}
+cta.viewProperty: اطّلعوا على مكان الإقامة
+cta.viewMenu: اطّلعوا على القائمة
+cta.roomDetails: اطّلعوا على تفاصيل الغرفة
+cta.directions: اتجاهات الوصول
+cta.phone: اتصلوا
+cta.email: أرسلوا بريداً إلكترونياً
+cta.morePhotos: شاهدوا جميع الصور
+cta.externalTab: يفتح في تبويب جديد
+cta.close: إغلاق
+cta.askPrice: استفسروا عن السعر
+cta.selectVenue: اختاروا الوجهة
+
+chooser.title: تواصلوا مع فريق المنشأة
+chooser.desc: يرجى اختيار الوجهة لبدء محادثة مباشرة عبر واتساب.
+booking.panelTitle: خيارات الحجز والتوافر
+
+consent.message: نستخدم تحليلات مجهولة لتحسين تجربتكم بعد موافقتكم الكريمة.
+consent.accept: موافق
+consent.decline: رفض
+
+footer.rights: جميع الحقوق محفوظة.
+footer.endorsed: جزء من مجموعة المجد
+badge.asOf: حتى
+
+error.404Title: الصفحة غير موجودة
+error.404Desc: عذراً، الصفحة التي تبحثون عنها غير متوفرة أو تم نقلها.
+error.goHome: العودة للرئيسية

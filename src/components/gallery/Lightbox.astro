@@ -1,0 +1,317 @@
+---
+import Icon from '../primitives/Icon.astro';
+import type { Locale } from '../../lib/i18n';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+
+const labels = {
+  id: {
+    close: 'Tutup tampilan foto',
+    prev: 'Foto sebelumnya',
+    next: 'Foto berikutnya',
+  },
+  en: {
+    close: 'Close photo view',
+    prev: 'Previous photo',
+    next: 'Next photo',
+  },
+  ar: {
+    close: 'إغلاق عرض الصورة',
+    prev: 'الصورة السابقة',
+    next: 'الصورة التالية',
+  },
+}[locale];
+---
+
+<dialog id="gallery-lightbox" class="lightbox-dialog" aria-label="Penampil Galeri Foto">
+  <div class="lightbox-wrapper">
+    <header class="lightbox-top-bar">
+      <div class="lightbox-meta">
+        <span id="lightbox-counter" class="lightbox-counter">1 / 1</span>
+        <span id="lightbox-venue" class="lightbox-venue"></span>
+      </div>
+      <button type="button" id="lightbox-close" class="lightbox-btn" aria-label={labels.close}>
+        <Icon name="close" size={24} />
+      </button>
+    </header>
+
+    <div class="lightbox-stage">
+      <button type="button" id="lightbox-prev" class="lightbox-nav-btn prev" aria-label={labels.prev}>
+        <Icon name="arrow-right" size={28} flipInRtl />
+      </button>
+
+      <div class="lightbox-image-box">
+        <img id="lightbox-img" src="" alt="" />
+      </div>
+
+      <button type="button" id="lightbox-next" class="lightbox-nav-btn next" aria-label={labels.next}>
+        <Icon name="arrow-right" size={28} />
+      </button>
+    </div>
+
+    <footer class="lightbox-bottom-bar">
+      <p id="lightbox-caption" class="lightbox-caption"></p>
+    </footer>
+  </div>
+</dialog>
+
+<script>
+  interface PhotoData {
+    src: string;
+    alt: string;
+    venue: string;
+    venueName: string;
+  }
+
+  function setupLightbox() {
+    const dialog = document.getElementById('gallery-lightbox') as HTMLDialogElement | null;
+    const img = document.getElementById('lightbox-img') as HTMLImageElement | null;
+    const caption = document.getElementById('lightbox-caption');
+    const venueEl = document.getElementById('lightbox-venue');
+    const counter = document.getElementById('lightbox-counter');
+    const prevBtn = document.getElementById('lightbox-prev');
+    const nextBtn = document.getElementById('lightbox-next');
+    const closeBtn = document.getElementById('lightbox-close');
+
+    if (!dialog || !img) return;
+
+    let photos: PhotoData[] = [];
+    let currentIndex = 0;
+    let lastActiveTrigger: HTMLElement | null = null;
+
+    function collectPhotos(): PhotoData[] {
+      const items = Array.from(document.querySelectorAll<HTMLElement>('.gallery-thumb-btn'));
+      return items.map((el) => ({
+        src: el.getAttribute('data-img-src') || '',
+        alt: el.getAttribute('data-img-alt') || '',
+        venue: el.getAttribute('data-img-venue') || '',
+        venueName: el.getAttribute('data-img-venue-name') || '',
+      }));
+    }
+
+    function showPhoto(index: number) {
+      if (index < 0) index = photos.length - 1;
+      if (index >= photos.length) index = 0;
+      currentIndex = index;
+
+      const p = photos[currentIndex];
+      if (!p) return;
+
+      img!.src = p.src;
+      img!.alt = p.alt;
+      if (caption) caption.textContent = p.alt;
+      if (venueEl) venueEl.textContent = p.venueName;
+      if (counter) counter.textContent = `${currentIndex + 1} / ${photos.length}`;
+    }
+
+    function openLightbox(index: number, trigger: HTMLElement) {
+      photos = collectPhotos();
+      if (!photos.length) return;
+      lastActiveTrigger = trigger;
+      showPhoto(index);
+      dialog!.showModal();
+      window.dispatchEvent(new CustomEvent('almagd:gallery_open', { detail: { index } }));
+    }
+
+    function closeLightbox() {
+      if (dialog && typeof dialog.close === 'function') {
+        dialog.close();
+      }
+      if (lastActiveTrigger) {
+        lastActiveTrigger.focus();
+        lastActiveTrigger = null;
+      }
+    }
+
+    // Attach click to thumbnails
+    document.querySelectorAll<HTMLElement>('.gallery-thumb-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.getAttribute('data-img-index') || '0', 10);
+        openLightbox(idx, btn);
+      });
+    });
+
+    if (closeBtn) closeBtn.addEventListener('click', closeLightbox);
+    if (prevBtn) prevBtn.addEventListener('click', () => showPhoto(currentIndex - 1));
+    if (nextBtn) nextBtn.addEventListener('click', () => showPhoto(currentIndex + 1));
+
+    // Keyboard handlers
+    dialog.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') {
+        const isRtl = document.documentElement.dir === 'rtl';
+        showPhoto(isRtl ? currentIndex + 1 : currentIndex - 1);
+      } else if (e.key === 'ArrowRight') {
+        const isRtl = document.documentElement.dir === 'rtl';
+        showPhoto(isRtl ? currentIndex - 1 : currentIndex + 1);
+      }
+    });
+
+    dialog.addEventListener('close', () => {
+      if (lastActiveTrigger) {
+        lastActiveTrigger.focus();
+        lastActiveTrigger = null;
+      }
+    });
+
+    // Close on backdrop click
+    dialog.addEventListener('click', (event) => {
+      const rect = dialog.getBoundingClientRect();
+      const inBox = (
+        rect.top <= event.clientY &&
+        event.clientY <= rect.top + rect.height &&
+        rect.left <= event.clientX &&
+        event.clientX <= rect.left + rect.width
+      );
+      if (!inBox) closeLightbox();
+    });
+  }
+
+  setupLightbox();
+  document.addEventListener('astro:page-load', setupLightbox);
+</script>
+
+<style>
+  .lightbox-dialog {
+    border: none;
+    border-radius: var(--radius-lg);
+    background-color: rgba(14, 27, 23, 0.96);
+    color: var(--color-white);
+    padding: 0;
+    max-width: 95vw;
+    width: 1200px;
+    height: 90vh;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+    overflow: hidden;
+  }
+
+  .lightbox-dialog::backdrop {
+    background-color: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+  }
+
+  .lightbox-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .lightbox-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-3) var(--space-5);
+    background-color: rgba(0, 0, 0, 0.4);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .lightbox-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-size: var(--font-size-small);
+  }
+
+  .lightbox-counter {
+    color: var(--color-brass-300);
+    font-weight: 600;
+  }
+
+  .lightbox-venue {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: var(--font-size-caption);
+  }
+
+  .lightbox-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: transparent;
+    border: none;
+    color: var(--color-white);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: background-color var(--transition-fast);
+  }
+
+  .lightbox-btn:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .lightbox-stage {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-3);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .lightbox-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius-pill);
+    background-color: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--color-white);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    z-index: 10;
+  }
+
+  .lightbox-nav-btn.prev {
+    transform: rotate(180deg);
+  }
+
+  :global([dir="rtl"]) .lightbox-nav-btn.prev {
+    transform: rotate(0deg);
+  }
+
+  :global([dir="rtl"]) .lightbox-nav-btn.next {
+    transform: rotate(180deg);
+  }
+
+  .lightbox-nav-btn:hover {
+    background-color: var(--color-pine);
+    border-color: var(--color-brass);
+  }
+
+  .lightbox-image-box {
+    flex: 1;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-2);
+  }
+
+  #lightbox-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: var(--radius-sm);
+  }
+
+  .lightbox-bottom-bar {
+    padding: var(--space-3) var(--space-5);
+    background-color: rgba(0, 0, 0, 0.4);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+  }
+
+  .lightbox-caption {
+    margin: 0;
+    font-size: var(--font-size-small);
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.4;
+  }
+</style>

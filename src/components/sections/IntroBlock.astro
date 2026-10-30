@@ -1,0 +1,82 @@
+---
+import Container from '../primitives/Container.astro';
+import Button from '../primitives/Button.astro';
+
+interface Props {
+  title: string;
+  eyebrow?: string;
+  body: string;
+  ctaText?: string;
+  ctaHref?: string;
+  centered?: boolean;
+}
+
+const {
+  title,
+  eyebrow,
+  body,
+  ctaText,
+  ctaHref,
+  centered = false,
+} = Astro.props;
+---
+
+<div class:list={['intro-block', { 'is-centered': centered }]}>
+  <Container size="narrow">
+    {eyebrow && <span class="intro-eyebrow">{eyebrow}</span>}
+    <h2 class="intro-title">{title}</h2>
+    <p class="intro-body">{body}</p>
+    {
+      ctaText && ctaHref && (
+        <div class="intro-cta">
+          <Button href={ctaHref} variant="secondary">
+            {ctaText}
+          </Button>
+        </div>
+      )
+    }
+  </Container>
+</div>
+
+<style>
+  .intro-block {
+    padding-block: var(--space-8);
+  }
+
+  .intro-eyebrow {
+    display: inline-block;
+    font-size: var(--font-size-small);
+    font-weight: 600;
+    color: var(--color-brass-text);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-block-end: var(--space-2);
+  }
+
+  .intro-title {
+    font-size: var(--font-size-h2);
+    margin: 0;
+    line-height: 1.25;
+  }
+
+  .intro-body {
+    font-size: 1.125rem;
+    color: var(--color-muted);
+    margin-block-start: var(--space-4);
+    margin-block-end: 0;
+    line-height: 1.7;
+    max-width: 68ch;
+  }
+
+  .intro-cta {
+    margin-block-start: var(--space-5);
+  }
+
+  .is-centered {
+    text-align: center;
+  }
+
+  .is-centered .intro-body {
+    margin-inline: auto;
+  }
+</style>

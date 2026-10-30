@@ -1,0 +1,351 @@
+---
+import Button from '../primitives/Button.astro';
+import Icon from '../primitives/Icon.astro';
+import { buildWhatsAppLink, type VenueKey } from '../../lib/whatsapp';
+import type { Locale } from '../../lib/i18n';
+
+interface OTALink {
+  platform: string;
+  url: string;
+  verified: boolean;
+}
+
+interface Props {
+  venueKey: VenueKey;
+  venueName: string;
+  phone?: string | null;
+  otaLinks?: OTALink[];
+  locale: Locale;
+}
+
+const { venueKey, venueName, phone, otaLinks = [], locale } = Astro.props;
+
+const waLink = buildWhatsAppLink({
+  venue: venueKey,
+  locale,
+});
+
+const verifiedOta = otaLinks.filter((o) => o.verified);
+
+const labels = {
+  id: {
+    title: 'Pesan atau Tanya Langsung',
+    subtitle: 'Hubungi tim kami untuk menanyakan ketersediaan atau pesan melalui platform mitra.',
+    waBtn: 'Hubungi via WhatsApp',
+    callBtn: 'Telepon Langsung',
+    otaTitle: 'Atau pesan melalui platform mitra terverifikasi:',
+    waMobile: 'Tanya via WA',
+    otaMobile: 'Mitra Booking',
+  },
+  en: {
+    title: 'Book or Inquire Directly',
+    subtitle: 'Contact our team for availability inquiries or book through verified partner platforms.',
+    waBtn: 'Chat on WhatsApp',
+    callBtn: 'Call Directly',
+    otaTitle: 'Or book via verified partner platforms:',
+    waMobile: 'Chat on WA',
+    otaMobile: 'Book Online',
+  },
+  ar: {
+    title: 'الحجز أو الاستفسار المباشر',
+    subtitle: 'تواصلوا مع فريقنا للاستفسار عن التوافر أو احجزوا عبر منصات الشركاء المعتمدة.',
+    waBtn: 'تواصلوا عبر واتساب',
+    callBtn: 'اتصال هاتفي',
+    otaTitle: 'أو احجزوا عبر منصات الشركاء المعتمدة:',
+    waMobile: 'تواصل واتساب',
+    otaMobile: 'منصات الحجز',
+  },
+}[locale];
+
+const platformDisplayNames: Record<string, string> = {
+  traveloka: 'Traveloka',
+  agoda: 'Agoda',
+  tiket: 'Tiket.com',
+  booking: 'Booking.com',
+  booking_com: 'Booking.com',
+  trip: 'Trip.com',
+  trip_com: 'Trip.com',
+};
+---
+
+<section class="booking-panel-section" id="book" aria-labelledby="book-title">
+  <div class="booking-card">
+    <div class="booking-card-header">
+      <span class="booking-badge">{venueName}</span>
+      <h2 id="book-title" class="booking-title">{labels.title}</h2>
+      <p class="booking-subtitle">{labels.subtitle}</p>
+    </div>
+
+    <div class="booking-actions-primary">
+      <Button
+        variant="whatsapp"
+        size="lg"
+        href={waLink}
+        external
+        data-wa-source="booking_panel"
+      >
+        <Icon name="whatsapp" size={22} />
+        <span>{labels.waBtn}</span>
+      </Button>
+
+      {phone && (
+        <a href={`tel:${phone}`} class="btn-phone-call">
+          <Icon name="phone" size={20} />
+          <span>{labels.callBtn} (<bdi dir="ltr">{phone}</bdi>)</span>
+        </a>
+      )}
+    </div>
+
+    {verifiedOta.length > 0 && (
+      <div class="booking-ota-block">
+        <p class="ota-title">{labels.otaTitle}</p>
+        <div class="ota-buttons-grid">
+          {verifiedOta.map((ota) => {
+            const name = platformDisplayNames[ota.platform] || ota.platform;
+            return (
+              <a
+                href={ota.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="ota-partner-btn"
+                data-ota-platform={ota.platform}
+              >
+                <span class="ota-btn-icon" aria-hidden="true">
+                  <Icon name={ota.platform} size={18} />
+                </span>
+                <span>{name}</span>
+                <Icon name="external" size={14} />
+              </a>
+            );
+          })}
+        </div>
+      </div>
+    )}
+  </div>
+</section>
+
+<!-- Mobile Sticky Booking Bar (<1024px) -->
+<aside class="mobile-sticky-booking-bar" aria-label="Aksi Cepat Pemesanan">
+  <div class="sticky-bar-inner">
+    <a
+      href={waLink}
+      target="_blank"
+      rel="noopener"
+      class="sticky-btn-wa"
+      data-wa-source="mobile_sticky_bar"
+    >
+      <Icon name="whatsapp" size={22} />
+      <span>{labels.waMobile}</span>
+    </a>
+
+    {verifiedOta.length > 0 ? (
+      <a
+        href={verifiedOta[0].url}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="sticky-btn-secondary"
+      >
+        <Icon name={verifiedOta[0].platform} size={18} />
+        <span>{platformDisplayNames[verifiedOta[0].platform] || labels.otaMobile}</span>
+        <Icon name="external" size={14} />
+      </a>
+    ) : phone ? (
+      <a href={`tel:${phone}`} class="sticky-btn-secondary">
+        <Icon name="phone" size={18} />
+        <span>{labels.callBtn}</span>
+      </a>
+    ) : null}
+  </div>
+</aside>
+
+<script>
+  function markStickyBar() {
+    if (document.querySelector('.mobile-sticky-booking-bar')) {
+      document.body.classList.add('has-sticky-bar');
+    }
+  }
+  markStickyBar();
+  document.addEventListener('astro:page-load', markStickyBar);
+</script>
+
+<style>
+  .booking-panel-section {
+    padding-block: var(--space-7);
+  }
+
+  .booking-card {
+    background-color: var(--color-pine);
+    color: var(--color-mist);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6) var(--space-5);
+    max-width: 760px;
+    margin-inline: auto;
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+  }
+
+  @media (min-width: 640px) {
+    .booking-card {
+      padding: var(--space-8) var(--space-7);
+    }
+  }
+
+  .booking-badge {
+    display: inline-block;
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-brass-300);
+    margin-block-end: var(--space-2);
+  }
+
+  .booking-title {
+    font-family: var(--font-display);
+    font-size: var(--font-size-h2);
+    color: var(--color-white);
+    margin-block-end: var(--space-3);
+  }
+
+  .booking-subtitle {
+    font-size: var(--font-size-body);
+    color: rgba(246, 243, 236, 0.85);
+    line-height: var(--line-height-body);
+    max-width: 54ch;
+    margin-inline: auto;
+    margin-block-end: var(--space-6);
+  }
+
+  .booking-actions-primary {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+    margin-block-end: var(--space-6);
+  }
+
+  @media (min-width: 640px) {
+    .booking-actions-primary {
+      flex-direction: row;
+      justify-content: center;
+    }
+  }
+
+  .btn-phone-call {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: 48px;
+    padding-inline: var(--space-5);
+    border: 1px solid rgba(246, 243, 236, 0.35);
+    border-radius: var(--radius-pill);
+    color: var(--color-white);
+    font-size: var(--font-size-small);
+    font-weight: 600;
+    text-decoration: none;
+    transition: all var(--transition-fast);
+  }
+
+  .btn-phone-call:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: var(--color-brass-300);
+  }
+
+  .booking-ota-block {
+    border-top: 1px solid rgba(246, 243, 236, 0.15);
+    padding-top: var(--space-5);
+  }
+
+  .ota-title {
+    font-size: var(--font-size-caption);
+    color: rgba(246, 243, 236, 0.75);
+    margin-block-end: var(--space-3);
+  }
+
+  .ota-buttons-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-3);
+  }
+
+  .ota-partner-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    background-color: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(246, 243, 236, 0.2);
+    border-radius: var(--radius-sm);
+    color: var(--color-white);
+    font-size: var(--font-size-small);
+    font-weight: 500;
+    text-decoration: none;
+    transition: all var(--transition-fast);
+  }
+
+  .ota-partner-btn:hover {
+    background-color: rgba(255, 255, 255, 0.18);
+    border-color: var(--color-brass-300);
+  }
+
+  /* Mobile Sticky Booking Bar */
+  .mobile-sticky-booking-bar {
+    position: fixed;
+    bottom: 0;
+    inset-inline: 0;
+    z-index: 950;
+    background-color: var(--color-white);
+    border-top: 1px solid var(--color-border);
+    padding-inline: var(--space-4);
+    padding-block: var(--space-2) max(var(--space-2), env(safe-area-inset-bottom, 8px));
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+  }
+
+  @media (min-width: 1024px) {
+    .mobile-sticky-booking-bar {
+      display: none;
+    }
+  }
+
+  .sticky-bar-inner {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    max-width: 540px;
+    margin-inline: auto;
+  }
+
+  .sticky-btn-wa {
+    flex: 6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: 48px;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-wa);
+    color: var(--color-wa-text);
+    font-weight: 600;
+    font-size: var(--font-size-small);
+    text-decoration: none;
+  }
+
+  .sticky-btn-secondary {
+    flex: 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-1);
+    min-height: 48px;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-stone);
+    border: 1px solid var(--color-border);
+    color: var(--color-pine);
+    font-weight: 600;
+    font-size: var(--font-size-small);
+    text-decoration: none;
+    padding-inline: var(--space-2);
+  }
+</style>

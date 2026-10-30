@@ -1,0 +1,141 @@
+---
+import type { Locale } from '../../lib/i18n';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+
+const labels = {
+  id: {
+    all: 'Semua Koleksi',
+    np: 'New Pratama Villa',
+    njd: 'Villa NJD',
+    cafe: 'NJD Cafe',
+    filterLabel: 'Saring foto berdasarkan properti:',
+  },
+  en: {
+    all: 'All Venues',
+    np: 'New Pratama Villa',
+    njd: 'Villa NJD',
+    cafe: 'NJD Cafe',
+    filterLabel: 'Filter photos by venue:',
+  },
+  ar: {
+    all: 'كل المنشآت',
+    np: 'New Pratama Villa',
+    njd: 'Villa NJD',
+    cafe: 'NJD Cafe',
+    filterLabel: 'تصفية الصور حسب المنشأة:',
+  },
+}[locale];
+
+const filters = [
+  { id: 'all', label: labels.all },
+  { id: 'new-pratama', label: labels.np },
+  { id: 'villa-njd', label: labels.njd },
+  { id: 'njd-cafe', label: labels.cafe },
+];
+---
+
+<div class="gallery-filter-wrap" role="toolbar" aria-label={labels.filterLabel}>
+  <div class="filter-buttons">
+    {filters.map((f, i) => (
+      <button
+        type="button"
+        class:list={['filter-btn', { 'is-active': i === 0 }]}
+        data-filter-venue={f.id}
+        aria-pressed={i === 0 ? 'true' : 'false'}
+      >
+        <span>{f.label}</span>
+      </button>
+    ))}
+  </div>
+  <div id="gallery-count-status" class="sr-only" aria-live="polite"></div>
+</div>
+
+<script>
+  function setupGalleryFilter() {
+    const filterBtns = document.querySelectorAll<HTMLButtonElement>('[data-filter-venue]');
+    const galleryItems = document.querySelectorAll<HTMLElement>('[data-item-venue]');
+    const countStatus = document.getElementById('gallery-count-status');
+
+    if (!filterBtns.length || !galleryItems.length) return;
+
+    filterBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const venue = btn.getAttribute('data-filter-venue');
+        if (!venue) return;
+
+        // Update active states
+        filterBtns.forEach((b) => {
+          b.classList.remove('is-active');
+          b.setAttribute('aria-pressed', 'false');
+        });
+        btn.classList.add('is-active');
+        btn.setAttribute('aria-pressed', 'true');
+
+        // Filter items
+        let count = 0;
+        galleryItems.forEach((item) => {
+          const itemVenue = item.getAttribute('data-item-venue');
+          if (venue === 'all' || itemVenue === venue) {
+            item.style.display = '';
+            count++;
+          } else {
+            item.style.display = 'none';
+          }
+        });
+
+        if (countStatus) {
+          countStatus.textContent = `${count} photos displayed`;
+        }
+
+        // Custom event for analytics
+        window.dispatchEvent(new CustomEvent('almagd:gallery_filter', { detail: { venue } }));
+      });
+    });
+  }
+
+  setupGalleryFilter();
+  document.addEventListener('astro:page-load', setupGalleryFilter);
+</script>
+
+<style>
+  .gallery-filter-wrap {
+    margin-block-end: var(--space-6);
+  }
+
+  .filter-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .filter-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--space-2) var(--space-4);
+    background-color: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    color: var(--color-ink);
+    font-size: var(--font-size-small);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .filter-btn:hover {
+    border-color: var(--color-brass);
+    color: var(--color-pine);
+  }
+
+  .filter-btn.is-active {
+    background-color: var(--color-pine);
+    color: var(--color-white);
+    border-color: var(--color-pine);
+    font-weight: 600;
+  }
+</style>

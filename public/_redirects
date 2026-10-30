@@ -1,0 +1,8 @@
+# Clean vanity redirects
+/menu /dining/njd-cafe/menu 301
+/en/menu /en/dining/njd-cafe/menu 301
+/ar/menu /ar/dining/njd-cafe/menu 301
+
+# Prevent /id/ duplicate content by redirecting to root paths
+/id/* /:splat 301
+/id / 301

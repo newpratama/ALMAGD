@@ -1,0 +1,15 @@
+---
+import AboutPage from '../../templates/AboutPage.astro';
+import type { Locale } from '../../lib/i18n';
+
+export function getStaticPaths() {
+  return [
+    { params: { locale: 'en' } },
+    { params: { locale: 'ar' } },
+  ];
+}
+
+const { locale } = Astro.params;
+---
+
+<AboutPage locale={locale as Locale} />

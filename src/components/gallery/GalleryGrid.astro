@@ -1,0 +1,162 @@
+---
+import ResponsiveImage from '../common/ResponsiveImage.astro';
+import type { Locale } from '../../lib/i18n';
+
+interface GalleryImage {
+  id: string;
+  file: string;
+  venueId: string;
+  topic: string;
+  alt: Record<Locale, string>;
+  orientation?: string;
+  width?: number;
+  height?: number;
+  sortOrder?: number;
+}
+
+interface Props {
+  images: GalleryImage[];
+  locale: Locale;
+}
+
+const { images = [], locale } = Astro.props;
+
+const venueDisplayNames: Record<string, Record<Locale, string>> = {
+  'new-pratama': {
+    id: 'New Pratama Villa',
+    en: 'New Pratama Villa',
+    ar: 'New Pratama Villa',
+  },
+  'villa-njd': {
+    id: 'Villa NJD',
+    en: 'Villa NJD',
+    ar: 'Villa NJD',
+  },
+  'njd-cafe': {
+    id: 'NJD Cafe',
+    en: 'NJD Cafe',
+    ar: 'NJD Cafe',
+  },
+};
+
+const viewLabel = {
+  id: 'Lihat foto ukuran penuh',
+  en: 'View full size photo',
+  ar: 'عرض الصورة بالحجم الكامل',
+}[locale];
+---
+
+<div class="gallery-grid" role="region" aria-label="Foto Galeri">
+  {images.map((img, idx) => {
+    const altText = img.alt[locale] || img.alt.en || img.alt.id;
+    const venueName = venueDisplayNames[img.venueId] ? (venueDisplayNames[img.venueId][locale] || img.venueId) : img.venueId;
+
+    return (
+      <div class="gallery-grid-item" data-item-venue={img.venueId}>
+        <button
+          type="button"
+          class="gallery-thumb-btn"
+          data-img-index={idx}
+          data-img-src={img.file}
+          data-img-alt={altText}
+          data-img-venue={img.venueId}
+          data-img-venue-name={venueName}
+          aria-label={`${viewLabel}: ${altText}`}
+        >
+          <div class="thumb-image-wrapper">
+            <ResponsiveImage
+              src={img.file}
+              alt={altText}
+              aspectRatio="4:3"
+              width={600}
+              height={450}
+            />
+            <span class="thumb-venue-badge">{venueName}</span>
+          </div>
+          <p class="thumb-caption">{altText}</p>
+        </button>
+      </div>
+    );
+  })}
+</div>
+
+<style>
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-5);
+  }
+
+  @media (min-width: 640px) {
+    .gallery-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .gallery-grid {
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-6);
+    }
+  }
+
+  .gallery-grid-item {
+    display: flex;
+  }
+
+  .gallery-thumb-btn {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 0;
+    border: 1px solid var(--color-stone);
+    border-radius: var(--radius-md);
+    background-color: var(--color-white);
+    text-align: start;
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+  }
+
+  .gallery-thumb-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-brass-300);
+  }
+
+  .gallery-thumb-btn:focus-visible {
+    outline: 2px solid var(--color-brass);
+    outline-offset: 2px;
+  }
+
+  .thumb-image-wrapper {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background-color: var(--color-stone);
+    width: 100%;
+  }
+
+  .thumb-venue-badge {
+    position: absolute;
+    top: var(--space-3);
+    inset-inline-start: var(--space-3);
+    background-color: rgba(14, 27, 23, 0.8);
+    backdrop-filter: blur(4px);
+    color: var(--color-mist);
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .thumb-caption {
+    padding: var(--space-3) var(--space-4);
+    margin: 0;
+    font-size: var(--font-size-caption);
+    color: var(--color-muted);
+    line-height: 1.4;
+  }
+</style>

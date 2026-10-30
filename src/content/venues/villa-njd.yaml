@@ -1,0 +1,133 @@
+id: villa-njd
+slug: villa-njd
+type: villa
+collection: stays
+name: Villa NJD
+shortName: Villa NJD
+typeLabel:
+  id: Vila · Tugu Utara
+  en: Villa · Tugu Utara
+  ar: فيلا · توغو أوتارا
+endorsement:
+  id: by ALMAGD
+  en: by ALMAGD
+  ar: من المجد
+status: published
+sortOrder: 1
+summary:
+  id: Penginapan bergaya vila dengan kolam renang luar ruangan dan pemandangan di Tugu Utara.
+  en: Villa-style stay with an outdoor swimming pool and mountain views in Tugu Utara.
+  ar: إقامة بطراز فيلا تضم مسبحاً خارجياً وإطلالات جبلية في توغو أوتارا.
+description:
+  id: Villa NJD merupakan bagian dari Koleksi ALMAGD di Tugu Utara, Cisarua, Bogor. Fasilitas terverifikasi mencakup kolam renang luar ruangan, Wi-Fi gratis, dan parkir gratis.
+  en: Villa NJD is part of The ALMAGD Collection in Tugu Utara, Cisarua, Bogor. Verified facilities include an outdoor pool, free Wi-Fi, and free parking.
+  ar: Villa NJD جزء من مجموعة المجد في توغو أوتارا، تشيساروا، بوغور. تشمل المرافق الموثقة مسبحاً خارجياً، وواي فاي مجانياً، ومواقف مجانية.
+highlights:
+  - icon: pool
+    label:
+      id: Kolam renang luar ruangan
+      en: Outdoor swimming pool
+      ar: مسبح خارجي
+    factRef: F-NJD-23
+  - icon: wifi
+    label:
+      id: Wi-Fi gratis
+      en: Free Wi-Fi
+      ar: واي فاي مجاني
+    factRef: F-NJD-24
+  - icon: parking
+    label:
+      id: Parkir gratis
+      en: Free parking
+      ar: مواقف مجانية
+    factRef: F-NJD-25
+address:
+  street: Jl. Ciburial RT.01/RW.05
+  village: Desa Tugu Utara
+  district: Kec. Cisarua
+  regency: Kab. Bogor
+  province: Jawa Barat
+  postalCode: "16750"
+  country: Indonesia
+geo:
+  lat: -6.682935
+  lng: 106.956431
+mapsUrl: https://maps.app.goo.gl/zs9wskiRTEPaaaPU9
+directionsUrl: https://www.google.com/maps/dir/?api=1&destination=-6.682935,106.956431
+placeId: null
+staticMap: null
+phone: "+6281333035141"
+whatsapp: "6281333035141"
+email: null
+socials:
+  - platform: instagram
+    url: https://www.instagram.com/njdvilla/
+    handle: "@njdvilla"
+otaLinks:
+  - platform: traveloka
+    url: https://www.traveloka.com/id-id/hotel/indonesia/villa-njd-9000000927251
+    verified: true
+  - platform: tiket
+    url: https://www.tiket.com/id-id/hotel/indonesia/villa-njd-909001790061495938
+    verified: true
+checkIn: "14:00"
+checkOut: "12:00"
+openingHours: []
+servesCuisine: []
+acceptsWalkIns: null
+facilities:
+  - pool-outdoor
+  - wifi-free
+  - parking-free
+policies:
+  - key: checkIn
+    value:
+      id: "Check-in pukul 14.00–23.59."
+      en: "Check-in: 2:00 pm–11:59 pm."
+      ar: "تسجيل الوصول: 14:00–23:59."
+  - key: checkOut
+    value:
+      id: "Check-out paling lambat pukul 12.00."
+      en: "Check-out by 12:00 pm."
+      ar: "تسجيل المغادرة حتى 12:00."
+  - key: pets
+    value:
+      id: "Hewan peliharaan tidak diperbolehkan."
+      en: "Pets are not allowed."
+      ar: "لا يُسمح باصطحاب الحيوانات الأليفة."
+heroImage: /images/venues/villa-njd-hero.jpg
+cardImage: /images/venues/villa-njd-pool.jpg
+gallery:
+  - /images/venues/villa-njd-hero.jpg
+  - /images/venues/villa-njd-pool.jpg
+  - /images/venues/villa-njd-exterior.jpg
+  - /images/venues/villa-njd-lounge.jpg
+faqIds:
+  - njd-faq-01
+  - njd-faq-02
+relatedVenueIds:
+  - new-pratama
+  - njd-cafe
+ratingIds:
+  - njd-traveloka
+seo:
+  title:
+    id: Villa NJD | Penginapan Puncak by ALMAGD
+    en: Villa NJD | Puncak Stays by ALMAGD
+    ar: Villa NJD | إقامة بونشاك من المجد
+  description:
+    id: Kenali Villa NJD di Tugu Utara, Cisarua, Bogor. Kolam renang luar ruangan, Wi-Fi gratis, dan parkir gratis.
+    en: Discover Villa NJD in Tugu Utara, Cisarua, Bogor. Outdoor pool, free Wi-Fi, and free parking.
+    ar: تعرّفوا على Villa NJD في توغو أوتارا، تشيساروا، بوغور. مسبح خارجي، واي فاي مجاني، ومواقف مجانية.
+fieldStatus:
+  name: VERIFIED_MULTIPLE_SOURCES
+  address: VERIFIED_MULTIPLE_SOURCES
+  phone: VERIFIED_MULTIPLE_SOURCES
+  whatsapp: VERIFIED_MULTIPLE_SOURCES
+  checkIn: VERIFIED_MULTIPLE_SOURCES
+  checkOut: VERIFIED_MULTIPLE_SOURCES
+  pool: VERIFIED_MULTIPLE_SOURCES
+  wifi: VERIFIED_MULTIPLE_SOURCES
+  parking: VERIFIED_MULTIPLE_SOURCES
+  pets: VERIFIED_MULTIPLE_SOURCES
+  otaLinks: VERIFIED

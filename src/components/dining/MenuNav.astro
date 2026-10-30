@@ -1,0 +1,129 @@
+---
+import type { Locale } from '../../lib/i18n';
+
+interface Category {
+  id: string;
+  slug: string;
+  name: Record<Locale, string>;
+  sortOrder: number;
+}
+
+interface Props {
+  categories: Category[];
+  locale: Locale;
+}
+
+const { categories = [], locale } = Astro.props;
+
+const labels = {
+  id: 'Daftar Kategori',
+  en: 'Menu Categories',
+  ar: 'أقسام القائمة',
+}[locale];
+---
+
+<nav class="menu-nav-bar" aria-label={labels}>
+  <div class="menu-nav-scroll">
+    <ul class="menu-nav-list" role="list">
+      {categories.map((cat) => {
+        const name = cat.name[locale] || cat.name.en || cat.name.id;
+        return (
+          <li class="menu-nav-item">
+            <a href={`#${cat.slug}`} class="menu-nav-link" data-cat-slug={cat.slug}>
+              <span>{name}</span>
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+  </div>
+</nav>
+
+<script>
+  function setupMenuNavSpy() {
+    const navLinks = document.querySelectorAll<HTMLAnchorElement>('.menu-nav-link');
+    if (!navLinks.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const id = entry.target.getAttribute('id');
+            navLinks.forEach((link) => {
+              if (link.getAttribute('href') === `#${id}`) {
+                link.classList.add('is-active');
+                link.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+              } else {
+                link.classList.remove('is-active');
+              }
+            });
+          }
+        });
+      },
+      { rootMargin: '-120px 0px -70% 0px' }
+    );
+
+    document.querySelectorAll('.menu-category-section').forEach((sec) => {
+      observer.observe(sec);
+    });
+  }
+
+  setupMenuNavSpy();
+  document.addEventListener('astro:page-load', setupMenuNavSpy);
+</script>
+
+<style>
+  .menu-nav-bar {
+    position: sticky;
+    top: 72px;
+    z-index: 100;
+    background-color: var(--color-mist);
+    border-bottom: 1px solid var(--color-stone);
+    padding-block: var(--space-3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+
+  .menu-nav-scroll {
+    overflow-x: auto;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+    padding-inline: var(--space-4);
+  }
+
+  .menu-nav-list {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    min-width: max-content;
+  }
+
+  .menu-nav-link {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--space-2) var(--space-4);
+    background-color: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    color: var(--color-ink);
+    font-size: var(--font-size-small);
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all var(--transition-fast);
+  }
+
+  .menu-nav-link:hover {
+    border-color: var(--color-brass);
+    color: var(--color-pine);
+  }
+
+  .menu-nav-link.is-active {
+    background-color: var(--color-pine);
+    color: var(--color-white);
+    border-color: var(--color-pine);
+    font-weight: 600;
+  }
+</style>

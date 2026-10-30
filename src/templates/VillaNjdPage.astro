@@ -1,0 +1,438 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+import HeroPage from '../components/sections/HeroPage.astro';
+import IntroBlock from '../components/sections/IntroBlock.astro';
+import HighlightList from '../components/property/HighlightList.astro';
+import RoomCardList from '../components/property/RoomCardList.astro';
+import FacilityGrid from '../components/property/FacilityGrid.astro';
+import RatingBadges from '../components/property/RatingBadges.astro';
+import PolicyList from '../components/property/PolicyList.astro';
+import FAQAccordion from '../components/property/FAQAccordion.astro';
+import BookingPanel from '../components/property/BookingPanel.astro';
+import CollectionGrid from '../components/sections/CollectionGrid.astro';
+import Container from '../components/primitives/Container.astro';
+import Icon from '../components/primitives/Icon.astro';
+import { type Locale, localizePath } from '../lib/i18n';
+import { buildWhatsAppLink } from '../lib/whatsapp';
+import { buildVenueSchema } from '../lib/schema';
+import { getEntry, getCollection } from 'astro:content';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+
+const venueEntry = await getEntry('venues', 'villa-njd');
+const venue = venueEntry.data as any;
+
+const newPratamaEntry = await getEntry('venues', 'new-pratama');
+const njdCafeEntry = await getEntry('venues', 'njd-cafe');
+
+const allRooms = await getCollection('rooms', (r) => r.data.venueId === 'villa-njd');
+const sortedRooms = allRooms
+  .map((r) => r.data)
+  .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+
+const faqEntry = await getEntry('faqs', 'villa-njd');
+const faqs = faqEntry?.data?.faqs || [];
+
+const ratingsEntry = await getEntry('ratings', 'ratings');
+const allRatings = ratingsEntry?.data?.ratings || [];
+const venueRatings = allRatings.filter((r: any) => r.venueId === 'villa-njd');
+
+const currentPath = localizePath('/properties/villa-njd', locale);
+
+const waLink = buildWhatsAppLink({
+  venue: 'villa_njd',
+  locale,
+});
+
+const copy = {
+  id: {
+    seoTitle: venue.seo.title.id,
+    seoDesc: venue.seo.description.id,
+    typeLabel: venue.typeLabel.id,
+    endorsement: venue.endorsement.id,
+    summary: venue.summary.id,
+    desc: venue.description.id,
+    addressTitle: 'Lokasi & Akses',
+    addressLead: 'Alamat Villa NJD di kawasan Tugu Utara, Cisarua, Bogor:',
+    mapsLinkText: 'Buka di Google Maps',
+    switcherNP: 'New Pratama Villa',
+    switcherNJD: 'Villa NJD',
+    switcherCafe: 'NJD Cafe',
+    relatedTitle: 'Jelajahi Koleksi ALMAGD Lainnya',
+    crumbs: [
+      { label: 'Akomodasi', href: localizePath('/properties', locale) },
+      { label: 'Villa NJD' },
+    ],
+  },
+  en: {
+    seoTitle: venue.seo.title.en,
+    seoDesc: venue.seo.description.en,
+    typeLabel: venue.typeLabel.en,
+    endorsement: venue.endorsement.en,
+    summary: venue.summary.en,
+    desc: venue.description.en,
+    addressTitle: 'Location & Access',
+    addressLead: 'Address for Villa NJD in Tugu Utara, Cisarua, Bogor:',
+    mapsLinkText: 'Open in Google Maps',
+    switcherNP: 'New Pratama Villa',
+    switcherNJD: 'Villa NJD',
+    switcherCafe: 'NJD Cafe',
+    relatedTitle: 'Also in The ALMAGD Collection',
+    crumbs: [
+      { label: 'Stays', href: localizePath('/properties', locale) },
+      { label: 'Villa NJD' },
+    ],
+  },
+  ar: {
+    seoTitle: venue.seo.title.ar,
+    seoDesc: venue.seo.description.ar,
+    typeLabel: venue.typeLabel.ar,
+    endorsement: venue.endorsement.ar,
+    summary: venue.summary.ar,
+    desc: venue.description.ar,
+    addressTitle: 'الموقع والوصول',
+    addressLead: 'عنوان Villa NJD في منطقة توغو أوتارا، تشيساروا، بوغور:',
+    mapsLinkText: 'فتح في خرائط Google',
+    switcherNP: 'New Pratama Villa',
+    switcherNJD: 'Villa NJD',
+    switcherCafe: 'NJD Cafe',
+    relatedTitle: 'استكشفوا المزيد في مجموعة المجد',
+    crumbs: [
+      { label: 'أماكن الإقامة', href: localizePath('/properties', locale) },
+      { label: 'Villa NJD' },
+    ],
+  },
+}[locale];
+
+const mapsExternalUrl = venue.mapsUrl || (venue.geo
+  ? `https://www.google.com/maps/search/?api=1&query=${venue.geo.lat},${venue.geo.lng}`
+  : 'https://www.google.com/maps/search/?api=1&query=Villa+NJD+Cisarua+Bogor');
+
+const relatedVenues = [newPratamaEntry.data, njdCafeEntry.data];
+const jsonLd = buildVenueSchema(venue);
+---
+
+<PageLayout
+  title={copy.seoTitle}
+  description={copy.seoDesc}
+  locale={locale}
+  currentPath={currentPath}
+  breadcrumbs={copy.crumbs}
+  venueKey="villa_njd"
+  jsonLd={jsonLd}
+>
+  <!-- Hero Section -->
+  <HeroPage
+    title={venue.name}
+    subtitle={`${copy.typeLabel} · ${copy.endorsement}`}
+    lead={copy.summary}
+    image={venue.heroImage}
+    primaryCta={{
+      label: locale === 'ar' ? 'استفسار عبر واتساب' : locale === 'en' ? 'WhatsApp Inquiry' : 'Tanya via WhatsApp',
+      href: waLink,
+      variant: 'whatsapp',
+      icon: 'whatsapp',
+    }}
+  />
+
+  <!-- Stay Switcher Pills -->
+  <section class="stay-switcher-section" aria-label="Pilihan Properti Lainnya">
+    <Container>
+      <div class="stay-switcher-pills">
+        <a href={localizePath('/properties/new-pratama', locale)} class="switcher-pill">
+          <span>{copy.switcherNP}</span>
+        </a>
+        <a href={localizePath('/properties/villa-njd', locale)} class="switcher-pill is-active" aria-current="page">
+          <span>{copy.switcherNJD}</span>
+        </a>
+        <a href={localizePath('/dining/njd-cafe', locale)} class="switcher-pill">
+          <span>{copy.switcherCafe}</span>
+        </a>
+      </div>
+    </Container>
+  </section>
+
+  <!-- Overview Block & Highlights -->
+  <Container>
+    <div class="overview-container">
+      <IntroBlock
+        title={locale === 'ar' ? 'نظرة عامة' : locale === 'en' ? 'Overview' : 'Sekilas Properti'}
+        subtitle={copy.typeLabel}
+        content={copy.desc}
+      />
+      {venue.highlights && venue.highlights.length > 0 && (
+        <HighlightList highlights={venue.highlights} locale={locale} />
+      )}
+    </div>
+  </Container>
+
+  <!-- Room Options -->
+  {sortedRooms.length > 0 && (
+    <Container>
+      <RoomCardList
+        rooms={sortedRooms}
+        venueKey="villa_njd"
+        locale={locale}
+      />
+    </Container>
+  )}
+
+  <!-- Verified Facilities -->
+  {venue.facilities && venue.facilities.length > 0 && (
+    <Container>
+      <FacilityGrid
+        facilityIds={venue.facilities}
+        locale={locale}
+      />
+    </Container>
+  )}
+
+  <!-- Rating Badges (Verified Traveloka) -->
+  {venueRatings.length > 0 && (
+    <Container>
+      <RatingBadges ratings={venueRatings} locale={locale} showUnapprovedInDev={true} />
+    </Container>
+  )}
+
+  <!-- Location & Address Card -->
+  <section class="venue-location-section" id="location" aria-labelledby="location-title">
+    <Container>
+      <div class="address-card">
+        <div class="address-card-header">
+          <span class="address-icon" aria-hidden="true"><Icon name="map-pin" size={24} /></span>
+          <div>
+            <h2 id="location-title" class="address-title">{copy.addressTitle}</h2>
+            <p class="address-lead">{copy.addressLead}</p>
+          </div>
+        </div>
+
+        <address class="address-details" dir="ltr">
+          <p class="address-line">{venue.address.street}</p>
+          <p class="address-line">{venue.address.village}, {venue.address.district}</p>
+          <p class="address-line">{venue.address.regency}, {venue.address.province} {venue.address.postalCode}</p>
+          <p class="address-line country">{venue.address.country}</p>
+        </address>
+
+        <div class="address-actions">
+          {mapsExternalUrl && (
+            <a
+              href={mapsExternalUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="maps-btn"
+            >
+              <Icon name="google-maps" size={18} />
+              <span>{copy.mapsLinkText}</span>
+              <Icon name="external" size={14} />
+            </a>
+          )}
+
+          {venue.phone && (
+            <div class="address-contact">
+              <span class="contact-label">{locale === 'ar' ? 'الاتصال المباشر:' : locale === 'en' ? 'Direct phone:' : 'Telepon langsung:'}</span>
+              <a href={`tel:${venue.phone}`} class="contact-phone" dir="ltr">
+                <Icon name="phone" size={16} />
+                <span>{venue.phone}</span>
+              </a>
+            </div>
+          )}
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <!-- Policies / Good to Know -->
+  {venue.policies && venue.policies.length > 0 && (
+    <Container>
+      <PolicyList policies={venue.policies} locale={locale} />
+    </Container>
+  )}
+
+  <!-- FAQs -->
+  {faqs.length > 0 && (
+    <Container>
+      <FAQAccordion faqs={faqs} locale={locale} />
+    </Container>
+  )}
+
+  <!-- Booking Panel -->
+  <Container>
+    <BookingPanel
+      venueKey="villa_njd"
+      venueName={venue.name}
+      phone={venue.phone}
+      otaLinks={venue.otaLinks}
+      locale={locale}
+    />
+  </Container>
+
+  <!-- Related ALMAGD Venues -->
+  <section class="related-venues-section">
+    <Container>
+      <CollectionGrid
+        title={copy.relatedTitle}
+        subtitle="The ALMAGD Collection"
+        venues={relatedVenues}
+        locale={locale}
+      />
+    </Container>
+  </section>
+</PageLayout>
+
+<style>
+  .stay-switcher-section {
+    padding-block: var(--space-4);
+    background-color: var(--color-stone);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .stay-switcher-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .switcher-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-pill);
+    background-color: var(--color-white);
+    color: var(--color-ink);
+    font-size: var(--font-size-small);
+    font-weight: 500;
+    text-decoration: none;
+    border: 1px solid var(--color-border);
+    transition: all var(--transition-fast);
+  }
+
+  .switcher-pill:hover {
+    border-color: var(--color-brass);
+    color: var(--color-pine);
+  }
+
+  .switcher-pill.is-active {
+    background-color: var(--color-pine);
+    color: var(--color-white);
+    border-color: var(--color-pine);
+    font-weight: 600;
+  }
+
+  .overview-container {
+    padding-block: var(--space-6);
+  }
+
+  .venue-location-section {
+    padding-block: var(--space-6);
+  }
+
+  .address-card {
+    background-color: var(--color-mist);
+    border: 1px solid var(--color-stone);
+    border-radius: var(--radius-md);
+    padding: var(--space-5) var(--space-6);
+  }
+
+  .address-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    margin-block-end: var(--space-4);
+  }
+
+  .address-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-sm);
+    background-color: var(--color-stone);
+    color: var(--color-brass);
+    flex-shrink: 0;
+  }
+
+  .address-title {
+    font-family: var(--font-display);
+    font-size: var(--font-size-h3);
+    color: var(--color-pine);
+    margin: 0 0 var(--space-1) 0;
+  }
+
+  .address-lead {
+    font-size: var(--font-size-small);
+    color: var(--color-muted);
+    margin: 0;
+  }
+
+  .address-details {
+    font-style: normal;
+    padding-inline-start: 56px;
+    margin-block-end: var(--space-4);
+    line-height: 1.6;
+    color: var(--color-ink);
+  }
+
+  .address-line {
+    margin: 0;
+  }
+
+  .address-line.country {
+    font-weight: 600;
+    color: var(--color-pine);
+  }
+
+  .address-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-4);
+    padding-inline-start: 56px;
+  }
+
+  .maps-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    background-color: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    color: var(--color-pine);
+    font-size: var(--font-size-small);
+    font-weight: 600;
+    text-decoration: none;
+    transition: all var(--transition-fast);
+  }
+
+  .maps-btn:hover {
+    border-color: var(--color-brass);
+    color: var(--color-brass-text);
+  }
+
+  .address-contact {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-small);
+  }
+
+  .contact-phone {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    color: var(--color-pine);
+    font-weight: 600;
+    text-decoration: underline;
+  }
+
+  .related-venues-section {
+    padding-block: var(--space-8);
+    background-color: var(--color-mist);
+    border-top: 1px solid var(--color-stone);
+  }
+</style>

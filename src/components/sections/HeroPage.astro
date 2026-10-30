@@ -1,0 +1,131 @@
+---
+import Container from '../primitives/Container.astro';
+import ResponsiveImage from '../common/ResponsiveImage.astro';
+
+interface Props {
+  title: string;
+  subtitle?: string;
+  lead?: string;
+  bg?: 'mist' | 'pine';
+  image?: string;
+  imageAlt?: string;
+}
+
+const {
+  title,
+  subtitle,
+  lead,
+  bg = 'mist',
+  image,
+  imageAlt = title,
+} = Astro.props;
+---
+
+<header class:list={['hero-page', `hero-bg-${bg}`, { 'dark-surface': bg === 'pine' }]}>
+  <Container>
+    <div class:list={['hero-page-layout', { 'has-image': !!image }]}>
+      <div class="hero-page-text">
+        {subtitle && <span class="hero-page-subtitle">{subtitle}</span>}
+        <h1 class="hero-page-title">{title}</h1>
+        {lead && <p class="hero-page-lead">{lead}</p>}
+      </div>
+
+      {
+        image && (
+          <div class="hero-page-media">
+            <ResponsiveImage
+              src={image}
+              alt={imageAlt}
+              aspectRatio="16:9"
+              priority={true}
+            />
+          </div>
+        )
+      }
+    </div>
+  </Container>
+</header>
+
+<style>
+  .hero-page {
+    padding-block: var(--space-7);
+    border-block-end: 1px solid var(--color-border);
+  }
+
+  @media (min-width: 1024px) {
+    .hero-page {
+      padding-block: var(--space-8);
+    }
+  }
+
+  .hero-bg-mist {
+    background-color: var(--color-mist);
+    color: var(--color-ink);
+  }
+
+  .hero-bg-pine {
+    background-color: var(--color-pine);
+    color: var(--color-white);
+  }
+
+  .hero-bg-pine .hero-page-title {
+    color: var(--color-white);
+  }
+
+  .hero-bg-pine .hero-page-subtitle {
+    color: var(--color-brass-300);
+  }
+
+  .hero-bg-pine .hero-page-lead {
+    color: var(--color-border);
+  }
+
+  .hero-page-layout {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+
+  @media (min-width: 1024px) {
+    .hero-page-layout.has-image {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      align-items: center;
+      gap: var(--space-8);
+    }
+  }
+
+  .hero-page-text {
+    max-width: 68ch;
+  }
+
+  .hero-page-subtitle {
+    display: inline-block;
+    font-size: var(--font-size-small);
+    font-weight: 600;
+    color: var(--color-brass-text);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-block-end: var(--space-2);
+  }
+
+  .hero-page-title {
+    font-size: var(--font-size-h1);
+    margin: 0;
+    line-height: 1.2;
+  }
+
+  .hero-page-lead {
+    font-size: 1.125rem;
+    color: var(--color-muted);
+    margin-block-start: var(--space-3);
+    margin-block-end: 0;
+    line-height: 1.6;
+  }
+
+  .hero-page-media {
+    width: 100%;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+</style>

@@ -1,0 +1,141 @@
+---
+import Icon from '../primitives/Icon.astro';
+
+interface Props {
+  src?: string | null;
+  alt: string;
+  aspectRatio?: '16:9' | '4:3' | '1:1' | '4:5' | '3:2';
+  priority?: boolean;
+  width?: number;
+  height?: number;
+  class?: string;
+  caption?: string;
+  focalPoint?: { x: number; y: number };
+}
+
+const {
+  src,
+  alt,
+  aspectRatio = '4:3',
+  priority = false,
+  width,
+  height,
+  class: className = '',
+  caption,
+  focalPoint = { x: 50, y: 50 },
+} = Astro.props;
+
+const isPlaceholder = !src || src.includes('placeholder') || src.includes('PLACEHOLDER');
+
+// Default dimensions based on aspect ratio
+const defaultDims = {
+  '16:9': { w: 1200, h: 675 },
+  '4:3': { w: 800, h: 600 },
+  '1:1': { w: 600, h: 600 },
+  '4:5': { w: 600, h: 750 },
+  '3:2': { w: 900, h: 600 },
+}[aspectRatio];
+
+const imgWidth = width || defaultDims.w;
+const imgHeight = height || defaultDims.h;
+---
+
+<figure class:list={['image-wrapper', `ratio-${aspectRatio.replace(':', '-')}`, className]}>
+  {
+    isPlaceholder ? (
+      <div
+        class="placeholder-container"
+        style={`aspect-ratio: ${aspectRatio.replace(':', '/')};`}
+        role="img"
+        aria-label={alt}
+      >
+        <div class="placeholder-content">
+          <Icon name="sun" size={32} class="placeholder-icon" />
+          <span class="placeholder-text">{alt}</span>
+          {import.meta.env.DEV && (
+            <span class="dev-placeholder">Dev Placeholder — Pending MD-19/40/62</span>
+          )}
+        </div>
+      </div>
+    ) : (
+      <img
+        src={src}
+        alt={alt}
+        width={imgWidth}
+        height={imgHeight}
+        loading={priority ? 'eager' : 'lazy'}
+        fetchpriority={priority ? 'high' : 'auto'}
+        decoding={priority ? 'sync' : 'async'}
+        style={`object-position: ${focalPoint.x}% ${focalPoint.y}%;`}
+        class="responsive-img"
+      />
+    )
+  }
+  {caption && <figcaption class="image-caption">{caption}</figcaption>}
+</figure>
+
+<style>
+  .image-wrapper {
+    position: relative;
+    width: 100%;
+    margin: 0;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+  }
+
+  .responsive-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform var(--transition-normal);
+  }
+
+  /* Aspect Ratios */
+  .ratio-16-9 { aspect-ratio: 16 / 9; }
+  .ratio-4-3 { aspect-ratio: 4 / 3; }
+  .ratio-1-1 { aspect-ratio: 1 / 1; }
+  .ratio-4-5 { aspect-ratio: 4 / 5; }
+  .ratio-3-2 { aspect-ratio: 3 / 2; }
+
+  /* Placeholder Styling (Highland Calm Palette) */
+  .placeholder-container {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--color-stone) 0%, var(--color-tea-100) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: inherit;
+  }
+
+  .placeholder-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: var(--space-2);
+    color: var(--color-pine);
+    max-width: 90%;
+  }
+
+  .placeholder-icon {
+    opacity: 0.6;
+    color: var(--color-tea);
+  }
+
+  .placeholder-text {
+    font-size: var(--font-size-small);
+    font-weight: 500;
+    line-height: 1.4;
+  }
+
+  .image-caption {
+    font-size: var(--font-size-caption);
+    color: var(--color-muted);
+    margin-block-start: var(--space-2);
+    text-align: center;
+  }
+</style>

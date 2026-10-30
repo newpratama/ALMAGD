@@ -1,0 +1,147 @@
+---
+import PageLayout from '../layouts/PageLayout.astro';
+import Container from '../components/primitives/Container.astro';
+import HeroPage from '../components/sections/HeroPage.astro';
+import { type Locale, localizePath } from '../lib/i18n';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+
+const currentPath = localizePath('/privacy', locale);
+
+const copy = {
+  id: {
+    seoTitle: 'Kebijakan Privasi | ALMAGD Hospitality',
+    seoDesc: 'Kebijakan privasi dan perlindungan data pengunjung situs resmi ALMAGD Hospitality.',
+    h1: 'Kebijakan Privasi',
+    subtitle: 'Komitmen Perlindungan Data',
+    lead: 'Halaman ini menjelaskan bagaimana ALMAGD Hospitality mengelola privasi dan data pengunjung situs web kami.',
+    p1Title: '1. Pengumpulan Data Pengunjung',
+    p1Text: 'Situs web ALMAGD adalah situs informasional dan promosi. Kami tidak menyediakan formulir kontak daring, sistem akun pengguna, keranjang belanja, maupun pemrosesan transaksi pembayaran langsung di situs ini. Oleh karena itu, kami tidak mengumpulkan data pribadi langsung seperti nama, alamat email, atau kata sandi melalui situs web ini.',
+    p2Title: '2. Tautan ke Layanan Pihak Ketiga',
+    p2Text: 'Situs kami memuat tautan langsung ke layanan pihak ketiga yang tepercaya, termasuk WhatsApp (Meta Platforms) untuk komunikasi reservasi, platform pemesanan mitra resmi (seperti Traveloka, Agoda, dan Tiket.com), serta peta digital. Saat Anda mengklik tautan tersebut, interaksi Anda tunduk pada kebijakan privasi masing-masing platform pihak ketiga tersebut.',
+    p3Title: '3. Cookie & Analitik Situs',
+    p3Text: 'Kami menghormati preferensi privasi Anda dengan menerapkan Google Consent Mode v2. Secara bawaan (default), tidak ada cookie analitik yang disimpan atau dikirimkan ke server analisis pihak ketiga sebelum Anda memberikan persetujuan eksplisit melalui banner persetujuan kami. Jika Anda menyetujui, analitik hanya mencatat data agregat non-identifikasi pribadi untuk mengukur kinerja situs.',
+    p4Title: '4. Hak Anda & Kontak Privasi',
+    p4Text: 'Jika Anda memiliki pertanyaan tentang kebijakan privasi kami atau ingin memperbarui preferensi data Anda, silakan hubungi manajemen ALMAGD Hospitality melalui kontak resmi yang tercantum di halaman Kontak.',
+    lastUpdated: 'Terakhir diperbarui: Oktober 2026',
+    crumbs: [{ label: 'Kebijakan Privasi' }],
+  },
+  en: {
+    seoTitle: 'Privacy Policy | ALMAGD Hospitality',
+    seoDesc: 'Privacy policy and data protection principles for ALMAGD Hospitality website visitors.',
+    h1: 'Privacy Policy',
+    subtitle: 'Our Data Protection Commitment',
+    lead: 'This page outlines how ALMAGD Hospitality manages visitor privacy and web data.',
+    p1Title: '1. Collection of Visitor Data',
+    p1Text: 'The ALMAGD website is strictly informational and promotional. We do not operate online contact forms, user account databases, shopping carts, or on-site payment processing. Consequently, we do not collect personal identifiers such as names, passwords, or payment cards through this website.',
+    p2Title: '2. Links to Third-Party Services',
+    p2Text: 'Our website provides direct links to verified third-party communication and booking channels, including WhatsApp (Meta Platforms), verified OTA platforms (such as Traveloka, Agoda, and Tiket.com), and digital maps. Interacting with those external services is governed by their respective privacy policies.',
+    p3Title: '3. Cookies & Analytics',
+    p3Text: 'We respect your privacy by adhering to Google Consent Mode v2. By default, no analytics cookies or tracking beacons are loaded prior to your explicit consent via our consent banner. Upon consent, analytics are strictly aggregated and anonymous to monitor website performance.',
+    p4Title: '4. Your Rights & Inquiries',
+    p4Text: 'Should you have questions regarding this privacy policy or wish to discuss data handling, please reach out to ALMAGD Hospitality management through the official channels listed on our Contact page.',
+    lastUpdated: 'Last updated: October 2026',
+    crumbs: [{ label: 'Privacy Policy' }],
+  },
+  ar: {
+    seoTitle: 'سياسة الخصوصية | مجموعة المجد للضيافة',
+    seoDesc: 'سياسة الخصوصية ومبادئ حماية بيانات زوار موقع مجموعة المجد للضيافة.',
+    h1: 'سياسة الخصوصية',
+    subtitle: 'التزامنا بحماية بيانات الزوار',
+    lead: 'توضح هذه الصفحة كيفية تعامل إدارة المجد للضيافة مع خصوصية وبيانات زوار الموقع الإلكتروني.',
+    p1Title: '1. جمع بيانات الزوار',
+    p1Text: 'موقع المجد هو موقع تعريفي وترويجي بحت. لا نطلب تعبئة نماذج تسجيل، ولا ندير حسابات مستخدمين، ولا نتلقى مدفوعات إلكترونية مباشرة عبر الموقع. بناءً على ذلك، لا نقوم بجمع أو تخزين بيانات تعريفية شخصية كالأسماء أو كلمات المرور من خلال هذا الموقع.',
+    p2Title: '2. روابط المنصات والخدمات الخارجية',
+    p2Text: 'يتضمن موقعنا روابط مباشرة لخدمات خارجية موثوقة، تشمل تطبيق واتساب (Meta) للتواصل المباشر، ومنصات الحجز الشريكة المعتمدة (مثل Traveloka و Agoda و Tiket.com)، والخرائط الرقمية. تخضع تعاملاتكم مع تلك المنصات لسياسات الخصوصية الخاصة بها.',
+    p3Title: '3. ملفات تعريف الارتباط والتحليلات',
+    p3Text: 'نلتزم بنظام Google Consent Mode v2 لحماية الخصوصية. بشكل افتراضي، لا يتم تحميل أي ملفات تعريف ارتباط تحليلية أو إرسال بيانات قبل موافقتكم الصريحة عبر شريط الموافقة. في حال الموافقة، تقتصر التحليلات على بيانات مجمعة ومجهولة الهوية لتحسين أداء الموقع.',
+    p4Title: '4. حقوقكم والتواصل بشأن الخصوصية',
+    p4Text: 'إذا كانت لديكم أي استفسارات تتعلق بسياسة الخصوصية أو ترغبون في تعديل خياراتكم، يرجى التواصل مع إدارة المجد عبر قنوات الاتصال الرسمية الموضحة في صفحة اتصلوا بنا.',
+    lastUpdated: 'آخر تحديث: أكتوبر 2026',
+    crumbs: [{ label: 'سياسة الخصوصية' }],
+  },
+}[locale];
+---
+
+<PageLayout
+  title={copy.seoTitle}
+  description={copy.seoDesc}
+  locale={locale}
+  currentPath={currentPath}
+  breadcrumbs={copy.crumbs}
+>
+  <HeroPage
+    title={copy.h1}
+    subtitle={copy.subtitle}
+    lead={copy.lead}
+  />
+
+  <main class="privacy-main">
+    <Container>
+      <article class="privacy-article">
+        <section class="privacy-section">
+          <h2>{copy.p1Title}</h2>
+          <p>{copy.p1Text}</p>
+        </section>
+
+        <section class="privacy-section">
+          <h2>{copy.p2Title}</h2>
+          <p>{copy.p2Text}</p>
+        </section>
+
+        <section class="privacy-section">
+          <h2>{copy.p3Title}</h2>
+          <p>{copy.p3Text}</p>
+        </section>
+
+        <section class="privacy-section">
+          <h2>{copy.p4Title}</h2>
+          <p>{copy.p4Text}</p>
+        </section>
+
+        <footer class="privacy-footer">
+          <small>{copy.lastUpdated}</small>
+        </footer>
+      </article>
+    </Container>
+  </main>
+</PageLayout>
+
+<style>
+  .privacy-main {
+    padding-block: var(--space-6) var(--space-9);
+  }
+
+  .privacy-article {
+    max-width: 68ch;
+    margin-inline: auto;
+  }
+
+  .privacy-section {
+    margin-block-end: var(--space-6);
+  }
+
+  .privacy-section h2 {
+    font-family: var(--font-display);
+    font-size: var(--font-size-h3);
+    color: var(--color-pine);
+    margin: 0 0 var(--space-2) 0;
+  }
+
+  .privacy-section p {
+    font-size: var(--font-size-body);
+    line-height: var(--line-height-body);
+    color: var(--color-ink);
+    margin: 0;
+  }
+
+  .privacy-footer {
+    border-top: 1px solid var(--color-stone);
+    padding-top: var(--space-4);
+    color: var(--color-muted);
+  }
+</style>

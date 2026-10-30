@@ -1,0 +1,152 @@
+---
+import Container from '../primitives/Container.astro';
+import Button from '../primitives/Button.astro';
+import ResponsiveImage from '../common/ResponsiveImage.astro';
+import { type Locale, localizePath } from '../../lib/i18n';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+
+const copy = {
+  id: {
+    tagline: 'Udara Sejuk, Sambutan Hangat.',
+    descriptor: 'Vila, penginapan, dan kuliner di Puncak, Bogor.',
+    body: 'Kenali New Pratama Villa, Villa NJD, dan NJD Cafe dalam Koleksi ALMAGD. Pilih tempat Anda, lalu hubungi timnya.',
+    primaryBtn: 'Jelajahi Penginapan',
+    secondaryBtn: 'Hubungi Kami',
+    heroAlt: 'Pemandangan alam pegunungan Puncak, Bogor',
+  },
+  en: {
+    tagline: 'Cool Air. Warm Welcome.',
+    descriptor: 'Villas, stays & dining in Puncak, Bogor.',
+    body: 'Discover New Pratama Villa, Villa NJD, and NJD Cafe in The ALMAGD Collection. Choose your place and contact its team.',
+    primaryBtn: 'Explore Our Stays',
+    secondaryBtn: 'Contact Us',
+    heroAlt: 'Scenic highland mountain views in Puncak, Bogor',
+  },
+  ar: {
+    tagline: 'هواءٌ عليل… وترحيبٌ دافئ',
+    descriptor: 'فلل وإقامة ومذاقات في بونشاك، بوغور.',
+    body: 'تعرّفوا على New Pratama Villa و Villa NJD و NJD Cafe ضمن مجموعة المجد. اختاروا وجهتكم وتواصلوا مع فريقها.',
+    primaryBtn: 'استكشفوا أماكن الإقامة',
+    secondaryBtn: 'تواصلوا معنا',
+    heroAlt: 'إطلالة طبيعية على جبال بونشاك، بوغور',
+  },
+}[locale];
+---
+
+<section class="hero-home" aria-label="Hero">
+  <Container>
+    <div class="hero-grid">
+      <div class="hero-content">
+        <span class="hero-badge">{copy.descriptor}</span>
+        <h1 class="hero-title">{copy.tagline}</h1>
+        <p class="hero-body">{copy.body}</p>
+        <div class="hero-actions">
+          <Button href={localizePath('/properties', locale)} variant="primary" size="lg">
+            {copy.primaryBtn}
+          </Button>
+          <Button variant="secondary" size="lg" id="hero-whatsapp-btn">
+            {copy.secondaryBtn}
+          </Button>
+        </div>
+      </div>
+
+      <div class="hero-media">
+        <ResponsiveImage
+          src="/images/placeholders/almagd-hero.jpg"
+          alt={copy.heroAlt}
+          aspectRatio="16:9"
+          priority={true}
+          class="hero-img-desktop"
+        />
+      </div>
+    </div>
+  </Container>
+</section>
+
+<script>
+  function setupHeroHome() {
+    const btn = document.getElementById('hero-whatsapp-btn');
+    btn?.addEventListener('click', () => {
+      window.dispatchEvent(new CustomEvent('open-whatsapp-chooser'));
+    });
+  }
+  document.addEventListener('DOMContentLoaded', setupHeroHome);
+</script>
+
+<style>
+  .hero-home {
+    padding-block-start: var(--space-7);
+    padding-block-end: var(--space-9);
+    background-color: var(--color-mist);
+  }
+
+  @media (min-width: 1024px) {
+    .hero-home {
+      padding-block-start: var(--space-9);
+      padding-block-end: var(--space-10);
+    }
+  }
+
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+    align-items: center;
+  }
+
+  @media (min-width: 1024px) {
+    .hero-grid {
+      grid-template-columns: 1.1fr 1fr;
+      gap: var(--space-8);
+    }
+  }
+
+  .hero-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-4);
+  }
+
+  .hero-badge {
+    display: inline-block;
+    font-size: var(--font-size-small);
+    font-weight: 600;
+    color: var(--color-brass-text);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .hero-title {
+    font-size: var(--font-size-display);
+    line-height: 1.15;
+    margin: 0;
+  }
+
+  .hero-body {
+    font-size: 1.125rem;
+    color: var(--color-muted);
+    max-width: 54ch;
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    margin-block-start: var(--space-2);
+  }
+
+  .hero-media {
+    width: 100%;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-2);
+  }
+</style>

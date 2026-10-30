@@ -1,0 +1,412 @@
+---
+import Icon from '../primitives/Icon.astro';
+import Button from '../primitives/Button.astro';
+import ResponsiveImage from '../common/ResponsiveImage.astro';
+import { buildWhatsAppLink, type VenueKey } from '../../lib/whatsapp';
+import type { Locale } from '../../lib/i18n';
+
+interface Room {
+  id: string;
+  venueId: string;
+  slug: string;
+  name: string;
+  kind: string;
+  summary: Record<Locale, string>;
+  sizeM2?: number | null;
+  maxGuests?: number | null;
+  bedrooms?: number | null;
+  beds?: Record<Locale, string>;
+  bathrooms?: number | null;
+  features: string[];
+  images: string[];
+  status: string;
+}
+
+interface Props {
+  room: Room;
+  venueKey: VenueKey;
+  locale: Locale;
+}
+
+const { room, venueKey, locale } = Astro.props;
+
+const summary = room.summary[locale] || room.summary.en || room.summary.id;
+const bedsLabel = room.beds ? (room.beds[locale] || room.beds.en || room.beds.id) : null;
+const heroImage = room.images && room.images.length > 0 ? room.images[0] : '/images/placeholders/room-standard.jpg';
+
+const waLink = buildWhatsAppLink({
+  venue: venueKey,
+  locale,
+  context: 'room',
+  contextParam: room.name,
+});
+
+const labels = {
+  id: {
+    details: 'Detail Pilihan Menginap',
+    close: 'Tutup dialog',
+    bedrooms: 'Kamar Tidur',
+    bathrooms: 'Kamar Mandi',
+    beds: 'Tempat Tidur',
+    features: 'Fasilitas Kamar',
+    inquireWa: 'Tanya Ketersediaan via WhatsApp',
+    pricingNote: 'Hubungi kami langsung untuk ketersediaan dan informasi pemesanan.',
+  },
+  en: {
+    details: 'Stay Option Details',
+    close: 'Close dialog',
+    bedrooms: 'Bedrooms',
+    bathrooms: 'Bathrooms',
+    beds: 'Beds',
+    features: 'Room Features',
+    inquireWa: 'Inquire Availability via WhatsApp',
+    pricingNote: 'Contact us directly for availability and booking details.',
+  },
+  ar: {
+    details: 'تفاصيل خيار الإقامة',
+    close: 'إغلاق النافذة',
+    bedrooms: 'غرف نوم',
+    bathrooms: 'دورات مياه',
+    beds: 'الأسرّة',
+    features: 'ميزات الغرفة',
+    inquireWa: 'الاستفسار عن التوافر عبر واتساب',
+    pricingNote: 'تواصلوا معنا مباشرة للاستفسار عن التوافر وتفاصيل الحجز.',
+  },
+}[locale];
+
+const featureLabels: Record<string, Record<Locale, string>> = {
+  'hot-water': { ar: 'مياه ساخنة', en: 'Hot Water', id: 'Air Panas' },
+  'tv': { ar: 'شاشة تلفزيون', en: 'Flat Screen TV', id: 'TV' },
+  'work-desk': { ar: 'مكتب عمل', en: 'Work Desk', id: 'Meja Kerja' },
+  'balcony': { ar: 'شرفة بإطلالة', en: 'Balcony', id: 'Balkon' },
+  'wifi': { ar: 'إنترنت واي فاي', en: 'Free Wi-Fi', id: 'WiFi Gratis' },
+  'kitchen': { ar: 'مطبخ مجهز', en: 'Equipped Kitchen', id: 'Dapur' },
+  'mountain-view': { ar: 'إطلالة جبلية', en: 'Mountain View', id: 'Pemandangan Gunung' },
+  'pool': { ar: 'مسبح', en: 'Swimming Pool', id: 'Kolam Renang' },
+};
+
+function getFeatureLabel(feature: string, loc: Locale): string {
+  return featureLabels[feature]?.[loc] || feature;
+}
+
+function getFeatureIcon(feature: string): string {
+  switch (feature) {
+    case 'balcony': return 'sun';
+    case 'hot-water': return 'droplet';
+    case 'tv': return 'tv';
+    case 'wifi': return 'wifi';
+    case 'pool': return 'pool';
+    case 'mountain-view': return 'mountain';
+    default: return 'check';
+  }
+}
+---
+
+<dialog id={`dialog-${room.slug}`} class="room-dialog" aria-labelledby={`dialog-title-${room.slug}`}>
+  <div class="dialog-content">
+    <header class="dialog-header">
+      <div class="dialog-title-group">
+        <span class="dialog-eyebrow">{labels.details}</span>
+        <h3 id={`dialog-title-${room.slug}`} class="dialog-title">
+          <bdi dir="ltr">{room.name}</bdi>
+        </h3>
+      </div>
+      <button type="button" class="dialog-close-btn" data-close-dialog={`dialog-${room.slug}`} aria-label={labels.close}>
+        <Icon name="close" size={20} />
+      </button>
+    </header>
+
+    <div class="dialog-body">
+      <div class="dialog-image-wrap">
+        <ResponsiveImage
+          src={heroImage}
+          alt={room.name}
+          aspectRatio="16:9"
+          width={800}
+          height={450}
+        />
+      </div>
+
+      <p class="dialog-summary">{summary}</p>
+
+      <div class="dialog-specs-grid">
+        {room.bedrooms && (
+          <div class="spec-card">
+            <span class="spec-icon" aria-hidden="true"><Icon name="home" size={22} /></span>
+            <span class="spec-value">{room.bedrooms}</span>
+            <span class="spec-label">{labels.bedrooms}</span>
+          </div>
+        )}
+        {bedsLabel && (
+          <div class="spec-card">
+            <span class="spec-icon" aria-hidden="true"><Icon name="bed" size={22} /></span>
+            <span class="spec-value">{bedsLabel}</span>
+            <span class="spec-label">{labels.beds}</span>
+          </div>
+        )}
+        {room.bathrooms && (
+          <div class="spec-card">
+            <span class="spec-icon" aria-hidden="true"><Icon name="bath" size={22} /></span>
+            <span class="spec-value">{room.bathrooms}</span>
+            <span class="spec-label">{labels.bathrooms}</span>
+          </div>
+        )}
+      </div>
+
+      {room.features && room.features.length > 0 && (
+        <div class="dialog-features-section">
+          <h4 class="features-title">{labels.features}</h4>
+          <ul class="features-list" role="list">
+            {room.features.map((feat) => (
+              <li class="feature-item">
+                <Icon name={getFeatureIcon(feat)} size={16} />
+                <span class="feature-name">{getFeatureLabel(feat, locale)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div class="pricing-notice">
+        <span class="pricing-notice-icon" aria-hidden="true"><Icon name="info" size={18} /></span>
+        <span class="pricing-notice-text">{labels.pricingNote}</span>
+      </div>
+    </div>
+
+    <footer class="dialog-footer">
+      <Button
+        variant="whatsapp"
+        size="lg"
+        href={waLink}
+        external
+        data-wa-source="room_dialog"
+        data-room-name={room.name}
+      >
+        <Icon name="whatsapp" size={20} />
+        <span>{labels.inquireWa}</span>
+      </Button>
+    </footer>
+  </div>
+</dialog>
+
+<style>
+  .room-dialog {
+    border: none;
+    border-radius: var(--radius-lg);
+    padding: 0;
+    max-width: 640px;
+    width: calc(100% - 32px);
+    background-color: var(--color-white);
+    color: var(--color-ink);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+  }
+
+  .room-dialog::backdrop {
+    background-color: rgba(14, 27, 23, 0.65);
+    backdrop-filter: blur(4px);
+  }
+
+  .dialog-content {
+    display: flex;
+    flex-direction: column;
+    max-height: 85vh;
+  }
+
+  .dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-4) var(--space-5);
+    border-bottom: 1px solid var(--color-stone);
+    background-color: var(--color-mist);
+  }
+
+  .dialog-eyebrow {
+    font-size: var(--font-size-caption);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-brass-text);
+    font-weight: 600;
+  }
+
+  .dialog-title {
+    font-family: var(--font-display);
+    font-size: var(--font-size-h3);
+    color: var(--color-pine);
+    margin: 0;
+  }
+
+  .dialog-close-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border: 1px solid var(--color-stone);
+    background-color: var(--color-white);
+    border-radius: var(--radius-full, 9999px);
+    color: var(--color-pine);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .dialog-close-btn:hover {
+    background-color: var(--color-pine);
+    color: var(--color-white);
+    border-color: var(--color-pine);
+  }
+
+  .dialog-body {
+    padding: var(--space-5);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .dialog-image-wrap {
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .dialog-summary {
+    font-size: var(--font-size-body);
+    line-height: var(--line-height-body);
+    color: var(--color-muted);
+    margin: 0;
+  }
+
+  .dialog-specs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: var(--space-3);
+  }
+
+  .spec-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: var(--space-4) var(--space-3);
+    background-color: var(--color-mist);
+    border: 1px solid var(--color-stone);
+    border-radius: var(--radius-md);
+    gap: var(--space-1);
+    transition: all var(--transition-fast);
+  }
+
+  .spec-card:hover {
+    border-color: var(--color-brass);
+    background-color: var(--color-white);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .spec-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-brass);
+    margin-block-end: 2px;
+  }
+
+  .spec-value {
+    font-weight: 700;
+    color: var(--color-pine);
+    font-size: var(--font-size-body);
+    line-height: 1.2;
+  }
+
+  .spec-label {
+    font-size: var(--font-size-caption);
+    color: var(--color-muted);
+    font-weight: 500;
+  }
+
+  .dialog-features-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .features-title {
+    font-size: var(--font-size-small);
+    font-weight: 700;
+    color: var(--color-pine);
+    margin: 0;
+  }
+
+  .features-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .feature-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 6px 14px;
+    background-color: var(--color-mist);
+    border: 1px solid var(--color-stone);
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-caption);
+    color: var(--color-pine);
+    font-weight: 600;
+    transition: all var(--transition-fast);
+  }
+
+  .feature-item:hover {
+    border-color: var(--color-brass);
+    background-color: var(--color-white);
+  }
+
+  .feature-item :global(svg) {
+    color: var(--color-brass);
+    flex-shrink: 0;
+  }
+
+  .pricing-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    background-color: var(--color-mist);
+    border: 1px solid rgba(200, 139, 44, 0.3);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-caption);
+    color: var(--color-ink);
+    line-height: 1.5;
+  }
+
+  .pricing-notice-icon {
+    color: var(--color-brass);
+    flex-shrink: 0;
+    margin-block-start: 2px;
+    display: inline-flex;
+  }
+
+  .pricing-notice-text {
+    flex: 1;
+  }
+
+  .dialog-footer {
+    padding: var(--space-4) var(--space-5);
+    border-top: 1px solid var(--color-stone);
+    background-color: var(--color-mist);
+    display: flex;
+    justify-content: stretch;
+  }
+
+  .dialog-footer :global(.btn) {
+    width: 100%;
+    justify-content: center;
+    padding-block: var(--space-3);
+    font-weight: 700;
+  }
+</style>

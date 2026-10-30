@@ -1,0 +1,45 @@
+nav.home: Beranda
+nav.about: Tentang Kami
+nav.stays: Penginapan
+nav.allStays: Semua Penginapan
+nav.dining: Kuliner
+nav.menu: Menu
+nav.gallery: Galeri
+nav.location: Lokasi & Akses
+nav.contact: Kontak
+nav.privacy: Kebijakan Privasi
+nav.contactUs: Hubungi Kami
+nav.close: Tutup
+nav.menuToggle: Buka menu
+nav.back: Kembali
+
+cta.whatsapp: Tanya melalui WhatsApp
+cta.availability: Tanya ketersediaan
+cta.bookOn: Pesan di {platform}
+cta.viewProperty: Lihat penginapan
+cta.viewMenu: Lihat menu
+cta.roomDetails: Lihat detail kamar
+cta.directions: Petunjuk arah
+cta.phone: Telepon
+cta.email: Kirim email
+cta.morePhotos: Lihat semua foto
+cta.externalTab: Membuka tab baru
+cta.close: Tutup
+cta.askPrice: Tanya harga
+cta.selectVenue: Pilih tempat
+
+chooser.title: Hubungi Tim Properti
+chooser.desc: Silakan pilih tujuan Anda untuk terhubung langsung via WhatsApp.
+booking.panelTitle: Opsi Pemesanan & Ketersediaan
+
+consent.message: Kami menggunakan analitik untuk meningkatkan pengalaman Anda setelah persetujuan.
+consent.accept: Setuju
+consent.decline: Tolak
+
+footer.rights: Hak cipta dilindungi undang-undang.
+footer.endorsed: Bagian dari Koleksi ALMAGD
+badge.asOf: Per
+
+error.404Title: Halaman Tidak Ditemukan
+error.404Desc: Maaf, halaman yang Anda tuju tidak tersedia atau telah dipindahkan.
+error.goHome: Kembali ke Beranda

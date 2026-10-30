@@ -1,0 +1,27 @@
+type: site_config
+brandName: ALMAGD
+brandNameAr: المجد
+groupName:
+  id: Koleksi ALMAGD
+  en: The ALMAGD Collection
+  ar: مجموعة المجد
+corporateDescriptor:
+  id: ALMAGD Hospitality
+  en: ALMAGD Hospitality
+  ar: ضيافة المجد
+tagline:
+  id: "Udara Sejuk, Sambutan Hangat."
+  en: "Cool Air. Warm Welcome."
+  ar: "هواءٌ عليل… وترحيبٌ دافئ"
+descriptor:
+  id: "Vila, penginapan & kuliner di Puncak, Bogor"
+  en: "Villas, stays & dining in Puncak, Bogor"
+  ar: "فلل وإقامات ومطاعم في بونشاك، بوغور"
+legalName: PLACEHOLDER
+logo: null
+defaultOgImage: /images/almagd-og.jpg
+email: null
+phone: null
+socials: []
+domain: "almagd.id"
+lastUpdated: "2026-10-09"

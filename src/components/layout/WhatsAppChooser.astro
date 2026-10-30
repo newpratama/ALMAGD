@@ -1,0 +1,295 @@
+---
+import Icon from '../primitives/Icon.astro';
+import { type Locale } from '../../lib/i18n';
+import { buildWhatsAppLink } from '../../lib/whatsapp';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+
+const venues = [
+  {
+    key: 'new_pratama' as const,
+    name: 'New Pratama Villa',
+    label: {
+      id: 'Kompleks Vila · Cisarua',
+      en: 'Villa Complex · Cisarua',
+      ar: 'مجمع فلل · تشيساروا',
+    }[locale],
+    link: buildWhatsAppLink({ venue: 'new_pratama', locale }),
+  },
+  {
+    key: 'villa_njd' as const,
+    name: 'Villa NJD',
+    label: {
+      id: 'Vila · Tugu Utara',
+      en: 'Villa · Tugu Utara',
+      ar: 'فيلا · توغو أوتارا',
+    }[locale],
+    link: buildWhatsAppLink({ venue: 'villa_njd', locale }),
+  },
+  {
+    key: 'njd_cafe' as const,
+    name: 'NJD Cafe',
+    label: {
+      id: 'Kafe & Resto · Cisarua',
+      en: 'Cafe & Dining · Cisarua',
+      ar: 'مقهى ومطعم · تشيساروا',
+    }[locale],
+    link: buildWhatsAppLink({ venue: 'njd_cafe', locale }),
+  },
+];
+
+const title = {
+  id: 'Hubungi Tim Properti',
+  en: 'Choose a Property',
+  ar: 'تواصلوا مع فريق المنشأة',
+}[locale];
+
+const desc = {
+  id: 'Pilih tujuan Anda untuk terhubung langsung via WhatsApp',
+  en: 'Select a venue to chat directly on WhatsApp',
+  ar: 'يرجى اختيار الوجهة للتواصل المباشر عبر واتساب',
+}[locale];
+
+const closeLabel = {
+  id: 'Tutup',
+  en: 'Close',
+  ar: 'إغلاق',
+}[locale];
+---
+
+<div id="whatsapp-chooser-modal" class="chooser-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="chooser-title">
+  <div class="chooser-backdrop" data-close-chooser></div>
+  <div class="chooser-panel">
+    <div class="chooser-header">
+      <div>
+        <h2 id="chooser-title" class="chooser-title">{title}</h2>
+        <p class="chooser-desc">{desc}</p>
+      </div>
+      <button type="button" class="chooser-close-btn" data-close-chooser aria-label={closeLabel}>
+        <Icon name="close" size={20} />
+      </button>
+    </div>
+
+    <ul class="chooser-list">
+      {
+        venues.map((v) => (
+          <li>
+            <a
+              href={v.link}
+              target="_blank"
+              rel="noopener"
+              class="chooser-item"
+              data-venue={v.key}
+            >
+              <div class="chooser-item-info">
+                <span class="chooser-item-name">{v.name}</span>
+                <span class="chooser-item-label">{v.label}</span>
+              </div>
+              <div class="chooser-item-action">
+                <Icon name="whatsapp" size={24} />
+              </div>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</div>
+
+<style>
+  .chooser-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-normal);
+  }
+
+  @media (min-width: 768px) {
+    .chooser-modal {
+      align-items: center;
+    }
+  }
+
+  .chooser-modal.is-open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .chooser-backdrop {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(21, 43, 36, 0.6);
+    backdrop-filter: blur(4px);
+  }
+
+  .chooser-panel {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    background-color: var(--color-white);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding: var(--space-6);
+    box-shadow: var(--shadow-dialog);
+    transform: translateY(20px);
+    transition: transform var(--transition-normal);
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+
+  @media (min-width: 768px) {
+    .chooser-panel {
+      border-radius: var(--radius-lg);
+      transform: scale(0.95);
+    }
+  }
+
+  .chooser-modal.is-open .chooser-panel {
+    transform: translateY(0);
+  }
+
+  @media (min-width: 768px) {
+    .chooser-modal.is-open .chooser-panel {
+      transform: scale(1);
+    }
+  }
+
+  .chooser-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-block-end: var(--space-5);
+    border-block-end: 1px solid var(--color-border);
+    padding-block-end: var(--space-4);
+  }
+
+  .chooser-title {
+    font-size: var(--font-size-h3);
+    margin: 0;
+  }
+
+  .chooser-desc {
+    font-size: var(--font-size-small);
+    color: var(--color-muted);
+    margin-block-start: var(--space-1);
+    margin-block-end: 0;
+  }
+
+  .chooser-close-btn {
+    min-width: var(--touch-target-min);
+    min-height: var(--touch-target-min);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 0;
+    color: var(--color-muted);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+  }
+
+  .chooser-close-btn:hover {
+    color: var(--color-ink);
+    background-color: var(--color-stone);
+  }
+
+  .chooser-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .chooser-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-4);
+    background-color: var(--color-mist);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    transition: background-color var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+  }
+
+  .chooser-item:hover {
+    background-color: var(--color-tea-100);
+    border-color: var(--color-tea);
+    transform: translateY(-2px);
+  }
+
+  .chooser-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .chooser-item-name {
+    font-weight: 600;
+    font-size: var(--font-size-body);
+    color: var(--color-pine);
+  }
+
+  .chooser-item-label {
+    font-size: var(--font-size-small);
+    color: var(--color-muted);
+  }
+
+  .chooser-item-action {
+    color: var(--color-wa);
+    display: flex;
+    align-items: center;
+  }
+</style>
+
+<script>
+  function setupWhatsAppChooser() {
+    const modal = document.getElementById('whatsapp-chooser-modal');
+    if (!modal) return;
+
+    const closeButtons = modal.querySelectorAll('[data-close-chooser]');
+    let lastActiveElement: HTMLElement | null = null;
+
+    function openModal() {
+      lastActiveElement = document.activeElement as HTMLElement;
+      modal?.classList.add('is-open');
+      modal?.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      const firstLink = modal?.querySelector('a') as HTMLElement;
+      firstLink?.focus();
+    }
+
+    function closeModal() {
+      modal?.classList.remove('is-open');
+      modal?.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      lastActiveElement?.focus();
+    }
+
+    closeButtons.forEach((btn) => btn.addEventListener('click', closeModal));
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal?.classList.contains('is-open')) {
+        closeModal();
+      }
+    });
+
+    // Listen for global open event
+    window.addEventListener('open-whatsapp-chooser', () => {
+      openModal();
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', setupWhatsAppChooser);
+</script>

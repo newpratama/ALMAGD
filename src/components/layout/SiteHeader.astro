@@ -1,0 +1,532 @@
+---
+import { type Locale, localizePath, isRTL } from '../../lib/i18n';
+import Icon from '../primitives/Icon.astro';
+import Button from '../primitives/Button.astro';
+import LanguageSwitcher from './LanguageSwitcher.astro';
+
+interface Props {
+  locale: Locale;
+  currentPath: string;
+}
+
+const { locale, currentPath } = Astro.props;
+const rtl = isRTL(locale);
+
+const copy = {
+  id: {
+    about: 'Tentang Kami',
+    stays: 'Penginapan',
+    newPratama: 'New Pratama Villa',
+    newPratamaType: 'Vila · Cisarua',
+    villaNjd: 'Villa NJD',
+    villaNjdType: 'Vila · Tugu Utara',
+    allStays: 'Semua Penginapan',
+    dining: 'Kuliner',
+    njdCafe: 'NJD Cafe',
+    menu: 'Menu',
+    gallery: 'Galeri',
+    location: 'Lokasi & Akses',
+    contact: 'Kontak',
+    contactBtn: 'Hubungi Kami',
+    menuToggle: 'Buka menu navigasi',
+    dashboard: 'Panel Kontrol',
+  },
+  en: {
+    about: 'About',
+    stays: 'Stays',
+    newPratama: 'New Pratama Villa',
+    newPratamaType: 'Villa · Cisarua',
+    villaNjd: 'Villa NJD',
+    villaNjdType: 'Villa · Tugu Utara',
+    allStays: 'All Stays',
+    dining: 'Dining',
+    njdCafe: 'NJD Cafe',
+    menu: 'Menu',
+    gallery: 'Gallery',
+    location: 'Location & Directions',
+    contact: 'Contact',
+    contactBtn: 'Contact Us',
+    menuToggle: 'Open navigation menu',
+    dashboard: 'Control Panel',
+  },
+  ar: {
+    about: 'عن المجموعة',
+    stays: 'الإقامات',
+    newPratama: 'New Pratama Villa',
+    newPratamaType: 'فيلا · تشيساروا',
+    villaNjd: 'Villa NJD',
+    villaNjdType: 'فيلا · توغو أوتارا',
+    allStays: 'جميع الإقامات',
+    dining: 'المطاعم',
+    njdCafe: 'NJD Cafe',
+    menu: 'القائمة',
+    gallery: 'المعرض',
+    location: 'الموقع والوصول',
+    contact: 'التواصل',
+    contactBtn: 'تواصلوا معنا',
+    menuToggle: 'فتح القائمة',
+    dashboard: 'لوحة التحكم',
+  },
+}[locale];
+
+const adminUrl = import.meta.env.PUBLIC_ADMIN_URL || '/admin/login';
+
+function isActive(path: string): boolean {
+  const localized = localizePath(path, locale);
+  if (path === '/' && (currentPath === '/' || currentPath === `/${locale}`)) return true;
+  return currentPath.startsWith(localized) && path !== '/';
+}
+---
+
+<header class="site-header" id="site-header">
+  <div class="header-container">
+    <!-- Brand Logo -->
+    <a href={localizePath('/', locale)} class="brand-link" aria-label={locale === 'ar' ? 'المجد للضيافة - الصفحة الرئيسية' : 'ALMAGD Hospitality - Home'}>
+      <img
+        src="/images/logo-almagd.png"
+        alt={locale === 'ar' ? 'المجد' : 'ALMAGD'}
+        width="132"
+        height="46"
+        class="brand-logo-img"
+        loading="eager"
+        decoding="async"
+      />
+    </a>
+
+    <!-- Desktop Navigation -->
+    <nav class="desktop-nav" aria-label="Main Navigation">
+      <ul class="nav-links">
+        <li>
+          <a
+            href={localizePath('/about', locale)}
+            class:list={['nav-link', { active: isActive('/about') }]}
+            aria-current={isActive('/about') ? 'page' : undefined}
+          >
+            {copy.about}
+          </a>
+        </li>
+
+        <!-- Stays Dropdown -->
+        <li class="dropdown-container">
+          <button
+            type="button"
+            class:list={['dropdown-trigger', { active: isActive('/properties') }]}
+            aria-expanded="false"
+            aria-haspopup="true"
+          >
+            <span>{copy.stays}</span>
+            <Icon name="chevron-down" size={16} />
+          </button>
+          <div class="dropdown-menu">
+            <a href={localizePath('/properties/new-pratama', locale)} class="dropdown-item">
+              <span class="item-title">{copy.newPratama}</span>
+              <span class="item-meta">{copy.newPratamaType}</span>
+            </a>
+            <a href={localizePath('/properties/villa-njd', locale)} class="dropdown-item">
+              <span class="item-title">{copy.villaNjd}</span>
+              <span class="item-meta">{copy.villaNjdType}</span>
+            </a>
+            <hr class="dropdown-divider" />
+            <a href={localizePath('/properties', locale)} class="dropdown-item dropdown-all">
+              <span>{copy.allStays}</span>
+              <Icon name={rtl ? 'arrow-left' : 'arrow-right'} size={14} />
+            </a>
+          </div>
+        </li>
+
+        <!-- Dining Dropdown -->
+        <li class="dropdown-container">
+          <button
+            type="button"
+            class:list={['dropdown-trigger', { active: isActive('/dining') }]}
+            aria-expanded="false"
+            aria-haspopup="true"
+          >
+            <span>{copy.dining}</span>
+            <Icon name="chevron-down" size={16} />
+          </button>
+          <div class="dropdown-menu">
+            <a href={localizePath('/dining/njd-cafe', locale)} class="dropdown-item">
+              <span class="item-title">{copy.njdCafe}</span>
+            </a>
+            <a href={localizePath('/dining/njd-cafe/menu', locale)} class="dropdown-item">
+              <span class="item-title">{copy.menu}</span>
+            </a>
+          </div>
+        </li>
+
+        <li>
+          <a
+            href={localizePath('/gallery', locale)}
+            class:list={['nav-link', { active: isActive('/gallery') }]}
+            aria-current={isActive('/gallery') ? 'page' : undefined}
+          >
+            {copy.gallery}
+          </a>
+        </li>
+
+        <li>
+          <a
+            href={localizePath('/location', locale)}
+            class:list={['nav-link', { active: isActive('/location') }]}
+            aria-current={isActive('/location') ? 'page' : undefined}
+          >
+            {copy.location}
+          </a>
+        </li>
+
+        <li>
+          <a
+            href={localizePath('/contact', locale)}
+            class:list={['nav-link', { active: isActive('/contact') }]}
+            aria-current={isActive('/contact') ? 'page' : undefined}
+          >
+            {copy.contact}
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Header Actions (End) -->
+    <div class="header-actions">
+      <!-- Desktop Language Switcher -->
+      <div class="desktop-lang">
+        <LanguageSwitcher currentLocale={locale} currentPath={currentPath} variant="header" />
+      </div>
+
+      <!-- Desktop Admin / Control Panel CTA -->
+      <div class="desktop-admin">
+        <Button
+          variant="secondary"
+          size="sm"
+          href={adminUrl}
+          target="_blank"
+          rel="noopener"
+          class="header-admin-btn"
+          aria-label={copy.dashboard}
+        >
+          <Icon name="shield" size={15} />
+          <span>{copy.dashboard}</span>
+        </Button>
+      </div>
+
+      <!-- Desktop Contact CTA -->
+      <div class="desktop-cta">
+        <Button variant="primary" size="sm" id="header-contact-btn">
+          {copy.contactBtn}
+        </Button>
+      </div>
+
+      <!-- Mobile WhatsApp Quick Trigger -->
+      <button
+        type="button"
+        class="mobile-wa-trigger"
+        id="mobile-header-wa"
+        aria-label="WhatsApp"
+      >
+        <Icon name="whatsapp" size={24} />
+      </button>
+
+      <!-- Mobile Menu Hamburger Button -->
+      <button
+        type="button"
+        class="mobile-menu-trigger"
+        id="mobile-menu-btn"
+        aria-label={copy.menuToggle}
+      >
+        <Icon name="menu" size={24} />
+      </button>
+    </div>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 800;
+    width: 100%;
+    height: 60px;
+    background-color: var(--color-mist);
+    border-block-end: 1px solid var(--color-border);
+    transition: background-color var(--transition-normal), box-shadow var(--transition-normal);
+  }
+
+  @media (min-width: 1024px) {
+    .site-header {
+      height: 72px;
+    }
+  }
+
+  .site-header.is-scrolled {
+    box-shadow: var(--shadow-1);
+    background-color: rgba(246, 243, 236, 0.96);
+    backdrop-filter: blur(8px);
+  }
+
+  .header-container {
+    max-width: var(--container-max-width);
+    height: 100%;
+    margin-inline: auto;
+    padding-inline: var(--container-gutter);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* Brand Lockup */
+  .brand-link {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    transition: opacity var(--transition-fast);
+  }
+
+  .brand-link:hover {
+    opacity: 0.9;
+  }
+
+  .brand-logo-img {
+    height: 42px;
+    width: auto;
+    max-width: 140px;
+    object-fit: contain;
+    display: block;
+  }
+
+  @media (min-width: 1024px) {
+    .brand-logo-img {
+      height: 48px;
+      max-width: 160px;
+    }
+  }
+
+  /* Desktop Nav */
+  .desktop-nav {
+    display: none;
+    height: 100%;
+  }
+
+  @media (min-width: 1024px) {
+    .desktop-nav {
+      display: flex;
+      align-items: center;
+    }
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    height: 100%;
+  }
+
+  .nav-link,
+  .dropdown-trigger {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 100%;
+    font-size: var(--font-size-body);
+    font-weight: 500;
+    color: var(--color-ink);
+    text-decoration: none;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding-block: var(--space-4);
+    transition: color var(--transition-fast);
+  }
+
+  .nav-link:hover,
+  .dropdown-trigger:hover {
+    color: var(--color-pine);
+  }
+
+  .nav-link.active,
+  .dropdown-trigger.active {
+    color: var(--color-pine);
+    font-weight: 600;
+  }
+
+  .nav-link.active::after,
+  .dropdown-trigger.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    inset-inline: 0;
+    height: 2px;
+    background-color: var(--color-brass);
+  }
+
+  /* Dropdown Menu */
+  .dropdown-container {
+    position: relative;
+    height: 100%;
+    display: flex;
+    align-items: center;
+  }
+
+  .dropdown-menu {
+    position: absolute;
+    top: calc(100% - 8px);
+    inset-inline-start: 0;
+    min-width: 240px;
+    background-color: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-2);
+    padding: var(--space-2);
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+    transition: opacity var(--transition-fast), transform var(--transition-fast);
+    z-index: 100;
+  }
+
+  .dropdown-container:hover .dropdown-menu,
+  .dropdown-container:focus-within .dropdown-menu {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .dropdown-item {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-3);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    transition: background-color var(--transition-fast);
+  }
+
+  .dropdown-item:hover {
+    background-color: var(--color-mist);
+  }
+
+  .item-title {
+    font-weight: 600;
+    font-size: var(--font-size-small);
+    color: var(--color-pine);
+  }
+
+  .item-meta {
+    font-size: var(--font-size-caption);
+    color: var(--color-muted);
+  }
+
+  .dropdown-divider {
+    border: 0;
+    height: 1px;
+    background-color: var(--color-border);
+    margin-block: var(--space-1);
+  }
+
+  .dropdown-all {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 600;
+    color: var(--color-brass-text);
+  }
+
+  /* Actions */
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  @media (min-width: 1024px) {
+    .header-actions {
+      gap: var(--space-4);
+    }
+  }
+
+  .desktop-lang,
+  .desktop-admin,
+  .desktop-cta {
+    display: none;
+  }
+
+  @media (min-width: 1024px) {
+    .desktop-lang,
+    .desktop-admin,
+    .desktop-cta {
+      display: block;
+    }
+  }
+
+  :global(.header-admin-btn) {
+    border-color: var(--color-border);
+    color: var(--color-ink);
+    background-color: var(--color-white);
+    gap: var(--space-2);
+  }
+
+  :global(.header-admin-btn:hover) {
+    background-color: var(--color-stone);
+    border-color: var(--color-muted);
+  }
+
+  .mobile-wa-trigger,
+  .mobile-menu-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: var(--touch-target-min);
+    min-height: var(--touch-target-min);
+    background: transparent;
+    border: 0;
+    border-radius: var(--radius-sm);
+    color: var(--color-pine);
+    cursor: pointer;
+  }
+
+  .mobile-wa-trigger {
+    color: var(--color-wa);
+  }
+
+  @media (min-width: 1024px) {
+    .mobile-wa-trigger,
+    .mobile-menu-trigger {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  function setupHeader() {
+    const header = document.getElementById('site-header');
+    if (!header) return;
+
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 24) {
+        header.classList.add('is-scrolled');
+      } else {
+        header.classList.remove('is-scrolled');
+      }
+    });
+
+    const menuBtn = document.getElementById('mobile-menu-btn');
+    menuBtn?.addEventListener('click', () => {
+      window.dispatchEvent(new CustomEvent('open-mobile-nav'));
+    });
+
+    const contactBtn = document.getElementById('header-contact-btn');
+    contactBtn?.addEventListener('click', () => {
+      window.dispatchEvent(new CustomEvent('open-whatsapp-chooser'));
+    });
+
+    const mobileWaBtn = document.getElementById('mobile-header-wa');
+    mobileWaBtn?.addEventListener('click', () => {
+      window.dispatchEvent(new CustomEvent('open-whatsapp-chooser'));
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', setupHeader);
+</script>

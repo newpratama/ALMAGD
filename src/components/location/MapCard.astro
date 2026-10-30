@@ -1,0 +1,886 @@
+---
+import Icon from '../primitives/Icon.astro';
+import type { Locale } from '../../lib/i18n';
+
+interface Address {
+  street?: string;
+  village?: string;
+  district?: string;
+  regency?: string;
+  province?: string;
+  postalCode?: string;
+  country: string;
+}
+
+interface Geo {
+  lat: number;
+  lng: number;
+}
+
+interface OtaLink {
+  platform: string;
+  url: string;
+  verified?: boolean;
+}
+
+interface Props {
+  venueId?: string;
+  venueName: string;
+  typeLabel?: string;
+  endorsement?: string;
+  summary?: string;
+  cardImage?: string;
+  address: Address;
+  geo?: Geo | null;
+  mapsUrl?: string | null;
+  directionsUrl?: string | null;
+  phone?: string | null;
+  whatsapp?: string | null;
+  otaLinks?: OtaLink[];
+  locale: Locale;
+}
+
+const {
+  venueId = '',
+  venueName,
+  typeLabel,
+  endorsement,
+  summary,
+  cardImage,
+  address,
+  geo,
+  mapsUrl: mapsUrlProp,
+  directionsUrl: directionsUrlProp,
+  phone,
+  whatsapp,
+  otaLinks = [],
+  locale,
+} = Astro.props;
+
+// Verified Google Maps URLs
+const directMapsUrl = mapsUrlProp || (geo
+  ? `https://www.google.com/maps/search/?api=1&query=${geo.lat},${geo.lng}`
+  : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venueName + ', Cisarua, Bogor')}`);
+
+const directDirectionsUrl = directionsUrlProp || (geo
+  ? `https://www.google.com/maps/dir/?api=1&destination=${geo.lat},${geo.lng}`
+  : directMapsUrl);
+
+// Google Maps interactive iframe embed URL (no API key required, reliable worldwide)
+const embedMapUrl = geo
+  ? `https://maps.google.com/maps?q=${geo.lat},${geo.lng}&hl=${locale}&z=16&output=embed`
+  : `https://maps.google.com/maps?q=${encodeURIComponent(venueName + ', Cisarua, Bogor')}&hl=${locale}&z=16&output=embed`;
+
+// WhatsApp direct chat URL
+const waNumber = whatsapp ? whatsapp.replace(/\D/g, '') : '';
+const waMessage = {
+  ar: `مرحباً، أود الاستفسار عن ${venueName} وموقعها في بونشاك.`,
+  en: `Hello, I would like to inquire about ${venueName} and its location in Puncak.`,
+  id: `Halo, saya ingin bertanya mengenai ${venueName} dan lokasinya di Puncak.`,
+}[locale];
+const waUrl = waNumber ? `https://wa.me/${waNumber}?text=${encodeURIComponent(waMessage)}` : null;
+
+// Clean address lines
+const streetLine = [address.street, address.village].filter(Boolean).join(', ');
+const regionLine = [address.district, address.regency].filter(Boolean).join(', ');
+const countryLine = [address.province, address.postalCode ? `Kode Pos ${address.postalCode}` : '', address.country].filter(Boolean).join(', ');
+
+const labels = {
+  ar: {
+    verifiedLocation: 'موقع موثق في بونشاك',
+    addressHeader: 'العنوان المعتمد',
+    coordinates: 'الإحداثيات',
+    copyCoords: 'نسخ الإحداثيات',
+    copied: 'تم النسخ!',
+    openMaps: 'فتح الاتجاهات في خرائط Google',
+    openDirections: 'بدء الملاحة عبر GPS',
+    whatsapp: 'تواصل عبر واتساب',
+    call: 'اتصال هاتف',
+    verifiedOn: 'موثق ومدرج على:',
+    liveMap: 'خريطة Google Maps التفاعلية',
+    openFullscreen: 'فتح الخريطة بالكامل',
+    mapHint: 'اسحب للتصفح واستخدم + / - للتكبير والتصغير',
+  },
+  en: {
+    verifiedLocation: 'Verified Puncak Location',
+    addressHeader: 'Verified Address',
+    coordinates: 'Coordinates',
+    copyCoords: 'Copy Coordinates',
+    copied: 'Copied!',
+    openMaps: 'Open Directions in Google Maps',
+    openDirections: 'Start GPS Navigation',
+    whatsapp: 'Chat via WhatsApp',
+    call: 'Call Directly',
+    verifiedOn: 'Verified & Listed on:',
+    liveMap: 'Live Interactive Google Map',
+    openFullscreen: 'Open Full Map',
+    mapHint: 'Drag to navigate, use + / - buttons to zoom',
+  },
+  id: {
+    verifiedLocation: 'Lokasi Terverifikasi Puncak',
+    addressHeader: 'Alamat Terverifikasi',
+    coordinates: 'Koordinat',
+    copyCoords: 'Salin Koordinat',
+    copied: 'Tersalin!',
+    openMaps: 'Buka Petunjuk Arah di Google Maps',
+    openDirections: 'Mulai Navigasi GPS',
+    whatsapp: 'Hubungi via WhatsApp',
+    call: 'Telepon Langsung',
+    verifiedOn: 'Terverifikasi & Terdaftar di:',
+    liveMap: 'Peta Interaktif Google Maps',
+    openFullscreen: 'Buka Peta Lengkap',
+    mapHint: 'Geser untuk melihat area sekitar, gunakan + / - untuk zoom',
+  },
+}[locale];
+
+// OTA Platform display helpers
+const platformNames: Record<string, string> = {
+  traveloka: 'Traveloka',
+  tiket: 'Tiket.com',
+  agoda: 'Agoda',
+  trip_com: 'Trip.com',
+  trip: 'Trip.com',
+  booking: 'Booking.com',
+  booking_com: 'Booking.com',
+};
+---
+
+<article class="luxury-location-card" id={`card-${venueId}`}>
+  <!-- Gold Accent Header Bar -->
+  <div class="card-accent-bar" aria-hidden="true"></div>
+
+  <div class="card-grid">
+    <!-- Left Column: Venue Details, Photo & Actions -->
+    <div class="card-details-panel">
+      {cardImage && (
+        <div class="venue-photo-wrap">
+          <img
+            src={cardImage}
+            alt={`${venueName} - Puncak, Bogor`}
+            class="venue-thumb"
+            loading="lazy"
+            decoding="async"
+          />
+          <div class="photo-overlay-badge">
+            <Icon name="map-pin" size={14} />
+            <span>{labels.verifiedLocation}</span>
+          </div>
+        </div>
+      )}
+
+      <div class="venue-info-header">
+        {(typeLabel || endorsement) && (
+          <div class="venue-meta-badge">
+            {typeLabel && <span class="type-pill">{typeLabel}</span>}
+            {endorsement && <span class="endorsement-pill">{endorsement}</span>}
+          </div>
+        )}
+        <h3 class="venue-card-title">{venueName}</h3>
+        {summary && <p class="venue-card-summary">{summary}</p>}
+      </div>
+
+      <!-- Verified Address Block -->
+      <div class="address-box">
+        <div class="address-icon-wrap" aria-hidden="true">
+          <Icon name="map-pin" size={20} />
+        </div>
+        <div class="address-content">
+          <strong class="address-heading">{labels.addressHeader}</strong>
+          <address class="address-lines">
+            {streetLine && <span class="address-line street">{streetLine}</span>}
+            {regionLine && <span class="address-line region">{regionLine}</span>}
+            {countryLine && <span class="address-line country">{countryLine}</span>}
+          </address>
+        </div>
+      </div>
+
+      <!-- Coordinates Box with Strict LTR BiDi Isolation -->
+      {geo && (
+        <div class="coords-box">
+          <div class="coords-leading">
+            <span class="coords-icon" aria-hidden="true">📍</span>
+            <span class="coords-label">{labels.coordinates}:</span>
+          </div>
+          <div class="coords-data">
+            <bdi class="coords-val" dir="ltr">{geo.lat.toFixed(6)}, {geo.lng.toFixed(6)}</bdi>
+            <button
+              type="button"
+              class="copy-coords-btn"
+              data-coords={`${geo.lat.toFixed(6)}, ${geo.lng.toFixed(6)}`}
+              aria-label={labels.copyCoords}
+              title={labels.copyCoords}
+            >
+              <span class="copy-default-text">📋 {labels.copyCoords}</span>
+              <span class="copy-done-text">✓ {labels.copied}</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      <!-- Primary Action Buttons -->
+      <div class="actions-group">
+        <a
+          href={directDirectionsUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn-maps-primary"
+        >
+          <span class="btn-icon">
+            <Icon name="google-maps" size={20} />
+          </span>
+          <span class="btn-text">{labels.openMaps}</span>
+          <Icon name="external" size={14} />
+        </a>
+
+        <div class="actions-secondary-row">
+          {waUrl && (
+            <a
+              href={waUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn-wa-action"
+            >
+              <Icon name="whatsapp" size={18} />
+              <span>{labels.whatsapp}</span>
+            </a>
+          )}
+          {phone && (
+            <a href={`tel:${phone}`} class="btn-phone-action">
+              <Icon name="phone" size={16} />
+              <span>{labels.call}</span>
+            </a>
+          )}
+        </div>
+      </div>
+
+      <!-- Verified OTA Badges Row -->
+      {(otaLinks.length > 0 || directMapsUrl) && (
+        <div class="verified-ota-section">
+          <span class="ota-title">{labels.verifiedOn}</span>
+          <div class="ota-badges-wrap">
+            <a
+              href={directMapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="ota-badge-pill google-maps-pill"
+              title="Google Maps"
+            >
+              <Icon name="google-maps" size={16} />
+              <span>Google Maps</span>
+            </a>
+            {otaLinks.map((ota) => (
+              <a
+                href={ota.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                class={`ota-badge-pill ${ota.platform}-pill`}
+                title={platformNames[ota.platform] || ota.platform}
+              >
+                <Icon name={ota.platform} size={16} />
+                <span>{platformNames[ota.platform] || ota.platform}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+
+    <!-- Right Column: Live Interactive Google Map Embed -->
+    <div class="card-map-panel">
+      <!-- Top Status Bar Over Map -->
+      <div class="map-top-bar">
+        <div class="map-live-status">
+          <span class="live-dot" aria-hidden="true"></span>
+          <span class="live-label">{labels.liveMap}</span>
+        </div>
+        <a
+          href={directMapsUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="map-fullscreen-link"
+          title={labels.openFullscreen}
+        >
+          <span>{labels.openFullscreen}</span>
+          <Icon name="external" size={13} />
+        </a>
+      </div>
+
+      <!-- Real Google Maps Iframe -->
+      <div class="map-iframe-container">
+        <iframe
+          src={embedMapUrl}
+          title={`${venueName} - Google Maps`}
+          width="100%"
+          height="100%"
+          style="border:0;"
+          allowfullscreen=""
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          class="google-map-iframe"
+        ></iframe>
+      </div>
+
+      <!-- Bottom Hint Bar -->
+      <div class="map-bottom-bar">
+        <span class="map-hint-text">💡 {labels.mapHint}</span>
+        <span class="map-location-tag">Puncak · Cisarua · Bogor</span>
+      </div>
+    </div>
+  </div>
+</article>
+
+<script>
+  // Interactive copy coordinates button with feedback
+  function setupCopyCoords() {
+    const buttons = document.querySelectorAll('.copy-coords-btn');
+    buttons.forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const coords = btn.getAttribute('data-coords');
+        if (!coords) return;
+        try {
+          await navigator.clipboard.writeText(coords);
+          btn.classList.add('is-copied');
+          setTimeout(() => {
+            btn.classList.remove('is-copied');
+          }, 2200);
+        } catch {
+          // Fallback if clipboard API is blocked
+          const tempInput = document.createElement('input');
+          tempInput.value = coords;
+          document.body.appendChild(tempInput);
+          tempInput.select();
+          document.execCommand('copy');
+          document.body.removeChild(tempInput);
+          btn.classList.add('is-copied');
+          setTimeout(() => {
+            btn.classList.remove('is-copied');
+          }, 2200);
+        }
+      });
+    });
+  }
+  setupCopyCoords();
+  document.addEventListener('astro:page-load', setupCopyCoords);
+</script>
+
+<style>
+  .luxury-location-card {
+    position: relative;
+    background-color: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 10px 30px -5px rgba(0, 30, 71, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    margin-block-end: var(--space-7);
+    transition: box-shadow var(--transition-normal);
+  }
+
+  .luxury-location-card:hover {
+    box-shadow: 0 16px 36px -6px rgba(0, 30, 71, 0.12), 0 6px 16px -2px rgba(0, 0, 0, 0.05);
+  }
+
+  /* Royal Gold Top Accent Bar */
+  .card-accent-bar {
+    height: 4px;
+    background: linear-gradient(90deg, var(--color-pine) 0%, var(--color-brass) 50%, var(--color-brass-300) 100%);
+    width: 100%;
+  }
+
+  /* 2-Column Grid on Desktop */
+  .card-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 960px) {
+    .card-grid {
+      grid-template-columns: 46% 54%;
+    }
+  }
+
+  /* Left Column: Details */
+  .card-details-panel {
+    padding: var(--space-5) var(--space-6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    background-color: var(--color-white);
+    border-inline-end: 1px solid var(--color-border);
+  }
+
+  @media (max-width: 959px) {
+    .card-details-panel {
+      border-inline-end: none;
+      border-block-end: 1px solid var(--color-border);
+      padding: var(--space-4) var(--space-4);
+    }
+  }
+
+  /* Photo Preview */
+  .venue-photo-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background-color: var(--color-stone);
+    border: 1px solid var(--color-border);
+  }
+
+  .venue-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s ease;
+  }
+
+  .venue-photo-wrap:hover .venue-thumb {
+    transform: scale(1.03);
+  }
+
+  .photo-overlay-badge {
+    position: absolute;
+    bottom: var(--space-3);
+    inset-inline-start: var(--space-3);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 6px 12px;
+    background-color: rgba(0, 30, 71, 0.88);
+    backdrop-filter: blur(8px);
+    color: var(--color-brass-300);
+    border: 1px solid rgba(200, 139, 44, 0.35);
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+  }
+
+  /* Venue Info Header */
+  .venue-info-header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .venue-meta-badge {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    margin-block-end: var(--space-1);
+  }
+
+  .type-pill {
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+    color: var(--color-brass-text);
+    background-color: var(--color-mist);
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-border);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .endorsement-pill {
+    font-size: var(--font-size-caption);
+    color: var(--color-muted);
+    font-style: italic;
+  }
+
+  .venue-card-title {
+    font-family: var(--font-display);
+    font-size: var(--font-size-h2);
+    color: var(--color-pine);
+    margin: 0;
+    line-height: 1.25;
+  }
+
+  .venue-card-summary {
+    font-size: var(--font-size-small);
+    color: var(--color-muted);
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  /* Address Box */
+  .address-box {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background-color: var(--color-mist);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-stone);
+  }
+
+  .address-icon-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-pine);
+    color: var(--color-brass-300);
+    flex-shrink: 0;
+    box-shadow: 0 4px 10px rgba(0, 30, 71, 0.15);
+  }
+
+  .address-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .address-heading {
+    font-size: var(--font-size-caption);
+    color: var(--color-pine);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .address-lines {
+    font-style: normal;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: var(--font-size-small);
+    color: var(--color-ink);
+    line-height: 1.45;
+  }
+
+  .address-line.country {
+    color: var(--color-muted);
+    font-size: var(--font-size-caption);
+  }
+
+  /* Coordinates Box */
+  .coords-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    background-color: var(--color-white);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-md);
+  }
+
+  .coords-leading {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-small);
+    font-weight: 600;
+    color: var(--color-pine);
+  }
+
+  .coords-data {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .coords-val {
+    font-family: monospace;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-brass-text);
+    background-color: var(--color-mist);
+    padding: 3px 8px;
+    border-radius: var(--radius-sm);
+    letter-spacing: 0.02em;
+    unicode-bidi: isolate;
+  }
+
+  .copy-coords-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    padding: 4px 10px;
+    font-size: var(--font-size-caption);
+    font-weight: 500;
+    color: var(--color-pine);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .copy-coords-btn:hover {
+    border-color: var(--color-brass);
+    color: var(--color-brass-text);
+    background-color: var(--color-mist);
+  }
+
+  .copy-done-text {
+    display: none;
+    color: var(--color-success);
+    font-weight: 600;
+  }
+
+  .copy-coords-btn.is-copied {
+    border-color: var(--color-success);
+    background-color: rgba(46, 125, 79, 0.1);
+  }
+
+  .copy-coords-btn.is-copied .copy-default-text {
+    display: none;
+  }
+
+  .copy-coords-btn.is-copied .copy-done-text {
+    display: inline;
+  }
+
+  /* Actions Group */
+  .actions-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-block-start: var(--space-2);
+  }
+
+  .btn-maps-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    min-height: 48px;
+    padding: var(--space-3) var(--space-5);
+    background-color: var(--color-pine);
+    color: var(--color-white);
+    border: 1px solid transparent;
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-small);
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: 0 4px 14px rgba(0, 30, 71, 0.25);
+    transition: all var(--transition-fast);
+  }
+
+  .btn-maps-primary:hover {
+    background-color: var(--color-pine-700);
+    border-color: var(--color-brass);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(0, 30, 71, 0.3);
+  }
+
+  .btn-icon {
+    display: flex;
+    align-items: center;
+  }
+
+  .actions-secondary-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+  }
+
+  .btn-wa-action {
+    flex: 1;
+    min-width: 140px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: 42px;
+    padding: var(--space-2) var(--space-4);
+    background-color: rgba(37, 211, 102, 0.12);
+    color: #0c5625;
+    border: 1px solid rgba(37, 211, 102, 0.4);
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-small);
+    font-weight: 600;
+    text-decoration: none;
+    transition: all var(--transition-fast);
+  }
+
+  .btn-wa-action:hover {
+    background-color: #25d366;
+    color: var(--color-white);
+    border-color: #25d366;
+  }
+
+  .btn-phone-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: 42px;
+    padding: var(--space-2) var(--space-4);
+    background-color: var(--color-mist);
+    color: var(--color-pine);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-small);
+    font-weight: 600;
+    text-decoration: none;
+    transition: all var(--transition-fast);
+  }
+
+  .btn-phone-action:hover {
+    border-color: var(--color-brass);
+    color: var(--color-brass-text);
+  }
+
+  /* Verified OTA Badges */
+  .verified-ota-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding-block-start: var(--space-3);
+    border-block-start: 1px solid var(--color-stone);
+  }
+
+  .ota-title {
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+    color: var(--color-muted);
+  }
+
+  .ota-badges-wrap {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+  }
+
+  .ota-badge-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background-color: var(--color-mist);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-ink);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+  }
+
+  .ota-badge-pill:hover {
+    border-color: var(--color-brass);
+    background-color: var(--color-white);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  }
+
+  /* Right Column: Live Interactive Google Map */
+  .card-map-panel {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--color-mist);
+    min-height: 480px;
+    position: relative;
+  }
+
+  @media (max-width: 959px) {
+    .card-map-panel {
+      min-height: 400px;
+    }
+  }
+
+  /* Map Top Bar */
+  .map-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-3) var(--space-4);
+    background-color: var(--color-white);
+    border-block-end: 1px solid var(--color-border);
+  }
+
+  .map-live-status {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+    animation: livePulse 2s infinite;
+  }
+
+  @keyframes livePulse {
+    0% { transform: scale(0.95); opacity: 0.8; }
+    50% { transform: scale(1.15); opacity: 1; }
+    100% { transform: scale(0.95); opacity: 0.8; }
+  }
+
+  .live-label {
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+    color: var(--color-pine);
+  }
+
+  .map-fullscreen-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+    color: var(--color-brass-text);
+    text-decoration: none;
+    padding: 3px 8px;
+    border-radius: var(--radius-sm);
+    transition: background-color var(--transition-fast);
+  }
+
+  .map-fullscreen-link:hover {
+    background-color: var(--color-mist);
+    text-decoration: underline;
+  }
+
+  /* Map Iframe Container */
+  .map-iframe-container {
+    position: relative;
+    flex: 1;
+    width: 100%;
+    min-height: 380px;
+    background-color: #e5e3df;
+  }
+
+  .google-map-iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  /* Map Bottom Bar */
+  .map-bottom-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    background-color: var(--color-white);
+    border-block-start: 1px solid var(--color-border);
+    font-size: var(--font-size-caption);
+  }
+
+  .map-hint-text {
+    color: var(--color-muted);
+  }
+
+  .map-location-tag {
+    font-weight: 600;
+    color: var(--color-pine);
+  }
+</style>
+

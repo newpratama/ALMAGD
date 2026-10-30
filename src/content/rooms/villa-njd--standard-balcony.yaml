@@ -1,0 +1,30 @@
+id: villa-njd--standard-balcony
+venueId: villa-njd
+slug: standard-balcony
+name: Standard With Balcony
+kind: room
+summary:
+  id: Kamar nyaman dengan balkon pribadi dan pemandangan.
+  en: Comfortable room with private balcony and scenic views.
+  ar: غرفة مريحة مع شرفة خاصة وإطلالة مميزة.
+sizeM2: null
+maxGuests: null
+bedrooms: 1
+beds:
+  id: 1 tempat tidur
+  en: 1 bed
+  ar: سرير واحد
+bathrooms: 1
+features:
+  - balcony
+  - hot-water
+  - tv
+images:
+  - /images/rooms/villa-njd--standard-balcony.jpg
+  - /images/rooms/villa-njd-bathroom.jpg
+sortOrder: 1
+status: draft
+fieldStatus:
+  name: PUBLIC_SOURCE_ONLY
+  sizeM2: SUSPICIOUS
+  features: PUBLIC_SOURCE_ONLY

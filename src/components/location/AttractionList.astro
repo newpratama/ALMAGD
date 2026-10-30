@@ -1,0 +1,193 @@
+---
+import Icon from '../primitives/Icon.astro';
+import type { Locale } from '../../lib/i18n';
+
+interface Distance {
+  venueId: string;
+  km: number;
+  status: string;
+}
+
+interface Attraction {
+  id: string;
+  name: string;
+  category: string;
+  description: Record<Locale, string>;
+  distances?: Distance[];
+}
+
+interface Props {
+  attractions: Attraction[];
+  locale: Locale;
+  venueId?: string;
+  title?: string;
+  subtitle?: string;
+}
+
+const { attractions = [], locale, venueId, title, subtitle } = Astro.props;
+
+const defaultTitle = {
+  id: 'Destinasi Sekitar Puncak',
+  en: 'Nearby Attractions in Puncak',
+  ar: 'معالم سياحية قريبة في بونشاك',
+}[locale];
+
+const defaultSubtitle = {
+  id: 'Kunjungi tempat wisata dan rekreasi populer di sekitar kawasan akomodasi kami.',
+  en: 'Explore popular leisure and nature destinations around our properties.',
+  ar: 'استكشفوا أشهر المعالم الطبيعية والترفيهية القريبة من منشآتنا.',
+}[locale];
+
+function getCategoryIcon(cat: string): string {
+  switch (cat) {
+    case 'park': return 'mountain';
+    case 'nature': return 'sun';
+    case 'food': return 'utensils';
+    default: return 'map-pin';
+  }
+}
+---
+
+{attractions.length > 0 && (
+  <section class="attractions-section" id="attractions" aria-labelledby="attractions-title">
+    <div class="attractions-header">
+      <h2 id="attractions-title" class="attractions-title">{title || defaultTitle}</h2>
+      <p class="attractions-subtitle">{subtitle || defaultSubtitle}</p>
+    </div>
+
+    <div class="attractions-grid">
+      {attractions.map((att) => {
+        const desc = att.description[locale] || att.description.en || att.description.id;
+        const iconName = getCategoryIcon(att.category);
+        const distanceObj = venueId && att.distances
+          ? att.distances.find((d) => d.venueId === venueId)
+          : att.distances && att.distances.length > 0 ? att.distances[0] : null;
+
+        return (
+          <article class="attraction-card">
+            <div class="attraction-icon-wrap" aria-hidden="true">
+              <Icon name={iconName} size={22} />
+            </div>
+
+            <div class="attraction-content">
+              <div class="attraction-title-row">
+                <h3 class="attraction-name">{att.name}</h3>
+                {distanceObj && (
+                  <span class="attraction-distance" dir="ltr">
+                    ± {distanceObj.km} km
+                  </span>
+                )}
+              </div>
+              <p class="attraction-desc">{desc}</p>
+            </div>
+          </article>
+        );
+      })}
+    </div>
+  </section>
+)}
+
+<style>
+  .attractions-section {
+    padding-block: var(--space-6);
+  }
+
+  .attractions-header {
+    margin-block-end: var(--space-5);
+  }
+
+  .attractions-title {
+    font-family: var(--font-display);
+    font-size: var(--font-size-h2);
+    color: var(--color-pine);
+    margin: 0 0 var(--space-2) 0;
+  }
+
+  .attractions-subtitle {
+    font-size: var(--font-size-small);
+    color: var(--color-muted);
+    margin: 0;
+  }
+
+  .attractions-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+
+  @media (min-width: 640px) {
+    .attractions-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .attractions-grid {
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-5);
+    }
+  }
+
+  .attraction-card {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+    background-color: var(--color-mist);
+    border: 1px solid var(--color-stone);
+    border-radius: var(--radius-md);
+    transition: border-color var(--transition-fast);
+  }
+
+  .attraction-card:hover {
+    border-color: var(--color-brass-300);
+  }
+
+  .attraction-icon-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    background-color: var(--color-stone);
+    color: var(--color-brass);
+    flex-shrink: 0;
+  }
+
+  .attraction-content {
+    flex: 1;
+  }
+
+  .attraction-title-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin-block-end: var(--space-1);
+  }
+
+  .attraction-name {
+    font-size: var(--font-size-body);
+    font-weight: 600;
+    color: var(--color-pine);
+    margin: 0;
+  }
+
+  .attraction-distance {
+    font-size: var(--font-size-caption);
+    font-weight: 700;
+    color: var(--color-brass-text);
+    background-color: var(--color-stone);
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    white-space: nowrap;
+  }
+
+  .attraction-desc {
+    font-size: var(--font-size-small);
+    color: var(--color-muted);
+    line-height: 1.4;
+    margin: 0;
+  }
+</style>

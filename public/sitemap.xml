@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <!-- Home -->
+  <url>
+    <loc>https://almagd.id/</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/"/>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://almagd.id/en</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/"/>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://almagd.id/ar</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/"/>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- About -->
+  <url>
+    <loc>https://almagd.id/about</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/about"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en/about"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar/about"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/about"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://almagd.id/en/about</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/about"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en/about"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar/about"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/about"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://almagd.id/ar/about</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/about"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en/about"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar/about"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/about"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Properties Index -->
+  <url>
+    <loc>https://almagd.id/properties</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/properties"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en/properties"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar/properties"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/properties"/>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://almagd.id/en/properties</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/properties"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en/properties"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar/properties"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/properties"/>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://almagd.id/ar/properties</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/properties"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en/properties"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar/properties"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/properties"/>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- New Pratama Villa -->
+  <url>
+    <loc>https://almagd.id/properties/new-pratama</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/properties/new-pratama"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en/properties/new-pratama"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar/properties/new-pratama"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/properties/new-pratama"/>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://almagd.id/en/properties/new-pratama</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/properties/new-pratama"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en/properties/new-pratama"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar/properties/new-pratama"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/properties/new-pratama"/>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://almagd.id/ar/properties/new-pratama</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/properties/new-pratama"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en/properties/new-pratama"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar/properties/new-pratama"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/properties/new-pratama"/>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Villa NJD -->
+  <url>
+    <loc>https://almagd.id/properties/villa-njd</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/properties/villa-njd"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en/properties/villa-njd"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar/properties/villa-njd"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/properties/villa-njd"/>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://almagd.id/en/properties/villa-njd</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/properties/villa-njd"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en/properties/villa-njd"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar/properties/villa-njd"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/properties/villa-njd"/>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://almagd.id/ar/properties/villa-njd</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/properties/villa-njd"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en/properties/villa-njd"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar/properties/villa-njd"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/properties/villa-njd"/>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- NJD Cafe -->
+  <url>
+    <loc>https://almagd.id/dining/njd-cafe</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/dining/njd-cafe"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en/dining/njd-cafe"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar/dining/njd-cafe"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/dining/njd-cafe"/>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://almagd.id/en/dining/njd-cafe</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/dining/njd-cafe"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en/dining/njd-cafe"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar/dining/njd-cafe"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/dining/njd-cafe"/>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://almagd.id/ar/dining/njd-cafe</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/dining/njd-cafe"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en/dining/njd-cafe"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar/dining/njd-cafe"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/dining/njd-cafe"/>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- NJD Cafe Menu -->
+  <url>
+    <loc>https://almagd.id/dining/njd-cafe/menu</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/dining/njd-cafe/menu"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en/dining/njd-cafe/menu"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar/dining/njd-cafe/menu"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/dining/njd-cafe/menu"/>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://almagd.id/en/dining/njd-cafe/menu</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/dining/njd-cafe/menu"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en/dining/njd-cafe/menu"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar/dining/njd-cafe/menu"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/dining/njd-cafe/menu"/>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://almagd.id/ar/dining/njd-cafe/menu</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/dining/njd-cafe/menu"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en/dining/njd-cafe/menu"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar/dining/njd-cafe/menu"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/dining/njd-cafe/menu"/>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Gallery -->
+  <url>
+    <loc>https://almagd.id/gallery</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/gallery"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en/gallery"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar/gallery"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/gallery"/>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://almagd.id/en/gallery</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/gallery"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en/gallery"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar/gallery"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/gallery"/>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://almagd.id/ar/gallery</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/gallery"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en/gallery"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar/gallery"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/gallery"/>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Location -->
+  <url>
+    <loc>https://almagd.id/location</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/location"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en/location"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar/location"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/location"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://almagd.id/en/location</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/location"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en/location"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar/location"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/location"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://almagd.id/ar/location</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/location"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en/location"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar/location"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/location"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Contact -->
+  <url>
+    <loc>https://almagd.id/contact</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/contact"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en/contact"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar/contact"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/contact"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://almagd.id/en/contact</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/contact"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en/contact"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar/contact"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/contact"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://almagd.id/ar/contact</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/contact"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en/contact"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar/contact"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/contact"/>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Privacy -->
+  <url>
+    <loc>https://almagd.id/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/privacy"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en/privacy"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar/privacy"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/privacy"/>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://almagd.id/en/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/privacy"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en/privacy"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar/privacy"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/privacy"/>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://almagd.id/ar/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="id" href="https://almagd.id/privacy"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://almagd.id/en/privacy"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://almagd.id/ar/privacy"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://almagd.id/privacy"/>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+</urlset>

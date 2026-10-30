@@ -1,0 +1,152 @@
+---
+import Icon from '../primitives/Icon.astro';
+import type { Locale } from '../../lib/i18n';
+
+interface FAQItem {
+  id?: string;
+  question: Record<Locale, string>;
+  answer: Record<Locale, string>;
+}
+
+interface Props {
+  faqs?: FAQItem[];
+  locale: Locale;
+  title?: string;
+  subtitle?: string;
+}
+
+const { faqs = [], locale, title, subtitle } = Astro.props;
+
+const defaultTitles = {
+  id: 'Pertanyaan yang Sering Diajukan',
+  en: 'Frequently Asked Questions',
+  ar: 'الأسئلة الشائعة',
+};
+
+const defaultSubtitles = {
+  id: 'Jawaban atas pertanyaan umum seputar properti dan layanan kami.',
+  en: 'Answers to common questions about our property and services.',
+  ar: 'إجابات على الأسئلة الشائعة حول المنشأة وخدماتنا.',
+};
+
+const sectionTitle = title || defaultTitles[locale];
+const sectionSubtitle = subtitle || defaultSubtitles[locale];
+---
+
+{faqs.length > 0 && (
+  <section class="faq-section" id="faq" aria-labelledby="faq-title">
+    <div class="faq-header">
+      <h2 id="faq-title" class="faq-title">{sectionTitle}</h2>
+      <p class="faq-subtitle">{sectionSubtitle}</p>
+    </div>
+
+    <div class="faq-accordion-container">
+      {faqs.map((item, index) => {
+        const q = item.question[locale] || item.question.en || item.question.id;
+        const a = item.answer[locale] || item.answer.en || item.answer.id;
+        return (
+          <details class="faq-item" open={index === 0}>
+            <summary class="faq-summary">
+              <span class="faq-question">{q}</span>
+              <span class="faq-chevron" aria-hidden="true">
+                <Icon name="chevron-down" size={20} />
+              </span>
+            </summary>
+            <div class="faq-answer">
+              <p>{a}</p>
+            </div>
+          </details>
+        );
+      })}
+    </div>
+  </section>
+)}
+
+<style>
+  .faq-section {
+    padding-block: var(--space-6);
+  }
+
+  .faq-header {
+    margin-block-end: var(--space-5);
+  }
+
+  .faq-title {
+    font-family: var(--font-display);
+    font-size: var(--font-size-h2);
+    color: var(--color-pine);
+    margin-block-end: var(--space-2);
+  }
+
+  .faq-subtitle {
+    font-size: var(--font-size-small);
+    color: var(--color-muted);
+  }
+
+  .faq-accordion-container {
+    max-width: 68ch;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .faq-item {
+    background-color: var(--color-mist);
+    border: 1px solid var(--color-stone);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: border-color var(--transition-fast);
+  }
+
+  .faq-item[open] {
+    border-color: var(--color-brass-300);
+    background-color: var(--color-white);
+  }
+
+  .faq-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+    cursor: pointer;
+    font-size: var(--font-size-body);
+    font-weight: 600;
+    color: var(--color-pine);
+    list-style: none;
+    user-select: none;
+  }
+
+  .faq-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq-summary:focus-visible {
+    outline: 2px solid var(--color-brass);
+    outline-offset: -2px;
+  }
+
+  .faq-chevron {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-brass);
+    transition: transform var(--transition-fast);
+    flex-shrink: 0;
+  }
+
+  .faq-item[open] .faq-chevron {
+    transform: rotate(180deg);
+  }
+
+  .faq-answer {
+    padding: 0 var(--space-5) var(--space-5);
+    color: var(--color-ink);
+    font-size: var(--font-size-body);
+    line-height: var(--line-height-body);
+  }
+
+  .faq-answer p {
+    margin: 0;
+  }
+</style>

@@ -1,0 +1,30 @@
+id: villa-njd--deluxe-balcony
+venueId: villa-njd
+slug: deluxe-balcony
+name: Deluxe With Balcony
+kind: room
+summary:
+  id: Kamar deluxe dengan balkon pribadi dan area lebih lega.
+  en: Deluxe room with private balcony and extra space.
+  ar: غرفة ديلوكس مع شرفة خاصة ومساحة رحبة.
+sizeM2: null
+maxGuests: null
+bedrooms: 1
+beds:
+  id: 1 tempat tidur besar
+  en: 1 large bed
+  ar: سرير كبير
+bathrooms: 1
+features:
+  - balcony
+  - hot-water
+  - tv
+images:
+  - /images/rooms/villa-njd--deluxe-balcony.jpg
+  - /images/rooms/villa-njd-bathroom.jpg
+sortOrder: 2
+status: draft
+fieldStatus:
+  name: PUBLIC_SOURCE_ONLY
+  sizeM2: CONFLICT
+  features: PUBLIC_SOURCE_ONLY

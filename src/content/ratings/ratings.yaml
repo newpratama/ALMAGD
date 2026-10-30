@@ -1,0 +1,10 @@
+ratings:
+  - id: njd-traveloka
+    venueId: villa-njd
+    platform: traveloka
+    score: 8.9
+    scale: 10
+    count: 717
+    url: https://www.traveloka.com/id-id/hotel/indonesia/villa-njd-9000000927251
+    asOf: "2026-10"
+    approved: false

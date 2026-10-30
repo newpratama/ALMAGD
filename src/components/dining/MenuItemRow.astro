@@ -1,0 +1,192 @@
+---
+import Icon from '../primitives/Icon.astro';
+import { buildWhatsAppLink } from '../../lib/whatsapp';
+import type { Locale } from '../../lib/i18n';
+
+interface MenuItem {
+  id: string;
+  slug: string;
+  name: string;
+  altName?: Record<Locale, string>;
+  price?: number | null;
+  currency?: string;
+  status: string;
+}
+
+interface Props {
+  item: MenuItem;
+  locale: Locale;
+}
+
+const { item, locale } = Astro.props;
+
+const altName = item.altName ? (item.altName[locale] || item.altName.en || item.altName.id) : null;
+
+const waLink = buildWhatsAppLink({
+  venue: 'njd_cafe',
+  locale,
+  context: 'item',
+  contextParam: item.name,
+});
+
+const labels = {
+  id: {
+    askPrice: 'Tanyakan harga',
+    inquireItem: 'Tanya via WA',
+  },
+  en: {
+    askPrice: 'Ask for price',
+    inquireItem: 'Ask on WA',
+  },
+  ar: {
+    askPrice: 'اسأل عن السعر',
+    inquireItem: 'استفسار عبر واتساب',
+  },
+}[locale];
+
+function formatPrice(price: number): string {
+  return `Rp ${price.toLocaleString('id-ID')}`;
+}
+---
+
+<article class="menu-item-row" data-item-id={item.id}>
+  <div class="item-info">
+    <div class="item-title-row">
+      <h3 class="item-name">
+        <bdi dir="ltr">{item.name}</bdi>
+      </h3>
+      <span class="item-dots" aria-hidden="true"></span>
+      <div class="item-price-wrap">
+        {item.price !== null && item.price !== undefined ? (
+          <span class="item-price" dir="ltr">{formatPrice(item.price)}</span>
+        ) : (
+          <span class="item-price-ask">{labels.askPrice}</span>
+        )}
+      </div>
+    </div>
+
+    {altName && altName !== item.name && (
+      <p class="item-alt-name">{altName}</p>
+    )}
+  </div>
+
+  <div class="item-action">
+    <a
+      href={waLink}
+      target="_blank"
+      rel="noopener"
+      class="item-wa-btn"
+      aria-label={`${labels.inquireItem}: ${item.name}`}
+      title={`${labels.inquireItem}: ${item.name}`}
+      data-item-id={item.id}
+    >
+      <Icon name="whatsapp" size={16} />
+      <span class="wa-btn-text">{labels.inquireItem}</span>
+    </a>
+  </div>
+</article>
+
+<style>
+  .menu-item-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-3) 0;
+    border-bottom: 1px dashed var(--color-stone);
+  }
+
+  .item-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .item-title-row {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+  }
+
+  .item-name {
+    font-size: var(--font-size-body);
+    font-weight: 600;
+    color: var(--color-pine);
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  .item-dots {
+    flex: 1;
+    border-bottom: 1px dotted var(--color-border);
+    margin-bottom: 4px;
+    min-width: 16px;
+  }
+
+  .item-price-wrap {
+    flex-shrink: 0;
+  }
+
+  .item-price {
+    font-size: var(--font-size-body);
+    font-weight: 700;
+    color: var(--color-pine-700);
+    white-space: nowrap;
+  }
+
+  .item-price-ask {
+    font-size: var(--font-size-caption);
+    font-weight: 500;
+    color: var(--color-brass-text);
+    background-color: var(--color-mist);
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    white-space: nowrap;
+  }
+
+  .item-alt-name {
+    margin: var(--space-1) 0 0 0;
+    font-size: var(--font-size-small);
+    color: var(--color-muted);
+    line-height: 1.4;
+  }
+
+  .item-action {
+    flex-shrink: 0;
+    margin-inline-start: var(--space-2);
+  }
+
+  .item-wa-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-height: 36px;
+    min-width: 36px;
+    padding: 4px 10px;
+    background-color: var(--color-mist);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    color: var(--color-pine);
+    font-size: var(--font-size-caption);
+    font-weight: 500;
+    text-decoration: none;
+    transition: all var(--transition-fast);
+  }
+
+  .item-wa-btn:hover {
+    background-color: var(--color-wa);
+    color: var(--color-wa-text);
+    border-color: var(--color-wa);
+  }
+
+  @media (max-width: 639px) {
+    .wa-btn-text {
+      display: none;
+    }
+    .item-wa-btn {
+      padding: 0;
+      width: 36px;
+      height: 36px;
+    }
+  }
+</style>
