@@ -166,6 +166,9 @@ export const RoomCalendar: React.FC<RoomCalendarProps> = ({
       }
     });
 
+    if (!unit.active) {
+      return { color: 'bg-amber-500', title: lang === 'ar' ? 'إغلاق صيانة' : 'Tutup Pemeliharaan' };
+    }
     if (!todayItem) return { color: 'bg-success', title: t('calendar.availableToday') };
     if (todayItem.block_id) return { color: 'bg-muted/60', title: t('unitStatus.blocked') };
     if (todayItem.bookings?.check_in === today) {
@@ -327,7 +330,16 @@ export const RoomCalendar: React.FC<RoomCalendarProps> = ({
 
                       {isVilla && (
                         <span className="text-[10px] bg-gold/15 text-gold-text px-1.5 py-0.2 rounded font-semibold shrink-0">
-                          4 Kamar
+                          {unit.active ? (
+                            `${units.filter((u) => u.parent_id === unit.id).length || 4} Kamar`
+                          ) : (
+                            <span className="text-amber-800 font-bold">{lang === 'ar' ? 'صيانة' : 'Maintenance'}</span>
+                          )}
+                        </span>
+                      )}
+                      {!isVilla && !unit.active && (
+                        <span className="text-[9px] bg-amber-50 text-amber-800 border border-amber-300 px-1 py-0.2 rounded font-semibold shrink-0">
+                          {lang === 'ar' ? 'صيانة' : 'Maintenance'}
                         </span>
                       )}
                     </div>

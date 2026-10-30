@@ -21,6 +21,7 @@ import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { StatusBadge } from '../components/booking/StatusBadge';
 import { PaymentStatusBadge } from '../components/booking/PaymentStatusBadge';
 import { useToast } from '../components/ui/Toast';
+import { useUnits } from '../api/units';
 
 export const TodayPage: React.FC = () => {
   const { role } = useAuth();
@@ -84,10 +85,21 @@ export const TodayPage: React.FC = () => {
     },
   });
 
-  // 4. Occupied rooms count from room_occupancy
+  // 4. Units & Operational Rooms (Excludes units closed for maintenance)
+  const { data: allUnits = [] } = useUnits();
+  const totalOperationalRooms = useMemo(() => {
+    const activeRooms = allUnits.filter((u) => u.kind === 'room' && u.active);
+    return activeRooms.length > 0 ? activeRooms.length : 66;
+  }, [allUnits]);
+
+  const activeRoomIds = useMemo(() => {
+    return new Set(allUnits.filter((u) => u.kind === 'room' && u.active).map((u) => u.id));
+  }, [allUnits]);
+
+  // Occupied rooms count from room_occupancy for active operational rooms only
   const nextDate = addDaysISO(selectedDate, 1);
   const { data: occupiedRoomsCount = 0 } = useQuery({
-    queryKey: ['today-occupancy', selectedDate],
+    queryKey: ['today-occupancy', selectedDate, Array.from(activeRoomIds).join(',')],
     queryFn: async () => {
       if (!supabase) return 0;
       const { data, error } = await supabase
@@ -96,7 +108,11 @@ export const TodayPage: React.FC = () => {
         .not('booking_id', 'is', null)
         .overlaps('stay', `[${selectedDate},${nextDate})`);
       if (error) throw error;
-      const unique = new Set((data || []).map((d) => d.room_id));
+      const unique = new Set(
+        (data || [])
+          .map((d) => d.room_id)
+          .filter((id) => (activeRoomIds.size > 0 ? activeRoomIds.has(id) : true))
+      );
       return unique.size;
     },
   });
@@ -201,7 +217,9 @@ export const TodayPage: React.FC = () => {
   const otherTotal = todayPayments.filter((p) => p.method === 'other').reduce((sum, p) => sum + Number(p.amount), 0);
 
   const totalOutstanding = unpaidBookings.reduce((sum, b) => sum + Number(b.balance || 0), 0);
-  const occupancyPercent = Math.round((occupiedRoomsCount / 72) * 100);
+  const occupancyPercent = totalOperationalRooms > 0
+    ? Math.round((occupiedRoomsCount / totalOperationalRooms) * 100)
+    : 0;
 
   // Filter occupied units
   const occupiedUnits = useMemo(() => {
@@ -230,7 +248,7 @@ export const TodayPage: React.FC = () => {
     // Sheet 1: Ringkasan Harian (Summary)
     const summaryRows = [
       { 'Parameter': 'Tanggal / التاريخ', 'Nilai': selectedDate },
-      { 'Parameter': 'Tingkat Hunian / نسبة الإشغال', 'Nilai': `${occupancyPercent}% (${occupiedRoomsCount} / 72)` },
+      { 'Parameter': 'Tingkat Hunian / نسبة الإشغال', 'Nilai': `${occupancyPercent}% (${occupiedRoomsCount} / ${totalOperationalRooms})` },
       { 'Parameter': 'Kedatangan / وصول اليوم', 'Nilai': arrivals.length },
       { 'Parameter': 'Keberangkatan / مغادرة اليوم', 'Nilai': departures.length },
       { 'Parameter': 'Tamu Menginap / الوحدات المشغولة', 'Nilai': inHouse.length },
@@ -321,7 +339,7 @@ export const TodayPage: React.FC = () => {
           </div>
           <div className="text-end text-xs text-muted">
             <div>{t('report.date')}: <span className="font-bold text-ink">{selectedDate}</span></div>
-            <div>{t('stats.occupancy')}: <span className="font-bold text-navy">{occupiedRoomsCount} / 72 ({occupancyPercent}%)</span></div>
+            <div>{t('stats.occupancy')}: <span className="font-bold text-navy">{occupiedRoomsCount} / {totalOperationalRooms} ({occupancyPercent}%)</span></div>
           </div>
         </div>
       </div>
@@ -386,7 +404,7 @@ export const TodayPage: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title={t('stats.occupancy')}
-          value={`${occupiedRoomsCount} / 72`}
+          value={`${occupiedRoomsCount} / ${totalOperationalRooms}`}
           subtitle={`${occupancyPercent}%`}
           variant="gold"
         />
