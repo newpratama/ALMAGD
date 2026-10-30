@@ -36,34 +36,34 @@ export const Sidebar: React.FC = () => {
   return (
     <aside className="hidden md:flex flex-col w-64 bg-gradient-to-b from-[#00132b] via-[#001938] to-[#001124] text-white fixed inset-y-0 start-0 z-30 border-e border-white/10 shadow-2xl select-none">
       {/* Brand Header */}
-      <div className="p-4 border-b border-white/10 flex flex-col items-center text-center">
-        {/* 1. Primary Company Logo (ALMAGD) across full width */}
-        <div className="w-full flex flex-col items-center justify-center py-2 px-3 rounded-2xl bg-white/[0.04] border border-white/10 shadow-inner group">
+      <div className="px-3.5 py-3 border-b border-white/10 flex flex-col items-center text-center">
+        {/* 1. Primary Company Logo (ALMAGD) - Compact & Elegant */}
+        <div className="w-full flex flex-col items-center justify-center py-1.5 px-2.5 rounded-xl bg-white/[0.03] border border-white/10 shadow-inner group">
           <img
             src={`${import.meta.env.BASE_URL}logo-almagd-light.png`}
             alt="ALMAGD"
-            className="w-full max-w-[190px] h-auto max-h-12 object-contain drop-shadow transition-transform duration-300 group-hover:scale-105"
+            className="w-full max-w-[130px] h-auto max-h-8 object-contain drop-shadow transition-transform duration-300 group-hover:scale-105"
             onError={(e) => {
               (e.currentTarget as HTMLImageElement).src = `${import.meta.env.BASE_URL}logo-almagd.png`;
             }}
           />
-          <div className="flex items-center justify-center gap-1.5 mt-1.5">
-            <h1 className="font-extrabold text-xs tracking-widest text-white/90 font-sans uppercase">
+          <div className="flex items-center justify-center gap-1.5 mt-1">
+            <h1 className="font-extrabold text-[11px] tracking-widest text-white/90 font-sans uppercase">
               ALMAGD
             </h1>
-            <span className="inline-flex items-center px-1.5 py-0.5 text-[9px] font-bold rounded-md bg-gold/25 text-gold-light border border-gold/40">
+            <span className="inline-flex items-center px-1.5 py-0.2 text-[8px] font-bold rounded bg-gold/25 text-gold-light border border-gold/40">
               PRO
             </span>
           </div>
         </div>
 
         {/* Subtle gold separator */}
-        <div className="h-px w-28 bg-gradient-to-r from-transparent via-gold/40 to-transparent my-3" />
+        <div className="h-px w-20 bg-gradient-to-r from-transparent via-gold/30 to-transparent my-2" />
 
-        {/* 2. Complex Logo (New Pratama) directly under the company logo */}
+        {/* 2. Complex Logo (New Pratama) - Refined Size under company logo */}
         <div className="flex flex-col items-center text-center w-full">
           <div className="relative group/emblem">
-            <div className="h-24 w-24 rounded-full bg-white p-1.5 shadow-xl shadow-black/50 ring-2 ring-gold/50 flex items-center justify-center transition-all duration-300 group-hover/emblem:scale-105 group-hover/emblem:ring-gold group-hover/emblem:shadow-gold/20">
+            <div className="h-16 w-16 rounded-full bg-white p-1 shadow-md shadow-black/40 ring-1.5 ring-gold/50 flex items-center justify-center transition-all duration-300 group-hover/emblem:scale-105 group-hover/emblem:ring-gold group-hover/emblem:shadow-gold/20">
               <img
                 src={`${import.meta.env.BASE_URL}a_clean_isolated_logo_graphic_on_a_transparent_bac.png`}
                 alt="New Pratama Complex"
@@ -75,22 +75,22 @@ export const Sidebar: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-2.5 text-center w-full">
-            <p className="text-xs font-bold text-white tracking-wide">
+          <div className="mt-1.5 text-center w-full">
+            <p className="text-[11px] font-bold text-white tracking-wide">
               {isAr ? 'مجمع نيو براتاما الفندقي' : 'New Pratama Villa Complex'}
             </p>
-            <p className="text-[11px] text-slate-300 font-medium mt-0.5">
+            <p className="text-[9.5px] text-slate-300 font-medium mt-0.5">
               {isAr ? 'نظام الحجوزات وإدارة العمليات' : 'Sistem Booking & Operasional'}
             </p>
           </div>
         </div>
 
         {/* 3. Live Cloud Sync Indicator */}
-        <div className="mt-3 w-full flex items-center justify-between px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[10px] text-emerald-300">
+        <div className="mt-2.5 w-full flex items-center justify-between px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[9.5px] text-emerald-300">
           <span className="flex items-center gap-1.5">
-            <span className="relative flex h-2 w-2">
+            <span className="relative flex h-1.5 w-1.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
             </span>
             <span className="font-medium">{isAr ? 'مزامنة سحابية حية' : 'Supabase Live'}</span>
           </span>
