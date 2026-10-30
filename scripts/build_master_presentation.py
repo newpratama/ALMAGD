@@ -128,7 +128,7 @@ def build_presentation():
 
         for idx, (st_t, st_b) in enumerate(steps, 1):
             p_s = tf_r.add_paragraph()
-            p_s.text = f"[{idx}] {st_t}"
+            p_s.text = f"الخطوة {idx}: {st_t}"
             p_s.font.size = Pt(11)
             p_s.font.bold = True
             p_s.font.name = FONT_AR
@@ -203,7 +203,7 @@ def build_presentation():
 
         for idx, (st_t, st_b) in enumerate(steps, 1):
             p_s = tf_r.add_paragraph()
-            p_s.text = f"[{idx}] {st_t}"
+            p_s.text = f"الخطوة {idx}: {st_t}"
             p_s.font.size = Pt(10.5)
             p_s.font.bold = True
             p_s.font.name = FONT_AR
