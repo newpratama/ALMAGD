@@ -298,9 +298,9 @@ export const BookingDetailPage: React.FC = () => {
           variant="success"
         />
         <StatCard
-          title={t('booking.balanceAmount')}
-          value={formatIDR(Number(booking.balance || 0))}
-          variant={Number(booking.balance || 0) > 0 ? 'danger' : 'default'}
+          title={booking.status === 'cancelled' && Number(booking.paid || 0) > 0 ? t('booking.refundDue') : t('booking.balanceAmount')}
+          value={booking.status === 'cancelled' ? (Number(booking.paid || 0) > 0 ? formatIDR(Number(booking.paid)) : '—') : formatIDR(Number(booking.balance || 0))}
+          variant={booking.status === 'cancelled' ? (Number(booking.paid || 0) > 0 ? 'gold' : 'default') : Number(booking.balance || 0) > 0 ? 'danger' : 'default'}
         />
       </div>
 

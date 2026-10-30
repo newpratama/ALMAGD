@@ -215,6 +215,7 @@ export const ar = {
     totalAmount: 'الإجمالي',
     paidAmount: 'المدفوع',
     balanceAmount: 'المتبقي',
+    refundDue: 'مستحق استرداد للنزيل',
     paymentSuccess: 'تم تسجيل الدفعة بنجاح.',
     bookingSaved: 'تم حفظ الحجز بنجاح.',
     printReceipt: 'طباعة إيصال الحجز',

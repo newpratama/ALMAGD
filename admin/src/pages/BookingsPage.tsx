@@ -309,7 +309,15 @@ export const BookingsPage: React.FC = () => {
                       {formatIDR(Number(booking.total_amount || 0))}
                     </Td>
                     <Td className="text-xs font-semibold">
-                      {Number(booking.balance || 0) > 0 ? (
+                      {booking.status === 'cancelled' ? (
+                        Number(booking.paid || 0) > 0 ? (
+                          <span className="text-amber-600 font-medium" title={t('booking.refundDue')}>
+                            ↩ {formatIDR(Number(booking.paid))}
+                          </span>
+                        ) : (
+                          <span className="text-muted font-normal">—</span>
+                        )
+                      ) : Number(booking.balance || 0) > 0 ? (
                         <span className="text-danger">
                           {formatIDR(Number(booking.balance || 0))}
                         </span>

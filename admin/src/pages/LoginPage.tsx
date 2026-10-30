@@ -37,7 +37,7 @@ export const LoginPage: React.FC = () => {
       let emailToTry = inputStr;
       if (inputStr === 'reception') {
         emailToTry = 'reception@almagd.test';
-      } else if (inputStr === 'manager') {
+      } else if (inputStr === 'manager' || inputStr === 'admin') {
         emailToTry = 'manager@almagd.test';
       }
 
@@ -46,10 +46,22 @@ export const LoginPage: React.FC = () => {
         password,
       });
 
-      // Seamless fallback for pratama.res26@gmail.com until email confirmation link is verified
+      // Seamless fallback for reception until email confirmation link is verified
       if (error && (inputStr === 'pratama.res26@gmail.com' || inputStr === 'reception')) {
         const fallback = await supabase.auth.signInWithPassword({
           email: 'reception@almagd.test',
+          password,
+        });
+        if (!fallback.error && fallback.data?.user) {
+          data = fallback.data;
+          error = null;
+        }
+      }
+
+      // Seamless fallback for manager / admin until email confirmation link is verified
+      if (error && (inputStr === 'newpratama25@gmail.com' || inputStr === 'admin' || inputStr === 'manager')) {
+        const fallback = await supabase.auth.signInWithPassword({
+          email: 'manager@almagd.test',
           password,
         });
         if (!fallback.error && fallback.data?.user) {
@@ -137,7 +149,7 @@ export const LoginPage: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="block w-full rounded-lg border border-line px-3 py-2 text-ink shadow-sm placeholder:text-muted/60 focus:border-navy focus:outline-none focus:ring-1 focus:ring-navy sm:text-sm text-start"
-                placeholder="pratama.res26@gmail.com"
+                placeholder="newpratama25@gmail.com / pratama.res26@gmail.com"
               />
             </div>
 

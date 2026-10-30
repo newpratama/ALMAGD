@@ -215,6 +215,7 @@ export const id = {
     totalAmount: 'Total',
     paidAmount: 'Dibayar',
     balanceAmount: 'Sisa',
+    refundDue: 'Pengembalian Dana (Refund)',
     paymentSuccess: 'Pembayaran berhasil disimpan.',
     bookingSaved: 'Booking berhasil disimpan.',
     printReceipt: 'Cetak Bukti / Kuitansi',
