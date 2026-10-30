@@ -290,13 +290,17 @@ def build_presentation():
     f1.line.color.rgb = C_GOLD
     f1.line.width = Pt(2)
 
-    tb = s1.shapes.add_textbox(Inches(1.2), Inches(1.4), Inches(10.9), Inches(4.8))
+    logo_path = "admin/public/logo-almagd-light.png"
+    if os.path.exists(logo_path):
+        s1.shapes.add_picture(logo_path, Inches(5.166), Inches(1.15), width=Inches(3.0))
+
+    tb = s1.shapes.add_textbox(Inches(1.2), Inches(2.35), Inches(10.9), Inches(4.1))
     tf = tb.text_frame
     tf.word_wrap = True
 
     p0 = tf.paragraphs[0]
     p0.text = "مجمع نيو براتاما الفندقي · بونشاك | ALMAGD Hospitality"
-    p0.font.size = Pt(15)
+    p0.font.size = Pt(14)
     p0.font.bold = True
     p0.font.name = FONT_AR
     p0.font.color.rgb = C_GOLD
@@ -304,7 +308,7 @@ def build_presentation():
 
     p1 = tf.add_paragraph()
     p1.text = "الدليل التشغيلي المصور لنظام إدارة العمليات الفندقية"
-    p1.font.size = Pt(32)
+    p1.font.size = Pt(30)
     p1.font.bold = True
     p1.font.name = FONT_AR
     p1.font.color.rgb = C_WHITE
@@ -318,7 +322,7 @@ def build_presentation():
     p2.alignment = PP_ALIGN.CENTER
 
     p3 = tf.add_paragraph()
-    p3.text = "\n\nنظام إدارة الحجوزات PMS v1.0 | الرابط الحي: almagd.pages.dev/admin"
+    p3.text = "\nنظام إدارة الحجوزات PMS v1.0 | الرابط الحي: almagd.pages.dev/admin"
     p3.font.size = Pt(13)
     p3.font.bold = True
     p3.font.name = FONT_AR
@@ -342,7 +346,7 @@ def build_presentation():
     ]
     for i, (sec_title, sec_desc) in enumerate(sections):
         row = i // 3
-        col = i % 3
+        col = 2 - (i % 3)  # RTL: column 0 is on the right, column 2 is on the left
         left = Inches(0.8 + col * 3.95)
         top = Inches(1.7 + row * 2.3)
         add_card(s2, left, top, Inches(3.8), Inches(2.1), bg_color=C_WHITE)
@@ -355,12 +359,14 @@ def build_presentation():
         p.font.bold = True
         p.font.name = FONT_AR
         p.font.color.rgb = C_NAVY
+        p.alignment = PP_ALIGN.RIGHT
 
         p_b = tf.add_paragraph()
         p_b.text = f"\n{sec_desc}"
         p_b.font.size = Pt(10)
         p_b.font.name = FONT_AR
         p_b.font.color.rgb = C_SLATE
+        p_b.alignment = PP_ALIGN.RIGHT
 
     add_footer_rule(s2, "تمت برمجة جميع هذه المسارات في النظام لتوفير الحماية المالية والتشغيلية الكاملة للمجمع.")
 
@@ -371,16 +377,18 @@ def build_presentation():
     add_bg(s3, C_BG_OFFWHITE)
     add_header(s3, "مصفوفة الصلاحيات والأدوار (Reception vs Manager)")
 
-    add_card(s3, Inches(0.8), Inches(1.7), Inches(5.6), Inches(4.5), bg_color=C_WHITE)
-    tb_l = s3.shapes.add_textbox(Inches(1.0), Inches(1.85), Inches(5.2), Inches(4.1))
-    tf_l = tb_l.text_frame
-    tf_l.word_wrap = True
-    p = tf_l.paragraphs[0]
+    # Right Card (First read in RTL): Receptionist
+    add_card(s3, Inches(6.8), Inches(1.7), Inches(5.7), Inches(4.5), bg_color=C_WHITE)
+    tb_r = s3.shapes.add_textbox(Inches(6.95), Inches(1.85), Inches(5.4), Inches(4.1))
+    tf_r = tb_r.text_frame
+    tf_r.word_wrap = True
+    p = tf_r.paragraphs[0]
     p.text = "👤 موظف الاستقبال (Reception Pratama)"
     p.font.size = Pt(15)
     p.font.bold = True
     p.font.name = FONT_AR
     p.font.color.rgb = C_BLUE
+    p.alignment = PP_ALIGN.RIGHT
 
     rec_lines = [
         "✅ إنشاء الحجوزات المباشرة وتسكين النزلاء (Check-In)",
@@ -392,22 +400,25 @@ def build_presentation():
         "❌ محجوب: لا يستطيع تعديل أسعار الغرف أو حذف الحجوزات"
     ]
     for line in rec_lines:
-        p_l = tf_l.add_paragraph()
+        p_l = tf_r.add_paragraph()
         p_l.text = line
         p_l.font.size = Pt(10.5)
         p_l.font.name = FONT_AR
         p_l.font.color.rgb = C_SLATE_DARK if "✅" in line else C_CRIMSON
+        p_l.alignment = PP_ALIGN.RIGHT
 
-    add_card(s3, Inches(6.8), Inches(1.7), Inches(5.7), Inches(4.5), bg_color=C_WHITE)
-    tb_r = s3.shapes.add_textbox(Inches(7.0), Inches(1.85), Inches(5.3), Inches(4.1))
-    tf_r = tb_r.text_frame
-    tf_r.word_wrap = True
-    p = tf_r.paragraphs[0]
+    # Left Card: Manager
+    add_card(s3, Inches(0.8), Inches(1.7), Inches(5.7), Inches(4.5), bg_color=C_WHITE)
+    tb_l = s3.shapes.add_textbox(Inches(0.95), Inches(1.85), Inches(5.4), Inches(4.1))
+    tf_l = tb_l.text_frame
+    tf_l.word_wrap = True
+    p = tf_l.paragraphs[0]
     p.text = "⭐ مدير الفندق (Manager Pratama)"
     p.font.size = Pt(15)
     p.font.bold = True
     p.font.name = FONT_AR
     p.font.color.rgb = C_GOLD_DARK
+    p.alignment = PP_ALIGN.RIGHT
 
     mgr_lines = [
         "✅ كافة صلاحيات موظف الاستقبال مضافة إليها إدارة الفندق",
@@ -419,11 +430,12 @@ def build_presentation():
         "✅ تصدير التقارير الرسمية إلى Excel وحذف الحجوزات الملغاة"
     ]
     for line in mgr_lines:
-        p_l = tf_r.add_paragraph()
+        p_l = tf_l.add_paragraph()
         p_l.text = line
         p_l.font.size = Pt(10.5)
         p_l.font.name = FONT_AR
         p_l.font.color.rgb = C_SLATE_DARK
+        p_l.alignment = PP_ALIGN.RIGHT
 
     add_footer_rule(s3, "صلاحيات الاستقبال مخصصة للعمليات اليومية؛ والمسائل المحاسبية والإلغاءات الكبرى من صلاحية المدير.")
 
@@ -832,6 +844,7 @@ def build_presentation():
         p_t.font.size = Pt(12)
         p_t.font.name = FONT_AR
         p_t.font.color.rgb = C_WHITE
+        p_t.alignment = PP_ALIGN.RIGHT
 
     # ==========================================================
     # SLIDE 25: Conclusion & System Access
@@ -839,13 +852,22 @@ def build_presentation():
     s25 = prs.slides.add_slide(blank_layout)
     add_bg(s25, C_NAVY)
 
-    tb = s25.shapes.add_textbox(Inches(1.5), Inches(1.6), Inches(10.3), Inches(4.8))
+    f25 = s25.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(0.8), Inches(11.733), Inches(5.9))
+    f25.fill.solid()
+    f25.fill.fore_color.rgb = C_NAVY_LIGHT
+    f25.line.color.rgb = C_GOLD
+    f25.line.width = Pt(2)
+
+    if os.path.exists(logo_path):
+        s25.shapes.add_picture(logo_path, Inches(5.166), Inches(1.15), width=Inches(3.0))
+
+    tb = s25.shapes.add_textbox(Inches(1.2), Inches(2.4), Inches(10.9), Inches(4.0))
     tf = tb.text_frame
     tf.word_wrap = True
 
     p = tf.paragraphs[0]
     p.text = "معاً نحو إدارة فندقية رائدة وضيافة استثنائية"
-    p.font.size = Pt(30)
+    p.font.size = Pt(28)
     p.font.bold = True
     p.font.name = FONT_AR
     p.font.color.rgb = C_GOLD
@@ -853,7 +875,7 @@ def build_presentation():
 
     p1 = tf.add_paragraph()
     p1.text = "\nمجمع نيو براتاما الفندقي · بونشاك | ALMAGD Hospitality"
-    p1.font.size = Pt(18)
+    p1.font.size = Pt(17)
     p1.font.bold = True
     p1.font.name = FONT_AR
     p1.font.color.rgb = C_WHITE
