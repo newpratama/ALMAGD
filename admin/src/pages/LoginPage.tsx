@@ -33,42 +33,10 @@ export const LoginPage: React.FC = () => {
     setSubmitting(true);
 
     try {
-      const inputStr = email.trim().toLowerCase();
-      let emailToTry = inputStr;
-      if (inputStr === 'reception') {
-        emailToTry = 'reception@almagd.test';
-      } else if (inputStr === 'manager' || inputStr === 'admin') {
-        emailToTry = 'manager@almagd.test';
-      }
-
-      let { data, error } = await supabase.auth.signInWithPassword({
-        email: emailToTry,
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
         password,
       });
-
-      // Seamless fallback for reception until email confirmation link is verified
-      if (error && (inputStr === 'pratama.res26@gmail.com' || inputStr === 'reception')) {
-        const fallback = await supabase.auth.signInWithPassword({
-          email: 'reception@almagd.test',
-          password,
-        });
-        if (!fallback.error && fallback.data?.user) {
-          data = fallback.data;
-          error = null;
-        }
-      }
-
-      // Seamless fallback for manager / admin until email confirmation link is verified
-      if (error && (inputStr === 'newpratama25@gmail.com' || inputStr === 'admin' || inputStr === 'manager')) {
-        const fallback = await supabase.auth.signInWithPassword({
-          email: 'manager@almagd.test',
-          password,
-        });
-        if (!fallback.error && fallback.data?.user) {
-          data = fallback.data;
-          error = null;
-        }
-      }
 
       if (error) {
         setLoginError(friendlyError(error) === 'errors.unknown' ? 'auth.loginFailed' : friendlyError(error));
@@ -143,13 +111,13 @@ export const LoginPage: React.FC = () => {
               <input
                 id="email"
                 name="email"
-                type="text"
-                autoComplete="username email"
+                type="email"
+                autoComplete="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="block w-full rounded-lg border border-line px-3 py-2 text-ink shadow-sm placeholder:text-muted/60 focus:border-navy focus:outline-none focus:ring-1 focus:ring-navy sm:text-sm text-start"
-                placeholder="newpratama25@gmail.com / pratama.res26@gmail.com"
+                placeholder="name@example.com"
               />
             </div>
 
