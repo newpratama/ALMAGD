@@ -31,9 +31,15 @@ export const AppShell: React.FC = () => {
               <img
                 src={`${import.meta.env.BASE_URL}logo-almagd.png`}
                 alt="ALMAGD"
-                className="h-8 w-auto object-contain"
+                className="h-7 w-auto object-contain"
               />
-              <span className="font-bold text-navy text-sm">ALMAGD</span>
+              <span className="h-4 w-px bg-slate-300" aria-hidden="true" />
+              <img
+                src={`${import.meta.env.BASE_URL}a_clean_isolated_logo_graphic_on_a_transparent_bac.png`}
+                alt="New Pratama"
+                className="h-7 w-7 rounded-full bg-white object-contain ring-1 ring-gold/50 p-0.5"
+              />
+              <span className="font-bold text-navy text-xs hidden sm:inline">نيو براتاما</span>
             </div>
           </div>
 

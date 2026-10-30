@@ -93,13 +93,6 @@ export const IdlePrefetcher: React.FC = () => {
           },
           staleTime: 1000 * 30,
         }),
-
-      // 6. Prefetch all Admin page JS chunks during browser idle time (0ms instant page navigation)
-      () => import('../../pages/CalendarPage'),
-      () => import('../../pages/BookingsPage'),
-      () => import('../../pages/GuestsPage'),
-      () => import('../../pages/ReportsPage'),
-      () => import('../../pages/SettingsPage'),
     ];
 
     let taskIndex = 0;

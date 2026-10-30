@@ -71,11 +71,19 @@ export const LoginPage: React.FC = () => {
       </div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <img
-          src={`${import.meta.env.BASE_URL}logo-almagd.png`}
-          alt="ALMAGD"
-          className="mx-auto h-20 w-auto object-contain mb-4"
-        />
+        <div className="flex items-center justify-center gap-4 mb-4">
+          <img
+            src={`${import.meta.env.BASE_URL}logo-almagd.png`}
+            alt="ALMAGD"
+            className="h-14 w-auto object-contain"
+          />
+          <span className="h-10 w-px bg-slate-300" aria-hidden="true" />
+          <img
+            src={`${import.meta.env.BASE_URL}a_clean_isolated_logo_graphic_on_a_transparent_bac.png`}
+            alt="New Pratama"
+            className="h-14 w-14 rounded-full bg-white object-contain ring-2 ring-gold/50 p-1 shadow-sm"
+          />
+        </div>
         <h2 className="text-2xl font-bold tracking-tight text-navy">
           {t('auth.loginTitle')}
         </h2>
