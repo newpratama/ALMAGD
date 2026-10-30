@@ -24,6 +24,11 @@ import { formatDateHuman } from '../lib/dates';
 import { formatIDR } from '../lib/money';
 import { friendlyError } from '../lib/errors';
 import { isOtaSource } from '../lib/bookingHelpers';
+import { setUnitHousekeepingStatus } from '../lib/housekeeping';
+import { CancelBookingModal } from '../components/booking/CancelBookingModal';
+import { ExtendStayModal } from '../components/booking/ExtendStayModal';
+import { EarlyCheckoutModal } from '../components/booking/EarlyCheckoutModal';
+import { TransferUnitModal } from '../components/booking/TransferUnitModal';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { StatCard } from '../components/ui/StatCard';
@@ -58,6 +63,11 @@ export const BookingDetailPage: React.FC = () => {
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [isAuditOpen, setIsAuditOpen] = useState(false);
   const [isPreviewReceiptOpen, setIsPreviewReceiptOpen] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [cancelIsNoShow, setCancelIsNoShow] = useState(false);
+  const [isExtendModalOpen, setIsExtendModalOpen] = useState(false);
+  const [isEarlyCheckoutModalOpen, setIsEarlyCheckoutModalOpen] = useState(false);
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
 
   // Queries
   const { data: booking, isLoading: loadingBooking, error: bookingErr, refetch: refetchBooking } = useBooking(id);
@@ -100,8 +110,15 @@ export const BookingDetailPage: React.FC = () => {
         id: bookingId,
         updates: { status: newStatus },
       });
+      if (newStatus === 'checked_out' && booking.unit_id) {
+        setUnitHousekeepingStatus(booking.unit_id, 'dirty');
+      }
       showToast('success', t('common.success'));
       refetchBooking();
+      queryClient.invalidateQueries({ queryKey: ['today-arrivals'] });
+      queryClient.invalidateQueries({ queryKey: ['today-departures'] });
+      queryClient.invalidateQueries({ queryKey: ['today-in-house'] });
+      queryClient.invalidateQueries({ queryKey: ['calendar'] });
     } catch (err) {
       showToast('error', t(friendlyError(err)));
     }
@@ -232,12 +249,48 @@ export const BookingDetailPage: React.FC = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleStatusChange('no_show')}
+                onClick={() => {
+                  setCancelIsNoShow(true);
+                  setIsCancelModalOpen(true);
+                }}
               >
                 {t('booking.noShowBtn')}
               </Button>
             </>
           )}
+
+          {/* Scenarios: Room Transfer & Extend Stay */}
+          {(booking.status === 'confirmed' || booking.status === 'checked_in') && (
+            <>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setIsTransferModalOpen(true)}
+              >
+                🔄 {t('scenarios.transferUnitBtn')}
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setIsExtendModalOpen(true)}
+              >
+                ⏱️ {t('scenarios.extendStayBtn')}
+              </Button>
+            </>
+          )}
+
+          {/* Scenario: Early Check-Out */}
+          {booking.status === 'checked_in' && (
+            <Button
+              variant="warning"
+              size="sm"
+              onClick={() => setIsEarlyCheckoutModalOpen(true)}
+            >
+              🚪🏃‍♂️ {t('scenarios.earlyCheckoutBtn')}
+            </Button>
+          )}
+
+          {/* Standard Check-Out */}
           {(booking.status === 'checked_in' || booking.status === 'confirmed') && (
             <Button
               variant="secondary"
@@ -247,12 +300,17 @@ export const BookingDetailPage: React.FC = () => {
               {t('booking.checkOutBtn')}
             </Button>
           )}
+
+          {/* Smart Cancel with Penalty & Refund Reconciliation */}
           {booking.status !== 'cancelled' && (
             <Button
               variant="ghost"
               size="sm"
               className="text-danger hover:bg-danger/10"
-              onClick={() => setConfirmCancelOpen(true)}
+              onClick={() => {
+                setCancelIsNoShow(false);
+                setIsCancelModalOpen(true);
+              }}
             >
               {t('booking.cancelBtn')}
             </Button>
@@ -629,6 +687,58 @@ export const BookingDetailPage: React.FC = () => {
         onConfirm={handleDeleteBooking}
         title={t('booking.deleteBtn')}
         message={t('booking.deleteConfirm')}
+      />
+
+      {/* Scenarios Modals */}
+      <CancelBookingModal
+        isOpen={isCancelModalOpen}
+        onClose={() => setIsCancelModalOpen(false)}
+        booking={booking}
+        isNoShow={cancelIsNoShow}
+        onSuccess={() => {
+          refetchBooking();
+          refetchPayments();
+          queryClient.invalidateQueries({ queryKey: ['today-arrivals'] });
+          queryClient.invalidateQueries({ queryKey: ['today-departures'] });
+          queryClient.invalidateQueries({ queryKey: ['today-in-house'] });
+        }}
+      />
+
+      <ExtendStayModal
+        isOpen={isExtendModalOpen}
+        onClose={() => setIsExtendModalOpen(false)}
+        booking={booking}
+        onSuccess={() => {
+          refetchBooking();
+          queryClient.invalidateQueries({ queryKey: ['today-in-house'] });
+          queryClient.invalidateQueries({ queryKey: ['today-departures'] });
+          queryClient.invalidateQueries({ queryKey: ['calendar'] });
+        }}
+      />
+
+      <EarlyCheckoutModal
+        isOpen={isEarlyCheckoutModalOpen}
+        onClose={() => setIsEarlyCheckoutModalOpen(false)}
+        booking={booking}
+        onSuccess={() => {
+          refetchBooking();
+          refetchPayments();
+          queryClient.invalidateQueries({ queryKey: ['today-in-house'] });
+          queryClient.invalidateQueries({ queryKey: ['today-departures'] });
+          queryClient.invalidateQueries({ queryKey: ['calendar'] });
+        }}
+      />
+
+      <TransferUnitModal
+        isOpen={isTransferModalOpen}
+        onClose={() => setIsTransferModalOpen(false)}
+        booking={booking}
+        onSuccess={() => {
+          refetchBooking();
+          queryClient.invalidateQueries({ queryKey: ['today-in-house'] });
+          queryClient.invalidateQueries({ queryKey: ['today-arrivals'] });
+          queryClient.invalidateQueries({ queryKey: ['calendar'] });
+        }}
       />
     </div>
   );

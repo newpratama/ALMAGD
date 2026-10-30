@@ -21,6 +21,9 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { StatusBadge } from '../components/booking/StatusBadge';
 import { PaymentStatusBadge } from '../components/booking/PaymentStatusBadge';
+import { HousekeepingBadge } from '../components/housekeeping/HousekeepingBadge';
+import { HousekeepingPanel } from '../components/housekeeping/HousekeepingPanel';
+import { setUnitHousekeepingStatus } from '../lib/housekeeping';
 import { useToast } from '../components/ui/Toast';
 import { useUnits } from '../api/units';
 
@@ -197,6 +200,9 @@ export const TodayPage: React.FC = () => {
 
   const handleCheckOut = (b: BookingOverview) => {
     if (!b.id) return;
+    if (b.unit_id) {
+      setUnitHousekeepingStatus(b.unit_id, 'dirty');
+    }
     if (Number(b.balance || 0) > 0) {
       setCheckoutTarget(b);
     } else {
@@ -206,6 +212,9 @@ export const TodayPage: React.FC = () => {
 
   const confirmCheckoutWithBalance = () => {
     if (!checkoutTarget || !checkoutTarget.id) return;
+    if (checkoutTarget.unit_id) {
+      setUnitHousekeepingStatus(checkoutTarget.unit_id, 'dirty');
+    }
     updateStatusMutation.mutate({ id: checkoutTarget.id, status: 'checked_out' });
     setCheckoutTarget(null);
   };
@@ -444,6 +453,9 @@ export const TodayPage: React.FC = () => {
           />
         </div>
       )}
+
+      {/* Housekeeping Real-time Status Panel */}
+      <HousekeepingPanel />
 
       {/* Main Content Sections */}
       {isLoading ? (
@@ -770,7 +782,10 @@ export const TodayPage: React.FC = () => {
                         {b.guest_name || '—'}
                       </Td>
                       <Td className="text-xs font-medium">
-                        {b.unit_name}
+                        <div className="flex items-center gap-2">
+                          <span>{b.unit_name}</span>
+                          {b.unit_id && <HousekeepingBadge unitId={b.unit_id} size="sm" />}
+                        </div>
                       </Td>
                       <Td className="text-xs font-semibold">
                         {b.nights}
@@ -850,7 +865,10 @@ export const TodayPage: React.FC = () => {
                         {b.guest_name || '—'}
                       </Td>
                       <Td className="text-xs font-medium">
-                        {b.unit_name}
+                        <div className="flex items-center gap-2">
+                          <span>{b.unit_name}</span>
+                          {b.unit_id && <HousekeepingBadge unitId={b.unit_id} size="sm" />}
+                        </div>
                       </Td>
                       <Td className="text-xs font-semibold">
                         {b.nights}
