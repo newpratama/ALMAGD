@@ -5,6 +5,7 @@ export interface BadgeProps {
   variant?: 'default' | 'success' | 'danger' | 'warning' | 'info' | 'gold' | 'navy';
   className?: string;
   style?: React.CSSProperties;
+  title?: string;
 }
 
 export const Badge: React.FC<BadgeProps> = ({
@@ -12,6 +13,7 @@ export const Badge: React.FC<BadgeProps> = ({
   variant = 'default',
   className = '',
   style,
+  title,
 }) => {
   const variantStyles = {
     default: 'bg-stone text-muted',
@@ -26,6 +28,7 @@ export const Badge: React.FC<BadgeProps> = ({
   return (
     <span
       style={style}
+      title={title}
       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium tracking-wide ${variantStyles} ${className}`}
     >
       {children}

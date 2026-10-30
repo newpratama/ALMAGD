@@ -4,7 +4,8 @@ import { useI18n } from '../i18n/I18nProvider';
 import { useBookings, useBookingSources, fetchAllBookingsForExport } from '../api/bookings';
 import type { BookingFilters } from '../api/bookings';
 import { formatIDR } from '../lib/money';
-import { formatDateHuman } from '../lib/dates';
+import { formatDateHuman, todayISO } from '../lib/dates';
+import { isOtaSource, formatLeadTime } from '../lib/bookingHelpers';
 import { exportBookingsToXlsx } from '../lib/exportXlsx';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -291,8 +292,17 @@ export const BookingsPage: React.FC = () => {
                     <Td className="text-xs font-medium">
                       {booking.unit_name}
                     </Td>
-                    <Td className="text-xs text-muted">
-                      {booking.check_in ? formatDateHuman(booking.check_in, lang) : '—'}
+                    <Td className="text-xs text-muted whitespace-nowrap">
+                      {booking.check_in ? (
+                        <div className="flex flex-col">
+                          <span>{formatDateHuman(booking.check_in, lang)}</span>
+                          {formatLeadTime(booking.check_in, todayISO(), lang) && (
+                            <span className="text-[10px] text-blue-700 font-semibold mt-0.5">
+                              ⏳ {formatLeadTime(booking.check_in, todayISO(), lang)}
+                            </span>
+                          )}
+                        </div>
+                      ) : '—'}
                     </Td>
                     <Td className="text-xs text-muted">
                       {booking.check_out ? formatDateHuman(booking.check_out, lang) : '—'}
@@ -308,7 +318,7 @@ export const BookingsPage: React.FC = () => {
                     <Td className="text-xs font-bold text-ink">
                       {formatIDR(Number(booking.total_amount || 0))}
                     </Td>
-                    <Td className="text-xs font-semibold">
+                    <Td className="text-xs font-semibold whitespace-nowrap">
                       {booking.status === 'cancelled' ? (
                         Number(booking.paid || 0) > 0 ? (
                           <span className="text-amber-600 font-medium" title={t('booking.refundDue')}>
@@ -317,6 +327,10 @@ export const BookingsPage: React.FC = () => {
                         ) : (
                           <span className="text-muted font-normal">—</span>
                         )
+                      ) : isOtaSource(booking.source_code) && Number(booking.balance || 0) > 0 ? (
+                        <span className="text-navy font-semibold text-[11px]" title={t('booking.otaPayoutNote')}>
+                          📱 {t('booking.otaPrepaidBadge')}
+                        </span>
                       ) : Number(booking.balance || 0) > 0 ? (
                         <span className="text-danger">
                           {formatIDR(Number(booking.balance || 0))}
@@ -328,7 +342,7 @@ export const BookingsPage: React.FC = () => {
                     <Td>
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <StatusBadge status={booking.status} />
-                        <PaymentStatusBadge status={booking.payment_status} />
+                        <PaymentStatusBadge status={booking.payment_status} sourceCode={booking.source_code} />
                       </div>
                     </Td>
                   </Tr>

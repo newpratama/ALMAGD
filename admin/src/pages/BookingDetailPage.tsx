@@ -23,6 +23,7 @@ import { BookingReceipt } from '../components/booking/BookingReceipt';
 import { formatDateHuman } from '../lib/dates';
 import { formatIDR } from '../lib/money';
 import { friendlyError } from '../lib/errors';
+import { isOtaSource } from '../lib/bookingHelpers';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { StatCard } from '../components/ui/StatCard';
@@ -285,6 +286,24 @@ export const BookingDetailPage: React.FC = () => {
         </div>
       )}
 
+      {/* OTA Prepaid Banner */}
+      {isOtaSource(booking.source_code) && booking.status !== 'cancelled' && (
+        <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50/70 p-4 flex items-start gap-3">
+          <span className="text-2xl">📱</span>
+          <div className="flex-1">
+            <h4 className="text-sm font-bold text-navy mb-1">
+              {t('booking.otaPrepaidTitle')} ({(booking.source_code || '').toUpperCase()})
+            </h4>
+            <p className="text-xs text-slate-700 leading-relaxed">
+              {t('booking.otaPrepaidDesc', {
+                source: (booking.source_code || '').toUpperCase(),
+                checkIn: booking.check_in ? formatDateHuman(booking.check_in, lang) : '—',
+              })}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Financial Overview (Money Card) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard
@@ -298,9 +317,31 @@ export const BookingDetailPage: React.FC = () => {
           variant="success"
         />
         <StatCard
-          title={booking.status === 'cancelled' && Number(booking.paid || 0) > 0 ? t('booking.refundDue') : t('booking.balanceAmount')}
-          value={booking.status === 'cancelled' ? (Number(booking.paid || 0) > 0 ? formatIDR(Number(booking.paid)) : '—') : formatIDR(Number(booking.balance || 0))}
-          variant={booking.status === 'cancelled' ? (Number(booking.paid || 0) > 0 ? 'gold' : 'default') : Number(booking.balance || 0) > 0 ? 'danger' : 'default'}
+          title={
+            booking.status === 'cancelled' && Number(booking.paid || 0) > 0
+              ? t('booking.refundDue')
+              : isOtaSource(booking.source_code) && Number(booking.balance || 0) > 0
+              ? t('booking.otaPayoutExpected')
+              : t('booking.balanceAmount')
+          }
+          value={
+            booking.status === 'cancelled'
+              ? Number(booking.paid || 0) > 0
+                ? formatIDR(Number(booking.paid))
+                : '—'
+              : formatIDR(Number(booking.balance || 0))
+          }
+          variant={
+            booking.status === 'cancelled'
+              ? Number(booking.paid || 0) > 0
+                ? 'gold'
+                : 'default'
+              : isOtaSource(booking.source_code) && Number(booking.balance || 0) > 0
+              ? 'navy'
+              : Number(booking.balance || 0) > 0
+              ? 'danger'
+              : 'default'
+          }
         />
       </div>
 

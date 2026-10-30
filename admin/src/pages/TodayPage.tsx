@@ -9,6 +9,7 @@ import type { BookingOverview } from '../api/bookings';
 import { todayISO, addDaysISO, formatDateHuman } from '../lib/dates';
 import { formatIDR } from '../lib/money';
 import { friendlyError } from '../lib/errors';
+import { isOtaSource, formatLeadTime } from '../lib/bookingHelpers';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
@@ -650,7 +651,16 @@ export const TodayPage: React.FC = () => {
                           {b.code}
                         </Td>
                         <Td className="text-xs text-muted font-mono whitespace-nowrap">
-                          {b.check_in ? formatDateHuman(b.check_in, lang) : '—'}
+                          {b.check_in ? (
+                            <div className="flex flex-col">
+                              <span>{formatDateHuman(b.check_in, lang)}</span>
+                              {formatLeadTime(b.check_in, selectedDate, lang) && (
+                                <span className="text-[10px] text-blue-700 font-semibold mt-0.5">
+                                  ⏳ {formatLeadTime(b.check_in, selectedDate, lang)}
+                                </span>
+                              )}
+                            </div>
+                          ) : '—'}
                         </Td>
                         <Td className="text-xs text-muted font-mono whitespace-nowrap">
                           {b.check_out ? formatDateHuman(b.check_out, lang) : '—'}
@@ -662,7 +672,13 @@ export const TodayPage: React.FC = () => {
                           {formatIDR(Number(b.total_amount || 0))}
                         </Td>
                         <Td className="whitespace-nowrap">
-                          {Number(b.balance || 0) > 0 ? (
+                          {b.status === 'cancelled' ? (
+                            <span className="text-muted text-xs">—</span>
+                          ) : isOtaSource(b.source_code) && Number(b.balance || 0) > 0 ? (
+                            <Badge variant="navy" className="text-[10px] whitespace-nowrap font-medium" title={t('booking.otaPayoutNote')}>
+                              📱 {t('booking.otaPrepaidBadge')}
+                            </Badge>
+                          ) : Number(b.balance || 0) > 0 ? (
                             <Badge variant="danger" className="text-[10px] font-mono">
                               ⚠️ {formatIDR(Number(b.balance))}
                             </Badge>
@@ -762,8 +778,12 @@ export const TodayPage: React.FC = () => {
                       <Td>
                         <StatusBadge status={b.status} />
                       </Td>
-                      <Td className="text-xs font-semibold">
-                        {Number(b.balance || 0) > 0 ? (
+                      <Td className="text-xs font-semibold whitespace-nowrap">
+                        {isOtaSource(b.source_code) && Number(b.balance || 0) > 0 ? (
+                          <span className="text-navy font-semibold text-[11px]" title={t('booking.otaPayoutNote')}>
+                            📱 {t('paymentStatus.otaPrepaid')}
+                          </span>
+                        ) : Number(b.balance || 0) > 0 ? (
                           <span className="text-danger">{formatIDR(Number(b.balance))}</span>
                         ) : (
                           <span className="text-success">0</span>
@@ -838,8 +858,12 @@ export const TodayPage: React.FC = () => {
                       <Td>
                         <StatusBadge status={b.status} />
                       </Td>
-                      <Td className="text-xs font-semibold">
-                        {Number(b.balance || 0) > 0 ? (
+                      <Td className="text-xs font-semibold whitespace-nowrap">
+                        {isOtaSource(b.source_code) && Number(b.balance || 0) > 0 ? (
+                          <span className="text-navy font-semibold text-[11px]" title={t('booking.otaPayoutNote')}>
+                            📱 {t('paymentStatus.otaPrepaid')}
+                          </span>
+                        ) : Number(b.balance || 0) > 0 ? (
                           <span className="text-danger">{formatIDR(Number(b.balance))}</span>
                         ) : (
                           <span className="text-success">0</span>
@@ -906,17 +930,35 @@ export const TodayPage: React.FC = () => {
                         {b.guest_name || '—'}
                       </Td>
                       <Td className="text-xs font-medium">{b.unit_name}</Td>
-                      <Td className="text-xs text-muted">
-                        {b.check_in ? formatDateHuman(b.check_in, lang) : '—'}
+                      <Td className="text-xs text-muted whitespace-nowrap">
+                        {b.check_in ? (
+                          <div className="flex flex-col">
+                            <span>{formatDateHuman(b.check_in, lang)}</span>
+                            {formatLeadTime(b.check_in, selectedDate, lang) && (
+                              <span className="text-[10px] text-blue-700 font-semibold mt-0.5">
+                                ⏳ {formatLeadTime(b.check_in, selectedDate, lang)}
+                              </span>
+                            )}
+                          </div>
+                        ) : '—'}
                       </Td>
                       <Td className="text-xs font-mono font-bold text-navy">
                         {formatIDR(Number(b.total_amount || 0))}
                       </Td>
-                      <Td className="text-xs font-mono font-bold text-danger">
-                        {formatIDR(Number(b.balance || 0))}
+                      <Td className="text-xs font-mono font-bold whitespace-nowrap">
+                        {isOtaSource(b.source_code) ? (
+                          <span className="text-navy" title={t('booking.otaPayoutNote')}>
+                            📱 {formatIDR(Number(b.balance || 0))}
+                            <span className="block text-[10px] text-muted font-sans font-normal">
+                              {t('booking.otaPayoutExpected')}
+                            </span>
+                          </span>
+                        ) : (
+                          <span className="text-danger">{formatIDR(Number(b.balance || 0))}</span>
+                        )}
                       </Td>
                       <Td>
-                        <PaymentStatusBadge status={b.payment_status || 'unpaid'} />
+                        <PaymentStatusBadge status={b.payment_status || 'unpaid'} sourceCode={b.source_code} />
                       </Td>
                     </Tr>
                   ))}
