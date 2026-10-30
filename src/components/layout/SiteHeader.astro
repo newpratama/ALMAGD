@@ -69,7 +69,7 @@ const copy = {
   },
 }[locale];
 
-const adminUrl = import.meta.env.PUBLIC_ADMIN_URL || '/admin/login';
+const adminUrl = import.meta.env.PUBLIC_ADMIN_URL || '/admin/';
 
 function isActive(path: string): boolean {
   const localized = localizePath(path, locale);
