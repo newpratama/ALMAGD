@@ -76,6 +76,8 @@ cardImage: /images/venues/njd-cafe-ambience.jpg
 gallery:
   - /images/venues/njd-cafe-hero.jpg
   - /images/venues/njd-cafe-ambience.jpg
+  - /images/venues/njd-cafe-terrace.jpg
+  - /images/venues/njd-cafe-exterior.jpg
 faqIds:
   - cafe-faq-01
 relatedVenueIds:
