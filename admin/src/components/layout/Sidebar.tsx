@@ -37,24 +37,16 @@ export const Sidebar: React.FC = () => {
     <aside className="hidden md:flex flex-col w-64 bg-gradient-to-b from-[#00132b] via-[#001938] to-[#001124] text-white fixed inset-y-0 start-0 z-30 border-e border-white/10 shadow-2xl select-none">
       {/* Brand Header */}
       <div className="px-3.5 py-3 border-b border-white/10 flex flex-col items-center text-center">
-        {/* 1. Primary Company Logo (ALMAGD) - Compact & Elegant */}
-        <div className="w-full flex flex-col items-center justify-center py-1.5 px-2.5 rounded-xl bg-white/[0.03] border border-white/10 shadow-inner group">
+        {/* 1. Primary Company Logo (ALMAGD) - Logo only */}
+        <div className="w-full flex items-center justify-center py-2 px-3 rounded-xl bg-white/[0.03] border border-white/10 shadow-inner group">
           <img
             src={`${import.meta.env.BASE_URL}logo-almagd-light.png`}
             alt="ALMAGD"
-            className="w-full max-w-[130px] h-auto max-h-8 object-contain drop-shadow transition-transform duration-300 group-hover:scale-105"
+            className="w-full max-w-[140px] h-auto max-h-9 object-contain drop-shadow transition-transform duration-300 group-hover:scale-105"
             onError={(e) => {
               (e.currentTarget as HTMLImageElement).src = `${import.meta.env.BASE_URL}logo-almagd.png`;
             }}
           />
-          <div className="flex items-center justify-center gap-1.5 mt-1">
-            <h1 className="font-extrabold text-[11px] tracking-widest text-white/90 font-sans uppercase">
-              ALMAGD
-            </h1>
-            <span className="inline-flex items-center px-1.5 py-0.2 text-[8px] font-bold rounded bg-gold/25 text-gold-light border border-gold/40">
-              PRO
-            </span>
-          </div>
         </div>
 
         {/* Subtle gold separator */}
