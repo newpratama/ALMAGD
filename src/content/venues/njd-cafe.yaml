@@ -71,11 +71,10 @@ servesCuisine:
 acceptsWalkIns: null
 facilities: []
 policies: []
-heroImage: /images/venues/njd-cafe-hero.jpg
-cardImage: /images/venues/njd-cafe-ambience.jpg
+heroImage: /images/venues/njd-cafe-terrace-view.jpg
+cardImage: /images/venues/njd-cafe-terrace-view.jpg
 gallery:
-  - /images/venues/njd-cafe-hero.jpg
-  - /images/venues/njd-cafe-ambience.jpg
+  - /images/venues/njd-cafe-terrace-view.jpg
   - /images/venues/njd-cafe-terrace.jpg
   - /images/venues/njd-cafe-exterior.jpg
 faqIds:

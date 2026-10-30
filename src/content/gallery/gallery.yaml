@@ -72,7 +72,7 @@ images:
     sortOrder: 4
 
   - id: cafe-interior-01
-    file: /images/venues/njd-cafe-hero.jpg
+    file: /images/venues/njd-cafe-terrace-view.jpg
     venueId: njd-cafe
     topic: interior
     alt:
