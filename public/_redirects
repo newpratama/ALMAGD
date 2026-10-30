@@ -6,3 +6,6 @@
 # Prevent /id/ duplicate content by redirecting to root paths
 /id/* /:splat 301
 /id / 301
+
+# SPA fallback for Admin Portal (Cloudflare Pages 200 rewrite)
+/admin/* /admin/index.html 200

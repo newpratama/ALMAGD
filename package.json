@@ -7,7 +7,7 @@
     "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev",
     "start": "ASTRO_TELEMETRY_DISABLED=1 astro dev",
     "build:admin": "npm --prefix admin run build",
-    "build": "ASTRO_TELEMETRY_DISABLED=1 astro build && npm --prefix admin run build && mkdir -p dist/admin && cp -r admin/dist/* dist/admin/",
+    "build": "npm --prefix admin install && ASTRO_TELEMETRY_DISABLED=1 astro build && npm --prefix admin run build && mkdir -p dist/admin && cp -r admin/dist/* dist/admin/",
     "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview",
     "check": "astro check",
     "verify": "node scripts/verify-build.mjs"
