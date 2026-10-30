@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { BottomNav } from './BottomNav';
@@ -6,11 +6,12 @@ import { LanguageToggle } from './LanguageToggle';
 import { useAuth } from '../../auth/AuthProvider';
 import { useI18n } from '../../i18n/I18nProvider';
 import { Badge } from '../ui/Badge';
+import { Spinner } from '../ui/Spinner';
 import { IdlePrefetcher } from '../data/IdlePrefetcher';
 
 export const AppShell: React.FC = () => {
   const { staff, role, signOut } = useAuth();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
 
   return (
     <div className="min-h-screen bg-mist text-ink flex flex-col">
@@ -69,7 +70,18 @@ export const AppShell: React.FC = () => {
 
         {/* Page Content */}
         <main className="flex-1 p-4 sm:p-6 w-full max-w-full">
-          <Outlet />
+          <Suspense
+            fallback={
+              <div className="min-h-[50vh] flex flex-col items-center justify-center gap-3 text-muted">
+                <Spinner size="lg" />
+                <span className="text-xs font-medium text-slate-500 animate-pulse">
+                  {lang === 'ar' ? 'جاري تحميل الصفحة...' : 'Memuat halaman...'}
+                </span>
+              </div>
+            }
+          >
+            <Outlet />
+          </Suspense>
         </main>
       </div>
 
