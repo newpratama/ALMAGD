@@ -11,6 +11,9 @@ import { Button } from '../ui/Button';
 
 export interface PaymentFormProps {
   bookingId: string;
+  bookingCode?: string | null;
+  defaultOtaRef?: string | null;
+  defaultMethod?: 'cash' | 'transfer' | 'app' | 'other';
   initialPayment?: Payment;
   defaultAmount?: number;
   onSubmit: (data: PaymentInsert | PaymentUpdate) => Promise<void>;
@@ -20,6 +23,9 @@ export interface PaymentFormProps {
 
 export const PaymentForm: React.FC<PaymentFormProps> = ({
   bookingId,
+  bookingCode,
+  defaultOtaRef,
+  defaultMethod,
   initialPayment,
   defaultAmount = 0,
   onSubmit,
@@ -33,15 +39,42 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const initialIsRefund = initialPayment ? Number(initialPayment.amount) < 0 : false;
 
   type MethodType = 'cash' | 'transfer' | 'app' | 'other';
-  const initialMethod = (initialPayment?.method as MethodType) || 'cash';
+  const initialMethod =
+    (initialPayment?.method as MethodType) ||
+    defaultMethod ||
+    (defaultOtaRef ? 'app' : 'cash');
+
+  const computeDefaultRef = (m: MethodType): string => {
+    if (m === 'cash') return bookingCode ? `CSH-${bookingCode}` : 'CSH-01';
+    if (m === 'app') return defaultOtaRef || (bookingCode ? `APP-${bookingCode}` : '');
+    if (m === 'transfer') return '';
+    return '';
+  };
 
   const [isRefund, setIsRefund] = useState(initialIsRefund);
   const [amount, setAmount] = useState<number>(initialAmount > 0 ? initialAmount : 500000);
   const [method, setMethod] = useState<MethodType>(initialMethod);
   const [paidOn, setPaidOn] = useState<string>(initialPayment?.paid_on || todayISO());
-  const [reference, setReference] = useState<string>(initialPayment?.reference || '');
+  const [reference, setReference] = useState<string>(
+    initialPayment?.reference || (!isEdit ? computeDefaultRef(initialMethod) : '')
+  );
   const [notes, setNotes] = useState<string>(initialPayment?.notes || '');
   const [amountError, setAmountError] = useState<string | null>(null);
+
+  const handleMethodChange = (newMethod: MethodType) => {
+    setMethod(newMethod);
+    if (!isEdit) {
+      if (newMethod === 'app') {
+        setReference(defaultOtaRef || (bookingCode ? `APP-${bookingCode}` : ''));
+      } else if (newMethod === 'cash') {
+        setReference(bookingCode ? `CSH-${bookingCode}` : 'CSH-01');
+      } else if (newMethod === 'transfer') {
+        if (reference.startsWith('CSH-') || reference.startsWith('APP-') || reference === defaultOtaRef) {
+          setReference('');
+        }
+      }
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,7 +151,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         <Field label={t('booking.method')} required>
           <Select
             value={method}
-            onChange={(e) => setMethod(e.target.value as typeof method)}
+            onChange={(e) => handleMethodChange(e.target.value as MethodType)}
           >
             <option value="cash">{t('paymentMethod.cash')}</option>
             <option value="transfer">{t('paymentMethod.transfer')}</option>
@@ -137,10 +170,28 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           />
         </Field>
 
-        <Field label={t('booking.reference')}>
+        <Field
+          label={
+            method === 'app'
+              ? `${t('booking.reference')} (سند دفع التطبيق / OTA Ref)`
+              : method === 'transfer'
+              ? `${t('booking.reference')} (رقم إشعار الحوالة البنكية)`
+              : method === 'cash'
+              ? `${t('booking.reference')} (رقم سند القبض النقدي)`
+              : t('booking.reference')
+          }
+        >
           <Input
             type="text"
-            placeholder="No. Transaksi / Bukti"
+            placeholder={
+              method === 'cash'
+                ? (bookingCode ? `مثال: CSH-${bookingCode} أو رقم السند الورقي` : 'رقم سند الكاش CSH-01')
+                : method === 'app'
+                ? (defaultOtaRef || 'رقم سند الدفع من التطبيق OTA Ref')
+                : method === 'transfer'
+                ? 'رقم العملية من إشعار التحويل البنكي (مثل: TRF-BCA-849201)'
+                : 'رقم الإيصال أو المرجع المالي'
+            }
             value={reference}
             onChange={(e) => setReference(e.target.value)}
           />

@@ -64,6 +64,11 @@ export const BookingReceipt: React.FC<BookingReceiptProps> = ({
           <div className="mt-1 font-mono text-xl sm:text-2xl font-bold text-navy">
             {booking.code}
           </div>
+          {booking.ota_reference && (
+            <div className="mt-1 text-xs font-mono font-bold text-navy bg-gold/15 border border-gold/40 px-2 py-0.5 rounded inline-block">
+              {sourceLabel || 'سند التطبيق'}: {booking.ota_reference}
+            </div>
+          )}
           <div className="text-[11px] text-muted mt-0.5">
             {t('booking.receiptIssueDate')}: <span className="font-semibold text-ink">{issueDate}</span>
           </div>
@@ -180,23 +185,49 @@ export const BookingReceipt: React.FC<BookingReceiptProps> = ({
             </tr>
 
             {/* Recorded Payments */}
-            {payments.map((p, idx) => (
-              <tr key={p.id} className="bg-mist/30">
-                <td className="py-2 px-3 font-mono text-muted">{idx + 2}</td>
-                <td className="py-2 px-3 text-ink font-medium">
-                  {Number(p.amount) < 0 ? '⚠️ ' + t('booking.refundToggle') : '✓ ' + t('booking.addPayment')}
-                  {p.notes && <span className="text-[10px] text-muted ms-1">({p.notes})</span>}
-                </td>
-                <td className="py-2 px-3 font-medium capitalize text-ink">
-                  {t(`paymentMethod.${p.method}`)}
-                </td>
-                <td className="py-2 px-3 text-muted">{p.paid_on}</td>
-                <td className="py-2 px-3 font-mono text-muted">{p.reference || '—'}</td>
-                <td className={`py-2 px-3 text-end font-bold ${Number(p.amount) < 0 ? 'text-danger' : 'text-success'}`}>
-                  {Number(p.amount) < 0 ? `- ${formatIDR(Math.abs(Number(p.amount)))}` : `+ ${formatIDR(Number(p.amount))}`}
-                </td>
-              </tr>
-            ))}
+            {payments.map((p, idx) => {
+              const displayRef =
+                p.reference?.trim() ||
+                (p.method === 'app'
+                  ? booking.ota_reference || `APP-${booking.code}`
+                  : p.method === 'transfer'
+                  ? `TRF-${booking.code}`
+                  : p.method === 'cash'
+                  ? `CSH-${booking.code}-${String(idx + 1).padStart(2, '0')}`
+                  : `REF-${booking.code}-${idx + 1}`);
+
+              const methodSubtitle =
+                p.method === 'app'
+                  ? (sourceLabel ? `سند المنصة (${sourceLabel})` : 'سند التطبيق')
+                  : p.method === 'transfer'
+                  ? 'إشعار تحويل بنكي'
+                  : p.method === 'cash'
+                  ? 'سند قبض نقدي'
+                  : '';
+
+              return (
+                <tr key={p.id} className="bg-mist/30">
+                  <td className="py-2 px-3 font-mono text-muted">{idx + 2}</td>
+                  <td className="py-2 px-3 text-ink font-medium">
+                    {Number(p.amount) < 0 ? '⚠️ ' + t('booking.refundToggle') : '✓ ' + t('booking.addPayment')}
+                    {p.notes && <span className="text-[10px] text-muted ms-1">({p.notes})</span>}
+                  </td>
+                  <td className="py-2 px-3 font-medium capitalize text-ink">
+                    {t(`paymentMethod.${p.method}`)}
+                  </td>
+                  <td className="py-2 px-3 text-muted">{p.paid_on}</td>
+                  <td className="py-2 px-3 font-mono">
+                    <span className="font-bold text-navy text-xs block">{displayRef}</span>
+                    {methodSubtitle && (
+                      <span className="text-[10px] text-muted font-sans block">{methodSubtitle}</span>
+                    )}
+                  </td>
+                  <td className={`py-2 px-3 text-end font-bold ${Number(p.amount) < 0 ? 'text-danger' : 'text-success'}`}>
+                    {Number(p.amount) < 0 ? `- ${formatIDR(Math.abs(Number(p.amount)))}` : `+ ${formatIDR(Number(p.amount))}`}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
 

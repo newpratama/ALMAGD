@@ -369,7 +369,21 @@ export const BookingForm: React.FC<BookingFormProps> = ({
             <Field label={t('booking.source')} required>
               <Select
                 value={sourceCode}
-                onChange={(e) => setSourceCode(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSourceCode(val);
+                  if (!isEdit) {
+                    if (val !== 'walk_in' && val !== 'direct') {
+                      setPaymentMethod('app');
+                      if (otaReference) setPaymentRef(otaReference);
+                    } else {
+                      if (paymentMethod === 'app') {
+                        setPaymentMethod('cash');
+                        setPaymentRef('CSH-01');
+                      }
+                    }
+                  }
+                }}
               >
                 {sources.map((s) => (
                   <option key={s.code} value={s.code}>
@@ -385,7 +399,13 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                   type="text"
                   placeholder="e.g. AG-123456"
                   value={otaReference}
-                  onChange={(e) => setOtaReference(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setOtaReference(val);
+                    if (!isEdit && paymentMethod === 'app') {
+                      setPaymentRef(val);
+                    }
+                  }}
                 />
               </Field>
             )}
@@ -464,7 +484,15 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                 <Field label={t('booking.method')} required>
                   <Select
                     value={paymentMethod}
-                    onChange={(e) => setPaymentMethod(e.target.value as typeof paymentMethod)}
+                    onChange={(e) => {
+                      const newM = e.target.value as typeof paymentMethod;
+                      setPaymentMethod(newM);
+                      if (newM === 'app' && otaReference && !paymentRef) {
+                        setPaymentRef(otaReference);
+                      } else if (newM === 'cash' && !paymentRef) {
+                        setPaymentRef('CSH-01');
+                      }
+                    }}
                   >
                     <option value="cash">{t('paymentMethod.cash')}</option>
                     <option value="transfer">{t('paymentMethod.transfer')}</option>
@@ -473,10 +501,28 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                   </Select>
                 </Field>
 
-                <Field label={t('booking.reference')}>
+                <Field
+                  label={
+                    paymentMethod === 'app'
+                      ? `${t('booking.reference')} (سند دفع التطبيق / OTA Ref)`
+                      : paymentMethod === 'transfer'
+                      ? `${t('booking.reference')} (رقم إشعار الحوالة البنكية)`
+                      : paymentMethod === 'cash'
+                      ? `${t('booking.reference')} (رقم سند القبض النقدي)`
+                      : t('booking.reference')
+                  }
+                >
                   <Input
                     type="text"
-                    placeholder="Receipt # / Ref"
+                    placeholder={
+                      paymentMethod === 'cash'
+                        ? 'رقم سند القبض (مثال: CSH-01)'
+                        : paymentMethod === 'app'
+                        ? (otaReference || 'رقم سند الدفع من التطبيق OTA Ref')
+                        : paymentMethod === 'transfer'
+                        ? 'رقم العملية من إشعار التحويل البنكي (مثل: TRF-BCA-849201)'
+                        : 'Receipt # / Ref'
+                    }
                     value={paymentRef}
                     onChange={(e) => setPaymentRef(e.target.value)}
                   />

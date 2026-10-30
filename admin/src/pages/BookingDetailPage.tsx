@@ -516,6 +516,9 @@ export const BookingDetailPage: React.FC = () => {
       <Card>
         <PaymentList
           payments={payments}
+          bookingCode={booking.code}
+          defaultOtaRef={booking.ota_reference}
+          sourceLabel={sourceLabel}
           onAddPayment={() => setIsAddPaymentOpen(true)}
           onEditPayment={(p) => setEditingPayment(p)}
           onDeletePayment={(p) => setDeletingPayment(p)}
@@ -607,6 +610,13 @@ export const BookingDetailPage: React.FC = () => {
       >
         <PaymentForm
           bookingId={bookingId}
+          bookingCode={booking.code}
+          defaultOtaRef={booking.ota_reference}
+          defaultMethod={
+            booking.source_code && booking.source_code !== 'direct' && booking.source_code !== 'walk_in'
+              ? 'app'
+              : 'cash'
+          }
           defaultAmount={Math.max(0, Number(booking.balance || 0))}
           onSubmit={handlePaymentSubmit}
           onCancel={() => setIsAddPaymentOpen(false)}
@@ -622,6 +632,8 @@ export const BookingDetailPage: React.FC = () => {
         {editingPayment && (
           <PaymentForm
             bookingId={bookingId}
+            bookingCode={booking.code}
+            defaultOtaRef={booking.ota_reference}
             initialPayment={editingPayment}
             onSubmit={handlePaymentSubmit}
             onCancel={() => setEditingPayment(null)}

@@ -10,6 +10,9 @@ import { EmptyState } from '../ui/EmptyState';
 
 export interface PaymentListProps {
   payments: Payment[];
+  bookingCode?: string | null;
+  defaultOtaRef?: string | null;
+  sourceLabel?: string | null;
   onAddPayment: () => void;
   onEditPayment?: (payment: Payment) => void;
   onDeletePayment?: (payment: Payment) => void;
@@ -18,6 +21,9 @@ export interface PaymentListProps {
 
 export const PaymentList: React.FC<PaymentListProps> = ({
   payments,
+  bookingCode,
+  defaultOtaRef,
+  sourceLabel,
   onAddPayment,
   onEditPayment,
   onDeletePayment,
@@ -73,8 +79,38 @@ export const PaymentList: React.FC<PaymentListProps> = ({
                       {t(`paymentMethod.${p.method}`)}
                     </Badge>
                   </Td>
-                  <Td className="font-mono text-xs text-muted">
-                    {p.reference || '—'}
+                  <Td className="font-mono text-xs">
+                    {p.reference?.trim() ? (
+                      <div>
+                        <span className="font-bold text-ink">{p.reference.trim()}</span>
+                        {p.method === 'app' && (
+                          <span className="text-[10px] text-muted block">{sourceLabel || t('paymentMethod.app')}</span>
+                        )}
+                      </div>
+                    ) : p.method === 'app' ? (
+                      <div>
+                        <span className="font-bold text-navy">
+                          {defaultOtaRef || (bookingCode ? `APP-${bookingCode}` : '—')}
+                        </span>
+                        <span className="text-[10px] text-muted block">{sourceLabel || t('paymentMethod.app')}</span>
+                      </div>
+                    ) : p.method === 'transfer' ? (
+                      <div>
+                        <span className="font-bold text-ink">
+                          {bookingCode ? `TRF-${bookingCode}` : '—'}
+                        </span>
+                        <span className="text-[10px] text-muted block">{t('paymentMethod.transfer')}</span>
+                      </div>
+                    ) : p.method === 'cash' ? (
+                      <div>
+                        <span className="font-bold text-ink">
+                          {bookingCode ? `CSH-${bookingCode}` : '—'}
+                        </span>
+                        <span className="text-[10px] text-muted block">{t('paymentMethod.cash')}</span>
+                      </div>
+                    ) : (
+                      <span className="text-muted">—</span>
+                    )}
                   </Td>
                   <Td className="text-xs text-muted max-w-xs truncate">
                     {p.notes || '—'}
