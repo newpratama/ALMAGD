@@ -11,6 +11,7 @@ import { createPayment } from '../../api/payments';
 import { setUnitHousekeepingStatus } from '../../lib/housekeeping';
 import { friendlyError } from '../../lib/errors';
 import { useToast } from '../ui/Toast';
+import { isOtaSource } from '../../lib/bookingHelpers';
 
 export interface EarlyCheckoutModalProps {
   isOpen: boolean;
@@ -36,11 +37,19 @@ export const EarlyCheckoutModal: React.FC<EarlyCheckoutModalProps> = ({
   const originalNights = Math.max(1, Number(booking.nights || 1));
   const ratePerNight = Math.round(originalTotal / originalNights);
 
+  const isOta = isOtaSource(booking.source_code);
+  const sourceName =
+    (booking.source_code && t(`source.${booking.source_code}`)) ||
+    booking.source_code ||
+    'OTA';
+
   const [actualCheckOut, setActualCheckOut] = useState<string>(today);
   const [policy, setPolicy] = useState<'prorated' | 'non_refundable' | 'custom'>('prorated');
   const [customTotal, setCustomTotal] = useState<number>(originalTotal);
   const [recordRefundNow, setRecordRefundNow] = useState<boolean>(true);
-  const [refundMethod, setRefundMethod] = useState<'cash' | 'transfer'>('cash');
+  const [refundMethod, setRefundMethod] = useState<'cash' | 'transfer' | 'app'>(
+    isOta ? 'app' : 'cash'
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const actualNights = useMemo(() => {
@@ -63,14 +72,17 @@ export const EarlyCheckoutModal: React.FC<EarlyCheckoutModalProps> = ({
     if (!booking.id) return;
     setIsSubmitting(true);
     try {
-      // 1. Record negative payment for immediate cash/transfer refund if applicable
+      // 1. Record negative payment for immediate cash/transfer/app refund if applicable
       if (isRefundDue && recordRefundNow && refundAmount > 0) {
         await createPayment({
           booking_id: booking.id,
           amount: -refundAmount,
           method: refundMethod,
           paid_on: today,
-          notes: `${t('scenarios.earlyCheckoutRefundNote')}`,
+          notes:
+            refundMethod === 'app'
+              ? `${t('scenarios.otaRefundNote', { source: sourceName })}`
+              : `${t('scenarios.earlyCheckoutRefundNote')}`,
         });
       }
 
@@ -266,14 +278,39 @@ export const EarlyCheckoutModal: React.FC<EarlyCheckoutModalProps> = ({
 
         {/* Immediate refund checkbox if guest is owed money */}
         {isRefundDue && (
-          <div className="p-3 bg-emerald-50/60 rounded-xl border border-emerald-200 space-y-2">
-            <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-emerald-950">
+          <div
+            className={`p-3.5 rounded-xl border space-y-2.5 ${
+              isOta
+                ? 'bg-amber-50/70 border-amber-200 text-amber-950'
+                : 'bg-emerald-50/60 border-emerald-200'
+            }`}
+          >
+            {isOta && (
+              <div className="flex items-start gap-2 text-xs text-amber-900 bg-amber-100/70 p-2.5 rounded-lg border border-amber-300/60">
+                <span className="text-base">📱</span>
+                <div className="flex-1">
+                  <span className="font-bold block">
+                    {t('scenarios.otaRefundNoticeTitle', { source: sourceName })}
+                  </span>
+                  <span className="text-[11px] leading-relaxed block mt-0.5">
+                    {t('scenarios.otaRefundNotice', { source: sourceName })}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-ink">
               <input
                 type="checkbox"
                 checked={recordRefundNow}
                 onChange={(e) => setRecordRefundNow(e.target.checked)}
+                className="w-4 h-4 rounded text-navy"
               />
-              <span>{t('scenarios.recordRefundNowCheckbox')}</span>
+              <span>
+                {isOta
+                  ? t('scenarios.recordRefundNowCheckboxOta', { source: sourceName })
+                  : t('scenarios.recordRefundNowCheckbox')}
+              </span>
             </label>
 
             {recordRefundNow && (
@@ -281,11 +318,21 @@ export const EarlyCheckoutModal: React.FC<EarlyCheckoutModalProps> = ({
                 <span className="text-xs text-slate-600">{t('booking.method')}:</span>
                 <Select
                   value={refundMethod}
-                  onChange={(e) => setRefundMethod(e.target.value as 'cash' | 'transfer')}
+                  onChange={(e) =>
+                    setRefundMethod(e.target.value as 'cash' | 'transfer' | 'app')
+                  }
                   className="text-xs py-1"
                 >
-                  <option value="cash">{t('paymentMethod.cash')}</option>
-                  <option value="transfer">{t('paymentMethod.transfer')}</option>
+                  {isOta && (
+                    <option value="app">
+                      📱 {t('scenarios.otaRefundMethodLabel', { source: sourceName })}
+                    </option>
+                  )}
+                  <option value="cash">💵 {t('paymentMethod.cash')}</option>
+                  <option value="transfer">🏦 {t('paymentMethod.transfer')}</option>
+                  {!isOta && (
+                    <option value="app">📱 {t('paymentMethod.app')}</option>
+                  )}
                 </Select>
               </div>
             )}
