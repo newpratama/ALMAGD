@@ -40,6 +40,32 @@ export const TodayPage: React.FC = () => {
   const [occupiedFilter, setOccupiedFilter] = useState<'all' | 'villas' | 'rooms'>('all');
   const [occupiedSearch, setOccupiedSearch] = useState<string>('');
 
+  // Collapsible sections state
+  const [isArrivalsOpen, setIsArrivalsOpen] = useState(true);
+  const [isDeparturesOpen, setIsDeparturesOpen] = useState(true);
+  const [isOccupiedOpen, setIsOccupiedOpen] = useState(true);
+  const [isUnpaidOpen, setIsUnpaidOpen] = useState(true);
+  const [isOverdueOpen, setIsOverdueOpen] = useState(true);
+  const [isTodayPaymentsOpen, setIsTodayPaymentsOpen] = useState(true);
+
+  const expandAll = () => {
+    setIsArrivalsOpen(true);
+    setIsDeparturesOpen(true);
+    setIsOccupiedOpen(true);
+    setIsUnpaidOpen(true);
+    setIsOverdueOpen(true);
+    setIsTodayPaymentsOpen(true);
+  };
+
+  const collapseAll = () => {
+    setIsArrivalsOpen(false);
+    setIsDeparturesOpen(false);
+    setIsOccupiedOpen(false);
+    setIsUnpaidOpen(false);
+    setIsOverdueOpen(false);
+    setIsTodayPaymentsOpen(false);
+  };
+
   // 1. Arrivals today
   const { data: arrivals = [], isLoading: loadingArrivals } = useQuery({
     queryKey: ['today-arrivals', selectedDate],
@@ -464,84 +490,365 @@ export const TodayPage: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-6">
+          {/* Quick Collapse / Expand All Toolbar */}
+          <div className="flex items-center justify-between gap-2 px-1 text-xs text-muted no-print">
+            <span className="font-semibold text-navy flex items-center gap-1.5">
+              <span>📋</span>
+              <span>{t('today.sectionsControl')}</span>
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={expandAll}
+                className="text-xs text-navy hover:text-blue-700 font-semibold flex items-center gap-1 px-2.5 py-1 rounded bg-stone/40 hover:bg-stone/60 border border-line/60 transition-all"
+              >
+                <span>▲</span>
+                <span>{t('common.expandAll')}</span>
+              </button>
+              <button
+                type="button"
+                onClick={collapseAll}
+                className="text-xs text-muted hover:text-navy font-semibold flex items-center gap-1 px-2.5 py-1 rounded bg-stone/40 hover:bg-stone/60 border border-line/60 transition-all"
+              >
+                <span>▼</span>
+                <span>{t('common.collapseAll')}</span>
+              </button>
+            </div>
+          </div>
+
           {/* Overdue Bookings Alert */}
           {overdueBookings.length > 0 && (
             <Card className="border-warning/60 bg-warning/5">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-bold text-warning-text flex items-center gap-2">
-                  <span>⚠️</span>
-                  <span>{t('today.overdueTitle')} ({overdueBookings.length})</span>
-                </h2>
+              <div
+                className="flex items-center justify-between gap-3 mb-4 cursor-pointer select-none"
+                onClick={() => setIsOverdueOpen(!isOverdueOpen)}
+              >
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-bold text-warning-text flex items-center gap-2">
+                    <span>⚠️</span>
+                    <span>{t('today.overdueTitle')}</span>
+                    <span className="text-xs bg-danger text-white px-2 py-0.5 rounded-full font-mono font-bold">
+                      {overdueBookings.length}
+                    </span>
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsOverdueOpen(!isOverdueOpen);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-warning/20 hover:bg-warning/30 text-xs font-bold text-warning-text transition-all border border-warning/40"
+                >
+                  <span className="text-[11px]">{isOverdueOpen ? t('common.collapse') : t('common.expand')}</span>
+                  <span className="text-xs font-bold">{isOverdueOpen ? '▲' : '▼'}</span>
+                </button>
               </div>
-              <Table>
-                <Thead>
-                  <Tr>
-                    <Th>{t('booking.code')}</Th>
-                    <Th>{t('booking.guest')}</Th>
-                    <Th>{t('booking.unit')}</Th>
-                    <Th>{t('booking.checkIn')}</Th>
-                    <Th>{t('booking.checkOut')}</Th>
-                    <Th>{t('common.status')}</Th>
-                    <Th>{t('common.actions')}</Th>
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {overdueBookings.map((b) => {
-                    const isOverdueCheckOut =
-                      b.status === 'checked_in' && b.check_out && b.check_out < selectedDate;
-                    return (
-                      <Tr key={b.id} className="hover:bg-warning/10">
-                        <Td
-                          className="font-mono text-xs font-bold text-navy cursor-pointer"
-                          onClick={() => navigate(`/bookings/${b.id}`)}
-                        >
-                          {b.code}
-                        </Td>
-                        <Td className="font-semibold text-ink">
-                          {b.guest_name || '—'}
-                        </Td>
-                        <Td className="text-xs font-medium">{b.unit_name}</Td>
-                        <Td className="text-xs text-muted">{b.check_in}</Td>
-                        <Td className="text-xs text-danger font-semibold">{b.check_out}</Td>
-                        <Td>
-                          <Badge variant="danger">
-                            {isOverdueCheckOut
-                              ? t('today.overdueCheckOut')
-                              : t('today.overdueCheckIn')}
-                          </Badge>
-                        </Td>
-                        <Td>
-                          {b.status === 'confirmed' ? (
-                            <Button
-                              variant="primary"
-                              size="sm"
-                              onClick={() => handleCheckIn(b)}
-                              disabled={updateStatusMutation.isPending}
-                            >
-                              {t('today.checkInAction')}
-                            </Button>
-                          ) : (
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              onClick={() => handleCheckOut(b)}
-                              disabled={updateStatusMutation.isPending}
-                            >
-                              {t('today.checkOutAction')}
-                            </Button>
-                          )}
-                        </Td>
+
+              {isOverdueOpen && (
+                <div className="animate-fadeIn">
+                  <Table>
+                    <Thead>
+                      <Tr>
+                        <Th>{t('booking.code')}</Th>
+                        <Th>{t('booking.guest')}</Th>
+                        <Th>{t('booking.unit')}</Th>
+                        <Th>{t('booking.checkIn')}</Th>
+                        <Th>{t('booking.checkOut')}</Th>
+                        <Th>{t('common.status')}</Th>
+                        <Th>{t('common.actions')}</Th>
                       </Tr>
-                    );
-                  })}
-                </Tbody>
-              </Table>
+                    </Thead>
+                    <Tbody>
+                      {overdueBookings.map((b) => {
+                        const isOverdueCheckOut =
+                          b.status === 'checked_in' && b.check_out && b.check_out < selectedDate;
+                        return (
+                          <Tr key={b.id} className="hover:bg-warning/10">
+                            <Td
+                              className="font-mono text-xs font-bold text-navy cursor-pointer"
+                              onClick={() => navigate(`/bookings/${b.id}`)}
+                            >
+                              {b.code}
+                            </Td>
+                            <Td className="font-semibold text-ink">
+                              {b.guest_name || '—'}
+                            </Td>
+                            <Td className="text-xs font-medium">{b.unit_name}</Td>
+                            <Td className="text-xs text-muted">{b.check_in}</Td>
+                            <Td className="text-xs text-danger font-semibold">{b.check_out}</Td>
+                            <Td>
+                              <Badge variant="danger">
+                                {isOverdueCheckOut
+                                  ? t('today.overdueCheckOut')
+                                  : t('today.overdueCheckIn')}
+                              </Badge>
+                            </Td>
+                            <Td>
+                              {b.status === 'confirmed' ? (
+                                <Button
+                                  variant="primary"
+                                  size="sm"
+                                  onClick={() => handleCheckIn(b)}
+                                  disabled={updateStatusMutation.isPending}
+                                >
+                                  {t('today.checkInAction')}
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  onClick={() => handleCheckOut(b)}
+                                  disabled={updateStatusMutation.isPending}
+                                >
+                                  {t('today.checkOutAction')}
+                                </Button>
+                              )}
+                            </Td>
+                          </Tr>
+                        );
+                      })}
+                    </Tbody>
+                  </Table>
+                </div>
+              )}
             </Card>
           )}
 
-          {/* Occupied Units Today (الفلل والغرف الممتلئة فقط) */}
+          {/* 1. Arrivals Today (وصول اليوم) - First Operational Section */}
+          <Card>
+            <div
+              className="flex items-center justify-between gap-3 mb-4 cursor-pointer select-none"
+              onClick={() => setIsArrivalsOpen(!isArrivalsOpen)}
+            >
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-bold text-navy flex items-center gap-2">
+                  <span>🛬</span>
+                  <span>{t('stats.arrivalsToday')}</span>
+                  <span className="text-xs bg-navy text-white px-2 py-0.5 rounded-full font-mono font-bold">
+                    {arrivals.length}
+                  </span>
+                </h2>
+                {!isArrivalsOpen && (
+                  <span className="text-xs text-muted font-normal ms-2 hidden sm:inline">
+                    ({arrivals.length > 0 ? `${arrivals.length} ${t('nav.bookings')}` : t('common.noData')})
+                  </span>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsArrivalsOpen(!isArrivalsOpen);
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone/40 hover:bg-stone/60 text-xs font-bold text-navy transition-all border border-line/60"
+              >
+                <span className="text-[11px]">{isArrivalsOpen ? t('common.collapse') : t('common.expand')}</span>
+                <span className="text-xs font-bold">{isArrivalsOpen ? '▲' : '▼'}</span>
+              </button>
+            </div>
+
+            {isArrivalsOpen && (
+              <div className="animate-fadeIn">
+                {arrivals.length === 0 ? (
+                  <EmptyState
+                    title={t('today.noArrivals')}
+                    className="py-8"
+                  />
+                ) : (
+                  <Table>
+                    <Thead>
+                      <Tr>
+                        <Th>{t('booking.code')}</Th>
+                        <Th>{t('booking.guest')}</Th>
+                        <Th>{t('booking.unit')}</Th>
+                        <Th>{t('booking.nights')}</Th>
+                        <Th>{t('common.status')}</Th>
+                        <Th>{t('booking.balanceAmount')}</Th>
+                        <Th>{t('common.actions')}</Th>
+                      </Tr>
+                    </Thead>
+                    <Tbody>
+                      {arrivals.map((b) => (
+                        <Tr key={b.id} className="hover:bg-mist/80">
+                          <Td
+                            className="font-mono text-xs font-bold text-navy cursor-pointer"
+                            onClick={() => navigate(`/bookings/${b.id}`)}
+                          >
+                            {b.code}
+                          </Td>
+                          <Td className="font-semibold text-ink">
+                            {b.guest_name || '—'}
+                          </Td>
+                          <Td className="text-xs font-medium">
+                            <div className="flex items-center gap-2">
+                              <span>{b.unit_name}</span>
+                              {b.unit_id && <HousekeepingBadge unitId={b.unit_id} size="sm" />}
+                            </div>
+                          </Td>
+                          <Td className="text-xs font-semibold">
+                            {b.nights}
+                          </Td>
+                          <Td>
+                            <StatusBadge status={b.status} />
+                          </Td>
+                          <Td className="text-xs font-semibold whitespace-nowrap">
+                            {isOtaSource(b.source_code) && Number(b.balance || 0) > 0 ? (
+                              <span className="text-navy font-semibold text-[11px]" title={t('booking.otaPayoutNote')}>
+                                📱 {t('paymentStatus.otaPrepaid')}
+                              </span>
+                            ) : Number(b.balance || 0) > 0 ? (
+                              <span className="text-danger">{formatIDR(Number(b.balance))}</span>
+                            ) : (
+                              <span className="text-success">0</span>
+                            )}
+                          </Td>
+                          <Td>
+                            {b.status === 'confirmed' ? (
+                              <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={() => handleCheckIn(b)}
+                                disabled={updateStatusMutation.isPending}
+                              >
+                                {t('today.checkInAction')}
+                              </Button>
+                            ) : (
+                              <Badge variant="navy">
+                                {t(`status.${b.status}`)}
+                              </Badge>
+                            )}
+                          </Td>
+                        </Tr>
+                      ))}
+                    </Tbody>
+                  </Table>
+                )}
+              </div>
+            )}
+          </Card>
+
+          {/* 2. Departures Today (مغادرة اليوم) - Second Operational Section */}
+          <Card>
+            <div
+              className="flex items-center justify-between gap-3 mb-4 cursor-pointer select-none"
+              onClick={() => setIsDeparturesOpen(!isDeparturesOpen)}
+            >
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-bold text-navy flex items-center gap-2">
+                  <span>🛫</span>
+                  <span>{t('stats.departuresToday')}</span>
+                  <span className="text-xs bg-navy text-white px-2 py-0.5 rounded-full font-mono font-bold">
+                    {departures.length}
+                  </span>
+                </h2>
+                {!isDeparturesOpen && (
+                  <span className="text-xs text-muted font-normal ms-2 hidden sm:inline">
+                    ({departures.length > 0 ? `${departures.length} ${t('nav.bookings')}` : t('common.noData')})
+                  </span>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsDeparturesOpen(!isDeparturesOpen);
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone/40 hover:bg-stone/60 text-xs font-bold text-navy transition-all border border-line/60"
+              >
+                <span className="text-[11px]">{isDeparturesOpen ? t('common.collapse') : t('common.expand')}</span>
+                <span className="text-xs font-bold">{isDeparturesOpen ? '▲' : '▼'}</span>
+              </button>
+            </div>
+
+            {isDeparturesOpen && (
+              <div className="animate-fadeIn">
+                {departures.length === 0 ? (
+                  <EmptyState
+                    title={t('today.noDepartures')}
+                    className="py-8"
+                  />
+                ) : (
+                  <Table>
+                    <Thead>
+                      <Tr>
+                        <Th>{t('booking.code')}</Th>
+                        <Th>{t('booking.guest')}</Th>
+                        <Th>{t('booking.unit')}</Th>
+                        <Th>{t('booking.nights')}</Th>
+                        <Th>{t('common.status')}</Th>
+                        <Th>{t('booking.balanceAmount')}</Th>
+                        <Th>{t('common.actions')}</Th>
+                      </Tr>
+                    </Thead>
+                    <Tbody>
+                      {departures.map((b) => (
+                        <Tr key={b.id} className="hover:bg-mist/80">
+                          <Td
+                            className="font-mono text-xs font-bold text-navy cursor-pointer"
+                            onClick={() => navigate(`/bookings/${b.id}`)}
+                          >
+                            {b.code}
+                          </Td>
+                          <Td className="font-semibold text-ink">
+                            {b.guest_name || '—'}
+                          </Td>
+                          <Td className="text-xs font-medium">
+                            <div className="flex items-center gap-2">
+                              <span>{b.unit_name}</span>
+                              {b.unit_id && <HousekeepingBadge unitId={b.unit_id} size="sm" />}
+                            </div>
+                          </Td>
+                          <Td className="text-xs font-semibold">
+                            {b.nights}
+                          </Td>
+                          <Td>
+                            <StatusBadge status={b.status} />
+                          </Td>
+                          <Td className="text-xs font-semibold whitespace-nowrap">
+                            {isOtaSource(b.source_code) && Number(b.balance || 0) > 0 ? (
+                              <span className="text-navy font-semibold text-[11px]" title={t('booking.otaPayoutNote')}>
+                                📱 {t('paymentStatus.otaPrepaid')}
+                              </span>
+                            ) : Number(b.balance || 0) > 0 ? (
+                              <span className="text-danger">{formatIDR(Number(b.balance))}</span>
+                            ) : (
+                              <span className="text-success">0</span>
+                            )}
+                          </Td>
+                          <Td>
+                            {b.status === 'checked_in' || b.status === 'confirmed' ? (
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => handleCheckOut(b)}
+                                disabled={updateStatusMutation.isPending}
+                              >
+                                {t('today.checkOutAction')}
+                              </Button>
+                            ) : (
+                              <Badge variant="default">
+                                {t(`status.${b.status}`)}
+                              </Badge>
+                            )}
+                          </Td>
+                        </Tr>
+                      ))}
+                    </Tbody>
+                  </Table>
+                )}
+              </div>
+            )}
+          </Card>
+
+          {/* 3. Occupied Units Today (الفلل والغرف الممتلئة فقط) - Third Operational Section */}
           <Card className="border-gold/40 shadow-sm">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+            <div
+              className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 cursor-pointer select-none"
+              onClick={() => setIsOccupiedOpen(!isOccupiedOpen)}
+            >
               <div>
                 <h2 className="text-base font-black text-navy flex items-center gap-2">
                   <span>🏛️</span>
@@ -555,475 +862,389 @@ export const TodayPage: React.FC = () => {
                 </p>
               </div>
 
-              {/* Sub-Filters and Search */}
-              <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
-                <div className="flex items-center gap-1 bg-stone/40 p-1 rounded-lg border border-line text-xs font-semibold">
-                  <button
-                    type="button"
-                    onClick={() => setOccupiedFilter('all')}
-                    className={`px-2.5 py-1 rounded-md transition-all ${
-                      occupiedFilter === 'all'
-                        ? 'bg-navy text-white shadow-xs'
-                        : 'text-muted hover:text-navy'
-                    }`}
-                  >
-                    {t('today.filterAllOccupied', { count: inHouse.length })}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setOccupiedFilter('villas')}
-                    className={`px-2.5 py-1 rounded-md transition-all ${
-                      occupiedFilter === 'villas'
-                        ? 'bg-navy text-white shadow-xs'
-                        : 'text-muted hover:text-navy'
-                    }`}
-                  >
-                    {t('today.filterVillasOnly', { count: occupiedVillasCount })}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setOccupiedFilter('rooms')}
-                    className={`px-2.5 py-1 rounded-md transition-all ${
-                      occupiedFilter === 'rooms'
-                        ? 'bg-navy text-white shadow-xs'
-                        : 'text-muted hover:text-navy'
-                    }`}
-                  >
-                    {t('today.filterRoomsOnly', { count: occupiedRoomsOnlyCount })}
-                  </button>
-                </div>
+              {/* Sub-Filters, Search, and Toggle Arrow */}
+              <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto" onClick={(e) => e.stopPropagation()}>
+                {isOccupiedOpen && (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-1 bg-stone/40 p-1 rounded-lg border border-line text-xs font-semibold">
+                      <button
+                        type="button"
+                        onClick={() => setOccupiedFilter('all')}
+                        className={`px-2.5 py-1 rounded-md transition-all ${
+                          occupiedFilter === 'all'
+                            ? 'bg-navy text-white shadow-xs'
+                            : 'text-muted hover:text-navy'
+                        }`}
+                      >
+                        {t('today.filterAllOccupied', { count: inHouse.length })}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setOccupiedFilter('villas')}
+                        className={`px-2.5 py-1 rounded-md transition-all ${
+                          occupiedFilter === 'villas'
+                            ? 'bg-navy text-white shadow-xs'
+                            : 'text-muted hover:text-navy'
+                        }`}
+                      >
+                        {t('today.filterVillasOnly', { count: occupiedVillasCount })}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setOccupiedFilter('rooms')}
+                        className={`px-2.5 py-1 rounded-md transition-all ${
+                          occupiedFilter === 'rooms'
+                            ? 'bg-navy text-white shadow-xs'
+                            : 'text-muted hover:text-navy'
+                        }`}
+                      >
+                        {t('today.filterRoomsOnly', { count: occupiedRoomsOnlyCount })}
+                      </button>
+                    </div>
 
-                <div className="w-full sm:w-48 no-print">
-                  <Input
-                    type="text"
-                    placeholder={t('common.search')}
-                    value={occupiedSearch}
-                    onChange={(e) => setOccupiedSearch(e.target.value)}
-                    className="h-8 text-xs"
-                  />
-                </div>
+                    <div className="w-full sm:w-44 no-print">
+                      <Input
+                        type="text"
+                        placeholder={t('common.search')}
+                        value={occupiedSearch}
+                        onChange={(e) => setOccupiedSearch(e.target.value)}
+                        className="h-8 text-xs"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setIsOccupiedOpen(!isOccupiedOpen)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone/40 hover:bg-stone/60 text-xs font-bold text-navy transition-all border border-line/60 ms-auto sm:ms-0"
+                >
+                  <span className="text-[11px]">{isOccupiedOpen ? t('common.collapse') : t('common.expand')}</span>
+                  <span className="text-xs font-bold">{isOccupiedOpen ? '▲' : '▼'}</span>
+                </button>
               </div>
             </div>
 
-            {occupiedUnits.length === 0 ? (
-              <EmptyState title={t('today.noOccupiedUnits')} className="py-8" />
-            ) : (
-              <Table>
-                <Thead>
-                  <Tr>
-                    <Th>{t('booking.unit')}</Th>
-                    <Th>{t('booking.guest')}</Th>
-                    <Th>{t('booking.code')}</Th>
-                    <Th>{t('booking.checkIn')}</Th>
-                    <Th>{t('booking.checkOut')}</Th>
-                    <Th>{t('booking.totalAmount')}</Th>
-                    <Th>{t('booking.balanceAmount')}</Th>
-                    <Th>{t('common.status')}</Th>
-                    <Th>{t('common.actions')}</Th>
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {occupiedUnits.map((b) => {
-                    const isVilla = b.unit_kind === 'villa';
-                    const isChildRoom = b.unit_kind === 'room' && (b.unit_name || '').includes(' - ');
-
-                    return (
-                      <Tr key={b.id} className="hover:bg-mist/80 transition-colors">
-                        <Td className="whitespace-nowrap">
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-bold text-navy text-xs">
-                              {b.unit_name}
-                            </span>
-                            <Badge
-                              variant={isVilla ? 'gold' : isChildRoom ? 'info' : 'navy'}
-                              className="text-[10px]"
-                            >
-                              {isVilla
-                                ? t('today.wholeVillaBadge')
-                                : isChildRoom
-                                ? t('today.roomInVillaBadge')
-                                : t('today.independentRoomBadge')}
-                            </Badge>
-                          </div>
-                        </Td>
-                        <Td>
-                          <div className="font-semibold text-ink text-xs">
-                            {b.guest_name || '—'}
-                          </div>
-                          {b.guest_phone && (
-                            <div className="text-[10px] text-muted font-mono">
-                              📞 {b.guest_phone}
-                            </div>
-                          )}
-                        </Td>
-                        <Td
-                          className="font-mono text-xs font-bold text-navy cursor-pointer hover:underline"
-                          onClick={() => navigate(`/bookings/${b.id}`)}
-                        >
-                          {b.code}
-                        </Td>
-                        <Td className="text-xs text-muted font-mono whitespace-nowrap">
-                          {b.check_in ? (
-                            <div className="flex flex-col">
-                              <span>{formatDateHuman(b.check_in, lang)}</span>
-                              {formatLeadTime(b.check_in, selectedDate, lang) && (
-                                <span className="text-[10px] text-blue-700 font-semibold mt-0.5">
-                                  ⏳ {formatLeadTime(b.check_in, selectedDate, lang)}
-                                </span>
-                              )}
-                            </div>
-                          ) : '—'}
-                        </Td>
-                        <Td className="text-xs text-muted font-mono whitespace-nowrap">
-                          {b.check_out ? formatDateHuman(b.check_out, lang) : '—'}
-                          <span className="ms-1 text-[10px] text-ink font-sans font-semibold">
-                            ({t('booking.nightsCount', { count: b.nights ?? 1 })})
-                          </span>
-                        </Td>
-                        <Td className="text-xs font-mono font-bold text-navy whitespace-nowrap">
-                          {formatIDR(Number(b.total_amount || 0))}
-                        </Td>
-                        <Td className="whitespace-nowrap">
-                          {b.status === 'cancelled' ? (
-                            <span className="text-muted text-xs">—</span>
-                          ) : isOtaSource(b.source_code) && Number(b.balance || 0) > 0 ? (
-                            <Badge variant="navy" className="text-[10px] whitespace-nowrap font-medium" title={t('booking.otaPayoutNote')}>
-                              📱 {t('booking.otaPrepaidBadge')}
-                            </Badge>
-                          ) : Number(b.balance || 0) > 0 ? (
-                            <Badge variant="danger" className="text-[10px] font-mono">
-                              ⚠️ {formatIDR(Number(b.balance))}
-                            </Badge>
-                          ) : (
-                            <Badge variant="success" className="text-[10px]">
-                              ✓ {t('calendar.paidBadge')}
-                            </Badge>
-                          )}
-                        </Td>
-                        <Td>
-                          <StatusBadge status={b.status} />
-                        </Td>
-                        <Td className="whitespace-nowrap no-print">
-                          <div className="flex items-center gap-1.5">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => navigate(`/bookings/${b.id}`)}
-                              className="text-xs"
-                            >
-                              {t('common.details')}
-                            </Button>
-                            {b.status === 'confirmed' ? (
-                              <Button
-                                variant="primary"
-                                size="sm"
-                                onClick={() => handleCheckIn(b)}
-                                disabled={updateStatusMutation.isPending}
-                                className="text-xs"
-                              >
-                                {t('today.checkInAction')}
-                              </Button>
-                            ) : (
-                              <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={() => handleCheckOut(b)}
-                                disabled={updateStatusMutation.isPending}
-                                className="text-xs"
-                              >
-                                {t('today.checkOutAction')}
-                              </Button>
-                            )}
-                          </div>
-                        </Td>
+            {isOccupiedOpen && (
+              <div className="animate-fadeIn">
+                {occupiedUnits.length === 0 ? (
+                  <EmptyState title={t('today.noOccupiedUnits')} className="py-8" />
+                ) : (
+                  <Table>
+                    <Thead>
+                      <Tr>
+                        <Th>{t('booking.unit')}</Th>
+                        <Th>{t('booking.guest')}</Th>
+                        <Th>{t('booking.code')}</Th>
+                        <Th>{t('booking.checkIn')}</Th>
+                        <Th>{t('booking.checkOut')}</Th>
+                        <Th>{t('booking.totalAmount')}</Th>
+                        <Th>{t('booking.balanceAmount')}</Th>
+                        <Th>{t('common.status')}</Th>
+                        <Th>{t('common.actions')}</Th>
                       </Tr>
-                    );
-                  })}
-                </Tbody>
-              </Table>
-            )}
-          </Card>
+                    </Thead>
+                    <Tbody>
+                      {occupiedUnits.map((b) => {
+                        const isVilla = b.unit_kind === 'villa';
+                        const isChildRoom = b.unit_kind === 'room' && (b.unit_name || '').includes(' - ');
 
-          {/* Arrivals Today */}
-          <Card>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-navy">
-                🛬 {t('stats.arrivalsToday')} ({arrivals.length})
-              </h2>
-            </div>
-            {arrivals.length === 0 ? (
-              <EmptyState
-                title={t('today.noArrivals')}
-                className="py-8"
-              />
-            ) : (
-              <Table>
-                <Thead>
-                  <Tr>
-                    <Th>{t('booking.code')}</Th>
-                    <Th>{t('booking.guest')}</Th>
-                    <Th>{t('booking.unit')}</Th>
-                    <Th>{t('booking.nights')}</Th>
-                    <Th>{t('common.status')}</Th>
-                    <Th>{t('booking.balanceAmount')}</Th>
-                    <Th>{t('common.actions')}</Th>
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {arrivals.map((b) => (
-                    <Tr key={b.id} className="hover:bg-mist/80">
-                      <Td
-                        className="font-mono text-xs font-bold text-navy cursor-pointer"
-                        onClick={() => navigate(`/bookings/${b.id}`)}
-                      >
-                        {b.code}
-                      </Td>
-                      <Td className="font-semibold text-ink">
-                        {b.guest_name || '—'}
-                      </Td>
-                      <Td className="text-xs font-medium">
-                        <div className="flex items-center gap-2">
-                          <span>{b.unit_name}</span>
-                          {b.unit_id && <HousekeepingBadge unitId={b.unit_id} size="sm" />}
-                        </div>
-                      </Td>
-                      <Td className="text-xs font-semibold">
-                        {b.nights}
-                      </Td>
-                      <Td>
-                        <StatusBadge status={b.status} />
-                      </Td>
-                      <Td className="text-xs font-semibold whitespace-nowrap">
-                        {isOtaSource(b.source_code) && Number(b.balance || 0) > 0 ? (
-                          <span className="text-navy font-semibold text-[11px]" title={t('booking.otaPayoutNote')}>
-                            📱 {t('paymentStatus.otaPrepaid')}
-                          </span>
-                        ) : Number(b.balance || 0) > 0 ? (
-                          <span className="text-danger">{formatIDR(Number(b.balance))}</span>
-                        ) : (
-                          <span className="text-success">0</span>
-                        )}
-                      </Td>
-                      <Td>
-                        {b.status === 'confirmed' ? (
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={() => handleCheckIn(b)}
-                            disabled={updateStatusMutation.isPending}
-                          >
-                            {t('today.checkInAction')}
-                          </Button>
-                        ) : (
-                          <Badge variant="navy">
-                            {t(`status.${b.status}`)}
-                          </Badge>
-                        )}
-                      </Td>
-                    </Tr>
-                  ))}
-                </Tbody>
-              </Table>
-            )}
-          </Card>
-
-          {/* Departures Today */}
-          <Card>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-navy">
-                🛫 {t('stats.departuresToday')} ({departures.length})
-              </h2>
-            </div>
-            {departures.length === 0 ? (
-              <EmptyState
-                title={t('today.noDepartures')}
-                className="py-8"
-              />
-            ) : (
-              <Table>
-                <Thead>
-                  <Tr>
-                    <Th>{t('booking.code')}</Th>
-                    <Th>{t('booking.guest')}</Th>
-                    <Th>{t('booking.unit')}</Th>
-                    <Th>{t('booking.nights')}</Th>
-                    <Th>{t('common.status')}</Th>
-                    <Th>{t('booking.balanceAmount')}</Th>
-                    <Th>{t('common.actions')}</Th>
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {departures.map((b) => (
-                    <Tr key={b.id} className="hover:bg-mist/80">
-                      <Td
-                        className="font-mono text-xs font-bold text-navy cursor-pointer"
-                        onClick={() => navigate(`/bookings/${b.id}`)}
-                      >
-                        {b.code}
-                      </Td>
-                      <Td className="font-semibold text-ink">
-                        {b.guest_name || '—'}
-                      </Td>
-                      <Td className="text-xs font-medium">
-                        <div className="flex items-center gap-2">
-                          <span>{b.unit_name}</span>
-                          {b.unit_id && <HousekeepingBadge unitId={b.unit_id} size="sm" />}
-                        </div>
-                      </Td>
-                      <Td className="text-xs font-semibold">
-                        {b.nights}
-                      </Td>
-                      <Td>
-                        <StatusBadge status={b.status} />
-                      </Td>
-                      <Td className="text-xs font-semibold whitespace-nowrap">
-                        {isOtaSource(b.source_code) && Number(b.balance || 0) > 0 ? (
-                          <span className="text-navy font-semibold text-[11px]" title={t('booking.otaPayoutNote')}>
-                            📱 {t('paymentStatus.otaPrepaid')}
-                          </span>
-                        ) : Number(b.balance || 0) > 0 ? (
-                          <span className="text-danger">{formatIDR(Number(b.balance))}</span>
-                        ) : (
-                          <span className="text-success">0</span>
-                        )}
-                      </Td>
-                      <Td>
-                        {b.status === 'checked_in' || b.status === 'confirmed' ? (
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => handleCheckOut(b)}
-                            disabled={updateStatusMutation.isPending}
-                          >
-                            {t('today.checkOutAction')}
-                          </Button>
-                        ) : (
-                          <Badge variant="default">
-                            {t(`status.${b.status}`)}
-                          </Badge>
-                        )}
-                      </Td>
-                    </Tr>
-                  ))}
-                </Tbody>
-              </Table>
-            )}
-          </Card>
-
-          {/* Unpaid Bookings */}
-          <Card>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-navy">
-                ⚠️ {t('today.unpaidList')} ({unpaidBookings.length})
-              </h2>
-            </div>
-            {unpaidBookings.length === 0 ? (
-              <EmptyState
-                title={t('today.noUnpaid')}
-                className="py-8"
-              />
-            ) : (
-              <Table>
-                <Thead>
-                  <Tr>
-                    <Th>{t('booking.code')}</Th>
-                    <Th>{t('booking.guest')}</Th>
-                    <Th>{t('booking.unit')}</Th>
-                    <Th>{t('booking.checkIn')}</Th>
-                    <Th>{t('booking.totalAmount')}</Th>
-                    <Th>{t('booking.balanceAmount')}</Th>
-                    <Th>{t('common.status')}</Th>
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {unpaidBookings.map((b) => (
-                    <Tr key={b.id} className="hover:bg-mist/80">
-                      <Td
-                        className="font-mono text-xs font-bold text-navy cursor-pointer"
-                        onClick={() => navigate(`/bookings/${b.id}`)}
-                      >
-                        {b.code}
-                      </Td>
-                      <Td className="font-semibold text-ink">
-                        {b.guest_name || '—'}
-                      </Td>
-                      <Td className="text-xs font-medium">{b.unit_name}</Td>
-                      <Td className="text-xs text-muted whitespace-nowrap">
-                        {b.check_in ? (
-                          <div className="flex flex-col">
-                            <span>{formatDateHuman(b.check_in, lang)}</span>
-                            {formatLeadTime(b.check_in, selectedDate, lang) && (
-                              <span className="text-[10px] text-blue-700 font-semibold mt-0.5">
-                                ⏳ {formatLeadTime(b.check_in, selectedDate, lang)}
+                        return (
+                          <Tr key={b.id} className="hover:bg-mist/80 transition-colors">
+                            <Td className="whitespace-nowrap">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-navy text-xs">
+                                  {b.unit_name}
+                                </span>
+                                <Badge
+                                  variant={isVilla ? 'gold' : isChildRoom ? 'info' : 'navy'}
+                                  className="text-[10px]"
+                                >
+                                  {isVilla
+                                    ? t('today.wholeVillaBadge')
+                                    : isChildRoom
+                                    ? t('today.roomInVillaBadge')
+                                    : t('today.independentRoomBadge')}
+                                </Badge>
+                              </div>
+                            </Td>
+                            <Td>
+                              <div className="font-semibold text-ink text-xs">
+                                {b.guest_name || '—'}
+                              </div>
+                              {b.guest_phone && (
+                                <div className="text-[10px] text-muted font-mono">
+                                  📞 {b.guest_phone}
+                                </div>
+                              )}
+                            </Td>
+                            <Td
+                              className="font-mono text-xs font-bold text-navy cursor-pointer hover:underline"
+                              onClick={() => navigate(`/bookings/${b.id}`)}
+                            >
+                              {b.code}
+                            </Td>
+                            <Td className="text-xs text-muted font-mono whitespace-nowrap">
+                              {b.check_in ? (
+                                <div className="flex flex-col">
+                                  <span>{formatDateHuman(b.check_in, lang)}</span>
+                                  {formatLeadTime(b.check_in, selectedDate, lang) && (
+                                    <span className="text-[10px] text-blue-700 font-semibold mt-0.5">
+                                      ⏳ {formatLeadTime(b.check_in, selectedDate, lang)}
+                                    </span>
+                                  )}
+                                </div>
+                              ) : '—'}
+                            </Td>
+                            <Td className="text-xs text-muted font-mono whitespace-nowrap">
+                              {b.check_out ? formatDateHuman(b.check_out, lang) : '—'}
+                              <span className="ms-1 text-[10px] text-ink font-sans font-semibold">
+                                ({t('booking.nightsCount', { count: b.nights ?? 1 })})
                               </span>
-                            )}
-                          </div>
-                        ) : '—'}
-                      </Td>
-                      <Td className="text-xs font-mono font-bold text-navy">
-                        {formatIDR(Number(b.total_amount || 0))}
-                      </Td>
-                      <Td className="text-xs font-mono font-bold whitespace-nowrap">
-                        {isOtaSource(b.source_code) ? (
-                          <span className="text-navy" title={t('booking.otaPayoutNote')}>
-                            📱 {formatIDR(Number(b.balance || 0))}
-                            <span className="block text-[10px] text-muted font-sans font-normal">
-                              {t('booking.otaPayoutExpected')}
-                            </span>
-                          </span>
-                        ) : (
-                          <span className="text-danger">{formatIDR(Number(b.balance || 0))}</span>
-                        )}
-                      </Td>
-                      <Td>
-                        <PaymentStatusBadge status={b.payment_status || 'unpaid'} sourceCode={b.source_code} />
-                      </Td>
-                    </Tr>
-                  ))}
-                </Tbody>
-              </Table>
+                            </Td>
+                            <Td className="text-xs font-mono font-bold text-navy whitespace-nowrap">
+                              {formatIDR(Number(b.total_amount || 0))}
+                            </Td>
+                            <Td className="whitespace-nowrap">
+                              {b.status === 'cancelled' ? (
+                                <span className="text-muted text-xs">—</span>
+                              ) : isOtaSource(b.source_code) && Number(b.balance || 0) > 0 ? (
+                                <Badge variant="navy" className="text-[10px] whitespace-nowrap font-medium" title={t('booking.otaPayoutNote')}>
+                                  📱 {t('booking.otaPrepaidBadge')}
+                                </Badge>
+                              ) : Number(b.balance || 0) > 0 ? (
+                                <Badge variant="danger" className="text-[10px] font-mono">
+                                  ⚠️ {formatIDR(Number(b.balance))}
+                                </Badge>
+                              ) : (
+                                <Badge variant="success" className="text-[10px]">
+                                  ✓ {t('calendar.paidBadge')}
+                                </Badge>
+                              )}
+                            </Td>
+                            <Td>
+                              <StatusBadge status={b.status} />
+                            </Td>
+                            <Td className="whitespace-nowrap no-print">
+                              <div className="flex items-center gap-1.5">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => navigate(`/bookings/${b.id}`)}
+                                  className="text-xs"
+                                >
+                                  {t('common.details')}
+                                </Button>
+                                {b.status === 'confirmed' ? (
+                                  <Button
+                                    variant="primary"
+                                    size="sm"
+                                    onClick={() => handleCheckIn(b)}
+                                    disabled={updateStatusMutation.isPending}
+                                    className="text-xs"
+                                  >
+                                    {t('today.checkInAction')}
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => handleCheckOut(b)}
+                                    disabled={updateStatusMutation.isPending}
+                                    className="text-xs"
+                                  >
+                                    {t('today.checkOutAction')}
+                                  </Button>
+                                )}
+                              </div>
+                            </Td>
+                          </Tr>
+                        );
+                      })}
+                    </Tbody>
+                  </Table>
+                )}
+              </div>
             )}
           </Card>
 
-          {/* Manager Section: Payments Received Today */}
+          {/* 4. Unpaid Bookings (مبالغ الحجوزات غير المسددة) - Fourth Operational Section */}
+          <Card>
+            <div
+              className="flex items-center justify-between gap-3 mb-4 cursor-pointer select-none"
+              onClick={() => setIsUnpaidOpen(!isUnpaidOpen)}
+            >
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-bold text-navy flex items-center gap-2">
+                  <span>⚠️</span>
+                  <span>{t('today.unpaidList')}</span>
+                  <span className="text-xs bg-warning text-warning-text px-2 py-0.5 rounded-full font-mono font-bold">
+                    {unpaidBookings.length}
+                  </span>
+                </h2>
+                <span className="text-xs font-mono font-bold text-danger ms-2">
+                  ({formatIDR(totalOutstanding)})
+                </span>
+                {!isUnpaidOpen && (
+                  <span className="text-xs text-muted font-normal ms-2 hidden sm:inline">
+                    ({unpaidBookings.length > 0 ? `${unpaidBookings.length} ${t('nav.bookings')}` : t('common.noData')})
+                  </span>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsUnpaidOpen(!isUnpaidOpen);
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone/40 hover:bg-stone/60 text-xs font-bold text-navy transition-all border border-line/60"
+              >
+                <span className="text-[11px]">{isUnpaidOpen ? t('common.collapse') : t('common.expand')}</span>
+                <span className="text-xs font-bold">{isUnpaidOpen ? '▲' : '▼'}</span>
+              </button>
+            </div>
+
+            {isUnpaidOpen && (
+              <div className="animate-fadeIn">
+                {unpaidBookings.length === 0 ? (
+                  <EmptyState
+                    title={t('today.noUnpaid')}
+                    className="py-8"
+                  />
+                ) : (
+                  <Table>
+                    <Thead>
+                      <Tr>
+                        <Th>{t('booking.code')}</Th>
+                        <Th>{t('booking.guest')}</Th>
+                        <Th>{t('booking.unit')}</Th>
+                        <Th>{t('booking.checkIn')}</Th>
+                        <Th>{t('booking.totalAmount')}</Th>
+                        <Th>{t('booking.balanceAmount')}</Th>
+                        <Th>{t('common.status')}</Th>
+                      </Tr>
+                    </Thead>
+                    <Tbody>
+                      {unpaidBookings.map((b) => (
+                        <Tr key={b.id} className="hover:bg-mist/80">
+                          <Td
+                            className="font-mono text-xs font-bold text-navy cursor-pointer"
+                            onClick={() => navigate(`/bookings/${b.id}`)}
+                          >
+                            {b.code}
+                          </Td>
+                          <Td className="font-semibold text-ink">
+                            {b.guest_name || '—'}
+                          </Td>
+                          <Td className="text-xs font-medium">{b.unit_name}</Td>
+                          <Td className="text-xs text-muted whitespace-nowrap">
+                            {b.check_in ? (
+                              <div className="flex flex-col">
+                                <span>{formatDateHuman(b.check_in, lang)}</span>
+                                {formatLeadTime(b.check_in, selectedDate, lang) && (
+                                  <span className="text-[10px] text-blue-700 font-semibold mt-0.5">
+                                    ⏳ {formatLeadTime(b.check_in, selectedDate, lang)}
+                                  </span>
+                                )}
+                              </div>
+                            ) : '—'}
+                          </Td>
+                          <Td className="text-xs font-mono font-bold text-navy">
+                            {formatIDR(Number(b.total_amount || 0))}
+                          </Td>
+                          <Td className="text-xs font-mono font-bold whitespace-nowrap">
+                            {isOtaSource(b.source_code) ? (
+                              <span className="text-navy" title={t('booking.otaPayoutNote')}>
+                                📱 {formatIDR(Number(b.balance || 0))}
+                                <span className="block text-[10px] text-muted font-sans font-normal">
+                                  {t('booking.otaPayoutExpected')}
+                                </span>
+                              </span>
+                            ) : (
+                              <span className="text-danger">{formatIDR(Number(b.balance || 0))}</span>
+                            )}
+                          </Td>
+                          <Td>
+                            <PaymentStatusBadge status={b.payment_status || 'unpaid'} sourceCode={b.source_code} />
+                          </Td>
+                        </Tr>
+                      ))}
+                    </Tbody>
+                  </Table>
+                )}
+              </div>
+            )}
+          </Card>
+
+          {/* 5. Manager Section: Payments Received Today */}
           {isManager && (
             <Card>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-bold text-navy">
-                  💰 {t('stats.receivedToday')} ({todayPayments.length})
-                </h2>
+              <div
+                className="flex items-center justify-between gap-3 mb-4 cursor-pointer select-none"
+                onClick={() => setIsTodayPaymentsOpen(!isTodayPaymentsOpen)}
+              >
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-bold text-navy flex items-center gap-2">
+                    <span>💰</span>
+                    <span>{t('stats.receivedToday')}</span>
+                    <span className="text-xs bg-success text-white px-2 py-0.5 rounded-full font-mono font-bold">
+                      {todayPayments.length}
+                    </span>
+                  </h2>
+                  <span className="text-xs font-mono font-bold text-success ms-2">
+                    ({formatIDR(totalReceived)})
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsTodayPaymentsOpen(!isTodayPaymentsOpen);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone/40 hover:bg-stone/60 text-xs font-bold text-navy transition-all border border-line/60"
+                >
+                  <span className="text-[11px]">{isTodayPaymentsOpen ? t('common.collapse') : t('common.expand')}</span>
+                  <span className="text-xs font-bold">{isTodayPaymentsOpen ? '▲' : '▼'}</span>
+                </button>
               </div>
-              {todayPayments.length === 0 ? (
-                <EmptyState title={t('common.noData')} className="py-8" />
-              ) : (
-                <Table>
-                  <Thead>
-                    <Tr>
-                      <Th>{t('payment.amount')}</Th>
-                      <Th>{t('payment.method')}</Th>
-                      <Th>{t('payment.reference')}</Th>
-                      <Th>{t('payment.paidOn')}</Th>
-                    </Tr>
-                  </Thead>
-                  <Tbody>
-                    {todayPayments.map((p) => (
-                      <Tr key={p.id} className="hover:bg-mist/80">
-                        <Td className="font-mono text-xs font-bold text-success">
-                          {formatIDR(Number(p.amount))}
-                        </Td>
-                        <Td>
-                          <Badge variant="default" className="uppercase text-[10px]">
-                            {p.method}
-                          </Badge>
-                        </Td>
-                        <Td className="font-mono text-xs text-muted">
-                          {p.reference || '—'}
-                        </Td>
-                        <Td className="text-xs text-muted font-mono">{p.paid_on}</Td>
-                      </Tr>
-                    ))}
-                  </Tbody>
-                </Table>
+
+              {isTodayPaymentsOpen && (
+                <div className="animate-fadeIn">
+                  {todayPayments.length === 0 ? (
+                    <EmptyState title={t('common.noData')} className="py-8" />
+                  ) : (
+                    <Table>
+                      <Thead>
+                        <Tr>
+                          <Th>{t('payment.amount')}</Th>
+                          <Th>{t('payment.method')}</Th>
+                          <Th>{t('payment.reference')}</Th>
+                          <Th>{t('payment.paidOn')}</Th>
+                        </Tr>
+                      </Thead>
+                      <Tbody>
+                        {todayPayments.map((p) => (
+                          <Tr key={p.id} className="hover:bg-mist/80">
+                            <Td className="font-mono text-xs font-bold text-success">
+                              {formatIDR(Number(p.amount))}
+                            </Td>
+                            <Td>
+                              <Badge variant="default" className="uppercase text-[10px]">
+                                {p.method}
+                              </Badge>
+                            </Td>
+                            <Td className="font-mono text-xs text-muted">
+                              {p.reference || '—'}
+                            </Td>
+                            <Td className="text-xs text-muted font-mono">{p.paid_on}</Td>
+                          </Tr>
+                        ))}
+                      </Tbody>
+                    </Table>
+                  )}
+                </div>
               )}
             </Card>
           )}

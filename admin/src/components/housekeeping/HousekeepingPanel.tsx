@@ -122,9 +122,10 @@ export const HousekeepingPanel: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsOpen(!isOpen)}
-            className="text-xs text-text-muted hover:text-ink px-2 py-1 font-semibold"
+            className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-stone/40 hover:bg-stone/60 text-xs font-bold text-navy transition-all border border-line/60"
           >
-            {isOpen ? '▲ ' + t('common.collapse') : '▼ ' + t('common.expand')}
+            <span>{isOpen ? t('common.collapse') : t('common.expand')}</span>
+            <span className="text-xs">{isOpen ? '▲' : '▼'}</span>
           </button>
         </div>
       </div>
