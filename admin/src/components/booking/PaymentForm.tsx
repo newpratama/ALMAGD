@@ -14,6 +14,7 @@ export interface PaymentFormProps {
   bookingCode?: string | null;
   defaultOtaRef?: string | null;
   defaultMethod?: 'cash' | 'transfer' | 'app' | 'other';
+  defaultPaidOn?: string | null;
   initialPayment?: Payment;
   defaultAmount?: number;
   onSubmit: (data: PaymentInsert | PaymentUpdate) => Promise<void>;
@@ -26,6 +27,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   bookingCode,
   defaultOtaRef,
   defaultMethod,
+  defaultPaidOn,
   initialPayment,
   defaultAmount = 0,
   onSubmit,
@@ -54,7 +56,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const [isRefund, setIsRefund] = useState(initialIsRefund);
   const [amount, setAmount] = useState<number>(initialAmount > 0 ? initialAmount : 500000);
   const [method, setMethod] = useState<MethodType>(initialMethod);
-  const [paidOn, setPaidOn] = useState<string>(initialPayment?.paid_on || todayISO());
+  const [paidOn, setPaidOn] = useState<string>(initialPayment?.paid_on || defaultPaidOn || todayISO());
   const [reference, setReference] = useState<string>(
     initialPayment?.reference || (!isEdit ? computeDefaultRef(initialMethod) : '')
   );

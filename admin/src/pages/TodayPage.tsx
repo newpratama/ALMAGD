@@ -64,6 +64,7 @@ export const TodayPage: React.FC = () => {
   const [checkoutTarget, setCheckoutTarget] = useState<BookingOverview | null>(null);
   const [occupiedFilter, setOccupiedFilter] = useState<'all' | 'villas' | 'rooms'>('all');
   const [occupiedSearch, setOccupiedSearch] = useState<string>('');
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState<'all' | 'cash' | 'transfer' | 'app'>('all');
 
   // Collapsible sections state
   const [isArrivalsOpen, setIsArrivalsOpen] = useState(true);
@@ -283,10 +284,36 @@ export const TodayPage: React.FC = () => {
 
   // Payment totals split by method
   const totalReceived = todayPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
-  const cashTotal = todayPayments.filter((p) => p.method === 'cash').reduce((sum, p) => sum + Number(p.amount), 0);
-  const transferTotal = todayPayments.filter((p) => p.method === 'transfer').reduce((sum, p) => sum + Number(p.amount), 0);
-  const appTotal = todayPayments.filter((p) => p.method === 'app').reduce((sum, p) => sum + Number(p.amount), 0);
-  const otherTotal = todayPayments.filter((p) => p.method === 'other').reduce((sum, p) => sum + Number(p.amount), 0);
+  const cashPayments = useMemo(() => todayPayments.filter((p) => p.method === 'cash'), [todayPayments]);
+  const transferPayments = useMemo(() => todayPayments.filter((p) => p.method === 'transfer'), [todayPayments]);
+  const appPayments = useMemo(
+    () => todayPayments.filter((p) => p.method === 'app' || p.method === 'other'),
+    [todayPayments]
+  );
+
+  const cashTotal = useMemo(
+    () => cashPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0),
+    [cashPayments]
+  );
+  const transferTotal = useMemo(
+    () => transferPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0),
+    [transferPayments]
+  );
+  const appTotal = useMemo(
+    () => appPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0),
+    [appPayments]
+  );
+
+  const filteredPayments = useMemo(() => {
+    if (paymentMethodFilter === 'cash') return cashPayments;
+    if (paymentMethodFilter === 'transfer') return transferPayments;
+    if (paymentMethodFilter === 'app') return appPayments;
+    return todayPayments;
+  }, [todayPayments, paymentMethodFilter, cashPayments, transferPayments, appPayments]);
+
+  const filteredTotal = useMemo(() => {
+    return filteredPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+  }, [filteredPayments]);
 
   const totalOutstanding = unpaidBookings.reduce((sum, b) => sum + Number(b.balance || 0), 0);
   const occupancyPercent = totalOperationalRooms > 0
@@ -327,7 +354,7 @@ export const TodayPage: React.FC = () => {
       { 'Parameter': 'Total Diterima / إجمالي المقبوضات (Rp)', 'Nilai': totalReceived },
       { 'Parameter': 'Kas Tunai / نقد (Rp)', 'Nilai': cashTotal },
       { 'Parameter': 'Transfer Bank / تحويل (Rp)', 'Nilai': transferTotal },
-      { 'Parameter': 'Aplikasi OTA / تطبيقات (Rp)', 'Nilai': appTotal + otherTotal },
+      { 'Parameter': 'Aplikasi OTA / تطبيقات (Rp)', 'Nilai': appTotal },
       { 'Parameter': 'Sisa Belum Lunas / الرصيد المتبقي (Rp)', 'Nilai': totalOutstanding },
     ];
     const wsSummary = XLSX.utils.json_to_sheet(summaryRows);
@@ -391,6 +418,26 @@ export const TodayPage: React.FC = () => {
       }));
       const wsOcc = XLSX.utils.json_to_sheet(occRows);
       XLSX.utils.book_append_sheet(wb, wsOcc, 'Unit Terisi (الممتلئة)');
+    }
+
+    // Sheet 5: Penerimaan (المقبوضات)
+    if (todayPayments.length > 0) {
+      const payRows = todayPayments.map((p) => ({
+        'Kode Booking / رمز الحجز': p.booking?.code || '—',
+        'Nama Tamu / النزيل': p.booking?.guest?.full_name || '—',
+        'Unit / الوحدة': p.booking?.unit?.name || '—',
+        'Metode / طريقة الدفع':
+          p.method === 'cash'
+            ? 'Tunai (نقداً)'
+            : p.method === 'transfer'
+            ? 'Transfer Bank (تحويل بنكي)'
+            : 'Aplikasi OTA (عبر التطبيق)',
+        'No Bukti / رقم السند': p.reference || '—',
+        'Tanggal Penerimaan / تاريخ الدخول': p.paid_on,
+        'Jumlah (Rp) / المبلغ': Number(p.amount || 0),
+      }));
+      const wsPay = XLSX.utils.json_to_sheet(payRows);
+      XLSX.utils.book_append_sheet(wb, wsPay, 'Penerimaan (المقبوضات)');
     }
 
     XLSX.writeFile(wb, `almagd-daily-report-${selectedDate}.xlsx`);
@@ -504,7 +551,7 @@ export const TodayPage: React.FC = () => {
           <StatCard
             title={t('stats.receivedToday')}
             value={formatIDR(totalReceived)}
-            subtitle={`💵 ${formatIDR(cashTotal)} | 🏦 ${formatIDR(transferTotal)} | 📱 ${formatIDR(appTotal + otherTotal)}`}
+            subtitle={`💵 ${formatIDR(cashTotal)} | 🏦 ${formatIDR(transferTotal)} | 📱 ${formatIDR(appTotal)}`}
             variant="success"
           />
           <StatCard
@@ -1217,44 +1264,172 @@ export const TodayPage: React.FC = () => {
           {isManager && (
             <Card className="border-emerald-200/60 shadow-sm">
               <div
-                className="flex items-center justify-between gap-3 mb-4 cursor-pointer select-none"
-                onClick={() => setIsTodayPaymentsOpen(!isTodayPaymentsOpen)}
+                className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4 select-none"
               >
-                <div className="flex items-center gap-2">
+                <div
+                  className="flex items-center gap-2 flex-wrap cursor-pointer"
+                  onClick={() => setIsTodayPaymentsOpen(!isTodayPaymentsOpen)}
+                >
                   <h2 className="text-base font-bold text-navy flex items-center gap-2">
                     <span>💰</span>
                     <span>{t('stats.receivedToday')}</span>
                     <span className="text-xs bg-success text-white px-2.5 py-0.5 rounded-full font-mono font-bold">
-                      {todayPayments.length}
+                      {paymentMethodFilter === 'all'
+                        ? todayPayments.length
+                        : `${filteredPayments.length} / ${todayPayments.length}`}
                     </span>
                   </h2>
                   <span className="text-sm font-mono font-black text-success ms-2">
-                    ({formatIDR(totalReceived)})
+                    ({formatIDR(filteredTotal)})
                   </span>
-                  {!isTodayPaymentsOpen && (
-                    <span className="text-xs text-muted font-normal ms-2 hidden sm:inline">
-                      ({todayPayments.length > 0 ? `${todayPayments.length} ${t('nav.bookings')}` : t('common.noData')})
-                    </span>
-                  )}
+                  <span className="text-[11px] text-muted font-normal ms-2 hidden lg:inline">
+                    • {t('payment.collectionOnCheckInNote')}
+                  </span>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsTodayPaymentsOpen(!isTodayPaymentsOpen);
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone/40 hover:bg-stone/60 text-xs font-bold text-navy transition-all border border-line/60"
-                >
-                  <span className="text-[11px]">{isTodayPaymentsOpen ? t('common.collapse') : t('common.expand')}</span>
-                  <span className="text-xs font-bold">{isTodayPaymentsOpen ? '▲' : '▼'}</span>
-                </button>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {/* Quick Day Selector for collections date */}
+                  <div className="flex items-center gap-1 bg-stone/40 border border-line/60 rounded-lg p-1">
+                    <button
+                      type="button"
+                      title={t('payment.selectDay')}
+                      onClick={() => setSelectedDate((d) => addDaysISO(d, -1))}
+                      className="px-2 py-1 rounded text-xs font-bold text-navy hover:bg-stone/80 transition-colors"
+                    >
+                      ◀
+                    </button>
+                    <input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
+                      className="text-xs font-mono font-semibold text-navy bg-transparent border-0 focus:ring-0 p-0.5 cursor-pointer"
+                      title={t('payment.selectDay')}
+                    />
+                    <button
+                      type="button"
+                      title={t('payment.selectDay')}
+                      onClick={() => setSelectedDate((d) => addDaysISO(d, 1))}
+                      className="px-2 py-1 rounded text-xs font-bold text-navy hover:bg-stone/80 transition-colors"
+                    >
+                      ▶
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsTodayPaymentsOpen(!isTodayPaymentsOpen)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone/40 hover:bg-stone/60 text-xs font-bold text-navy transition-all border border-line/60"
+                  >
+                    <span className="text-[11px]">{isTodayPaymentsOpen ? t('common.collapse') : t('common.expand')}</span>
+                    <span className="text-xs font-bold">{isTodayPaymentsOpen ? '▲' : '▼'}</span>
+                  </button>
+                </div>
               </div>
 
               {isTodayPaymentsOpen && (
-                <div className="animate-fadeIn">
+                <div className="animate-fadeIn space-y-4">
+                  {/* Payment Method Filter Pills */}
+                  <div className="flex items-center gap-2 flex-wrap pb-2 border-b border-line/50">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethodFilter('all')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                        paymentMethodFilter === 'all'
+                          ? 'bg-navy text-white shadow-sm'
+                          : 'bg-stone/40 hover:bg-stone/60 text-muted hover:text-ink'
+                      }`}
+                    >
+                      <span>{t('payment.filterAll')}</span>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold ${
+                          paymentMethodFilter === 'all' ? 'bg-white/20 text-white' : 'bg-stone text-muted'
+                        }`}
+                      >
+                        {todayPayments.length}
+                      </span>
+                      <span className="text-[11px] font-mono font-semibold ms-1">
+                        ({formatIDR(totalReceived)})
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethodFilter('cash')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                        paymentMethodFilter === 'cash'
+                          ? 'bg-success text-white shadow-sm'
+                          : 'bg-stone/40 hover:bg-stone/60 text-muted hover:text-ink'
+                      }`}
+                    >
+                      <span>💵 {t('payment.filterCash')}</span>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold ${
+                          paymentMethodFilter === 'cash' ? 'bg-white/20 text-white' : 'bg-stone text-muted'
+                        }`}
+                      >
+                        {cashPayments.length}
+                      </span>
+                      <span className="text-[11px] font-mono font-semibold ms-1">
+                        ({formatIDR(cashTotal)})
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethodFilter('transfer')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                        paymentMethodFilter === 'transfer'
+                          ? 'bg-info text-white shadow-sm'
+                          : 'bg-stone/40 hover:bg-stone/60 text-muted hover:text-ink'
+                      }`}
+                    >
+                      <span>🏦 {t('payment.filterTransfer')}</span>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold ${
+                          paymentMethodFilter === 'transfer' ? 'bg-white/20 text-white' : 'bg-stone text-muted'
+                        }`}
+                      >
+                        {transferPayments.length}
+                      </span>
+                      <span className="text-[11px] font-mono font-semibold ms-1">
+                        ({formatIDR(transferTotal)})
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethodFilter('app')}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                        paymentMethodFilter === 'app'
+                          ? 'bg-navy text-white shadow-sm'
+                          : 'bg-stone/40 hover:bg-stone/60 text-muted hover:text-ink'
+                      }`}
+                    >
+                      <span>📱 {t('payment.filterApp')}</span>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold ${
+                          paymentMethodFilter === 'app' ? 'bg-white/20 text-white' : 'bg-stone text-muted'
+                        }`}
+                      >
+                        {appPayments.length}
+                      </span>
+                      <span className="text-[11px] font-mono font-semibold ms-1">
+                        ({formatIDR(appTotal)})
+                      </span>
+                    </button>
+                  </div>
+
                   {todayPayments.length === 0 ? (
-                    <EmptyState title={t('common.noData')} className="py-8" />
+                    <EmptyState
+                      title={t('common.noData')}
+                      description={t('payment.noPaymentsForFilter')}
+                      className="py-8"
+                    />
+                  ) : filteredPayments.length === 0 ? (
+                    <EmptyState
+                      title={t('payment.noPaymentsForFilter')}
+                      className="py-8"
+                    />
                   ) : (
                     <Table>
                       <Thead>
@@ -1270,7 +1445,7 @@ export const TodayPage: React.FC = () => {
                         </Tr>
                       </Thead>
                       <Tbody>
-                        {todayPayments.map((p) => {
+                        {filteredPayments.map((p) => {
                           const numAmount = Number(p.amount);
                           const isRefund = numAmount < 0;
                           const b = p.booking;

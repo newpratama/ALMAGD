@@ -156,6 +156,7 @@ export async function createBooking(
     method: 'cash' | 'transfer' | 'app' | 'other';
     reference?: string;
     notes?: string;
+    paid_on?: string;
   }
 ): Promise<{ booking: Booking; paymentError?: Error }> {
   if (!supabase) throw new Error('Supabase not configured');
@@ -173,6 +174,7 @@ export async function createBooking(
   if (firstPayment && firstPayment.amount > 0) {
     const { error: pErr } = await supabase.from('payments').insert({
       booking_id: booking.id,
+      paid_on: firstPayment.paid_on || booking.check_in,
       amount: firstPayment.amount,
       method: firstPayment.method,
       reference: firstPayment.reference || null,

@@ -201,6 +201,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
             ? {
                 amount: paymentAmount,
                 method: paymentMethod,
+                paid_on: checkIn,
                 reference: paymentRef.trim() || undefined,
               }
             : undefined;

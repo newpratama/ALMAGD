@@ -612,6 +612,7 @@ export const BookingDetailPage: React.FC = () => {
           bookingId={bookingId}
           bookingCode={booking.code}
           defaultOtaRef={booking.ota_reference}
+          defaultPaidOn={booking.check_in}
           defaultMethod={
             booking.source_code && booking.source_code !== 'direct' && booking.source_code !== 'walk_in'
               ? 'app'
