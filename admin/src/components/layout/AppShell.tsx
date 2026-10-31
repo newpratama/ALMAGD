@@ -1,5 +1,6 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useState } from 'react';
 import { Outlet } from 'react-router-dom';
+import { PanelLeft, PanelLeftClose } from 'lucide-react';
 import { Sidebar } from './Sidebar';
 import { BottomNav } from './BottomNav';
 import { LanguageToggle } from './LanguageToggle';
@@ -12,6 +13,25 @@ import { IdlePrefetcher } from '../data/IdlePrefetcher';
 export const AppShell: React.FC = () => {
   const { staff, role, signOut } = useAuth();
   const { t, lang } = useI18n();
+  const isAr = lang === 'ar';
+
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('almagd_sidebar_collapsed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('almagd_sidebar_collapsed', String(next));
+      } catch {}
+      return next;
+    });
+  };
 
   return (
     <div className="min-h-screen bg-mist text-ink flex flex-col">
@@ -19,14 +39,40 @@ export const AppShell: React.FC = () => {
       <IdlePrefetcher />
 
       {/* Sidebar (Desktop) */}
-      <Sidebar />
+      <Sidebar isCollapsed={isSidebarCollapsed} onToggleCollapse={toggleSidebar} />
 
       {/* Main Wrapper */}
-      <div className="md:ps-64 flex flex-col flex-1 min-w-0 pb-16 md:pb-6">
+      <div
+        className={`${
+          isSidebarCollapsed ? 'md:ps-20' : 'md:ps-64'
+        } flex flex-col flex-1 min-w-0 pb-16 md:pb-6 transition-all duration-300 ease-in-out`}
+      >
         {/* Top Header */}
         <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-xs border-b border-line px-4 sm:px-6 py-3 flex items-center justify-between gap-3 shadow-xs">
-          {/* Left / Start: Mobile brand & Title */}
+          {/* Left / Start: Desktop toggle button & Mobile brand */}
           <div className="flex items-center gap-3">
+            {/* Desktop Sidebar Toggle Button */}
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              className="hidden md:flex items-center justify-center p-2 rounded-lg text-slate-500 hover:text-navy hover:bg-stone/60 border border-line/70 transition-all shadow-xs"
+              title={
+                isSidebarCollapsed
+                  ? isAr
+                    ? 'توسيع القائمة الجانبية'
+                    : 'Perluas Sidebar'
+                  : isAr
+                  ? 'تصغير القائمة الجانبية'
+                  : 'Ciutkan Sidebar'
+              }
+            >
+              {isSidebarCollapsed ? (
+                <PanelLeft className="w-4 h-4 text-navy" />
+              ) : (
+                <PanelLeftClose className="w-4 h-4 text-navy" />
+              )}
+            </button>
+
             <div className="md:hidden flex items-center gap-2">
               <img
                 src={`${import.meta.env.BASE_URL}logo-almagd.png`}
