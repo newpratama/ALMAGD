@@ -79,6 +79,18 @@ export const GuestDetailPage: React.FC = () => {
           {isVip && <Badge variant="gold">{t('guest.vip')}</Badge>}
           {isBlacklist && <Badge variant="danger">{t('guest.blacklist')}</Badge>}
         </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => navigate(`/bookings/new?guest=${guest.id}`)}
+            className="gap-2 shadow-xs"
+          >
+            <span>➕</span>
+            <span>{t('guest.addBookingForGuest')}</span>
+          </Button>
+        </div>
       </div>
 
       {/* Blacklist Alert Banner */}
@@ -124,9 +136,20 @@ export const GuestDetailPage: React.FC = () => {
         {/* Right Column: Stays History */}
         <div className="lg:col-span-2 space-y-4">
           <Card>
-            <h2 className="text-base font-bold text-navy mb-4">
-              {t('guest.staysHistory')} ({history.length})
-            </h2>
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+              <h2 className="text-base font-bold text-navy">
+                {t('guest.staysHistory')} ({history.length})
+              </h2>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => navigate(`/bookings/new?guest=${guest.id}`)}
+                className="gap-1.5 text-xs"
+              >
+                <span>➕</span>
+                <span>{t('guest.addBookingForGuest')}</span>
+              </Button>
+            </div>
 
             {loadingHistory ? (
               <div className="py-12 flex justify-center">
@@ -135,7 +158,18 @@ export const GuestDetailPage: React.FC = () => {
             ) : history.length === 0 ? (
               <EmptyState
                 title={t('common.noData')}
-                description={t('guest.staysHistory')}
+                description={t('guest.noStaysRecorded')}
+                action={
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => navigate(`/bookings/new?guest=${guest.id}`)}
+                    className="gap-2 mt-2"
+                  >
+                    <span>➕</span>
+                    <span>{t('guest.addBookingForGuest')}</span>
+                  </Button>
+                }
               />
             ) : (
               <Table>

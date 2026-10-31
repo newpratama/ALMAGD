@@ -22,6 +22,7 @@ export interface BookingFormProps {
   initialBooking?: Booking;
   preselectedUnitId?: number | null;
   preselectedFrom?: string | null;
+  preselectedGuestId?: string | null;
   onSuccess: (bookingId: string) => void;
   onCancel?: () => void;
 }
@@ -30,6 +31,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
   initialBooking,
   preselectedUnitId,
   preselectedFrom,
+  preselectedGuestId,
   onSuccess,
   onCancel,
 }) => {
@@ -39,7 +41,15 @@ export const BookingForm: React.FC<BookingFormProps> = ({
   const isEdit = Boolean(initialBooking);
 
   // Form states
-  const [guestId, setGuestId] = useState<string | null>(initialBooking?.guest_id || null);
+  const [guestId, setGuestId] = useState<string | null>(
+    initialBooking?.guest_id || preselectedGuestId || null
+  );
+
+  useEffect(() => {
+    if (!initialBooking && preselectedGuestId && !guestId) {
+      setGuestId(preselectedGuestId);
+    }
+  }, [preselectedGuestId, initialBooking]);
   const [checkIn, setCheckIn] = useState<string>(
     initialBooking?.check_in || preselectedFrom || todayISO()
   );

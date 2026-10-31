@@ -304,6 +304,8 @@ export const id = {
     confirmDeletePhoto: 'Apakah Anda yakin ingin menghapus foto ID ini?',
     blacklistWarning: 'PERINGATAN: Tamu ini masuk dalam daftar Blacklist!',
     guestSaved: 'Data tamu berhasil disimpan.',
+    addBookingForGuest: 'Tambah Booking untuk Tamu Ini',
+    noStaysRecorded: 'Belum ada riwayat booking atau menginap untuk tamu ini.',
   },
   report: {
     period: 'Periode',

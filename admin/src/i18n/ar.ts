@@ -304,6 +304,8 @@ export const ar = {
     confirmDeletePhoto: 'هل أنت متأكد من حذف صورة الهوية؟',
     blacklistWarning: 'تحذير: هذا الضيف مدرج في القائمة السوداء!',
     guestSaved: 'تم حفظ بيانات الضيف بنجاح.',
+    addBookingForGuest: 'إضافة حجز لهذا الضيف',
+    noStaysRecorded: 'لا توجد حجوزات أو إقامات مسجلة لهذا الضيف حتى الآن.',
   },
   report: {
     period: 'الفترة',
