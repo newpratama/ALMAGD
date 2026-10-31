@@ -27,6 +27,31 @@ import { setUnitHousekeepingStatus } from '../lib/housekeeping';
 import { useToast } from '../components/ui/Toast';
 import { useUnits } from '../api/units';
 
+export interface TodayPaymentItem {
+  id: string;
+  booking_id: string;
+  amount: number;
+  method: string;
+  paid_on: string;
+  reference: string | null;
+  notes: string | null;
+  created_at: string;
+  booking?: {
+    id: string;
+    code: string;
+    ota_reference: string | null;
+    source_code: string;
+    guest?: {
+      full_name: string;
+      phone: string | null;
+    } | null;
+    unit?: {
+      name: string;
+      kind: string;
+    } | null;
+  } | null;
+}
+
 export const TodayPage: React.FC = () => {
   const { role } = useAuth();
   const { t, lang } = useI18n();
@@ -148,16 +173,27 @@ export const TodayPage: React.FC = () => {
   });
 
   // 5. Manager: Payments received today
-  const { data: todayPayments = [] } = useQuery({
+  const { data: todayPayments = [] } = useQuery<TodayPaymentItem[]>({
     queryKey: ['today-payments', selectedDate],
     queryFn: async () => {
       if (!supabase || !isManager) return [];
       const { data, error } = await supabase
         .from('payments')
-        .select('*')
-        .eq('paid_on', selectedDate);
+        .select(`
+          *,
+          booking:bookings(
+            id,
+            code,
+            ota_reference,
+            source_code,
+            guest:guests(full_name, phone),
+            unit:units(name, kind)
+          )
+        `)
+        .eq('paid_on', selectedDate)
+        .order('created_at', { ascending: false });
       if (error) throw error;
-      return data || [];
+      return (data || []) as unknown as TodayPaymentItem[];
     },
     enabled: isManager,
   });
@@ -1179,7 +1215,7 @@ export const TodayPage: React.FC = () => {
 
           {/* 5. Manager Section: Payments Received Today */}
           {isManager && (
-            <Card>
+            <Card className="border-emerald-200/60 shadow-sm">
               <div
                 className="flex items-center justify-between gap-3 mb-4 cursor-pointer select-none"
                 onClick={() => setIsTodayPaymentsOpen(!isTodayPaymentsOpen)}
@@ -1188,13 +1224,18 @@ export const TodayPage: React.FC = () => {
                   <h2 className="text-base font-bold text-navy flex items-center gap-2">
                     <span>💰</span>
                     <span>{t('stats.receivedToday')}</span>
-                    <span className="text-xs bg-success text-white px-2 py-0.5 rounded-full font-mono font-bold">
+                    <span className="text-xs bg-success text-white px-2.5 py-0.5 rounded-full font-mono font-bold">
                       {todayPayments.length}
                     </span>
                   </h2>
-                  <span className="text-xs font-mono font-bold text-success ms-2">
+                  <span className="text-sm font-mono font-black text-success ms-2">
                     ({formatIDR(totalReceived)})
                   </span>
+                  {!isTodayPaymentsOpen && (
+                    <span className="text-xs text-muted font-normal ms-2 hidden sm:inline">
+                      ({todayPayments.length > 0 ? `${todayPayments.length} ${t('nav.bookings')}` : t('common.noData')})
+                    </span>
+                  )}
                 </div>
 
                 <button
@@ -1218,29 +1259,131 @@ export const TodayPage: React.FC = () => {
                     <Table>
                       <Thead>
                         <Tr>
-                          <Th>{t('payment.amount')}</Th>
-                          <Th>{t('payment.method')}</Th>
-                          <Th>{t('payment.reference')}</Th>
+                          <Th>{t('booking.code')}</Th>
+                          <Th>{t('booking.guest')}</Th>
+                          <Th>{t('booking.unit')}</Th>
+                          <Th>{t('booking.method')}</Th>
+                          <Th>{t('booking.reference')}</Th>
                           <Th>{t('payment.paidOn')}</Th>
+                          <Th>{t('payment.amount')}</Th>
+                          <Th>{t('common.actions')}</Th>
                         </Tr>
                       </Thead>
                       <Tbody>
-                        {todayPayments.map((p) => (
-                          <Tr key={p.id} className="hover:bg-mist/80">
-                            <Td className="font-mono text-xs font-bold text-success">
-                              {formatIDR(Number(p.amount))}
-                            </Td>
-                            <Td>
-                              <Badge variant="default" className="uppercase text-[10px]">
-                                {p.method}
-                              </Badge>
-                            </Td>
-                            <Td className="font-mono text-xs text-muted">
-                              {p.reference || '—'}
-                            </Td>
-                            <Td className="text-xs text-muted font-mono">{p.paid_on}</Td>
-                          </Tr>
-                        ))}
+                        {todayPayments.map((p) => {
+                          const numAmount = Number(p.amount);
+                          const isRefund = numAmount < 0;
+                          const b = p.booking;
+                          const guestName = b?.guest?.full_name || '—';
+                          const unitName = b?.unit?.name || '—';
+                          const isVilla = b?.unit?.kind === 'villa';
+
+                          const displayRef =
+                            p.reference?.trim() ||
+                            (p.method === 'app'
+                              ? b?.ota_reference || (b?.code ? `APP-${b.code}` : '—')
+                              : p.method === 'transfer'
+                              ? (b?.code ? `TRF-${b.code}` : '—')
+                              : p.method === 'cash'
+                              ? (b?.code ? `CSH-${b.code}` : '—')
+                              : b?.ota_reference || (b?.code ? `REF-${b.code}` : '—'));
+
+                          return (
+                            <Tr key={p.id} className="hover:bg-mist/80 transition-colors">
+                              <Td
+                                className="font-mono text-xs font-bold text-navy cursor-pointer hover:underline whitespace-nowrap"
+                                onClick={() => b?.id && navigate(`/bookings/${b.id}`)}
+                              >
+                                {b?.code || '—'}
+                              </Td>
+                              <Td>
+                                <div className="font-semibold text-ink text-xs">
+                                  {guestName}
+                                </div>
+                                {b?.guest?.phone && (
+                                  <div className="text-[10px] text-muted font-mono">
+                                    📞 {b.guest.phone}
+                                  </div>
+                                )}
+                              </Td>
+                              <Td className="whitespace-nowrap">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-bold text-navy text-xs">
+                                    {unitName}
+                                  </span>
+                                  {b?.unit?.kind && (
+                                    <Badge
+                                      variant={isVilla ? 'gold' : 'navy'}
+                                      className="text-[10px]"
+                                    >
+                                      {isVilla
+                                        ? t('today.wholeVillaBadge')
+                                        : t('today.independentRoomBadge')}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </Td>
+                              <Td>
+                                <Badge
+                                  variant={
+                                    p.method === 'cash'
+                                      ? 'success'
+                                      : p.method === 'transfer'
+                                      ? 'info'
+                                      : p.method === 'app'
+                                      ? 'navy'
+                                      : 'default'
+                                  }
+                                  className="text-[10px] font-semibold"
+                                >
+                                  {p.method === 'cash'
+                                    ? '💵 ' + t('paymentMethod.cash')
+                                    : p.method === 'transfer'
+                                    ? '🏦 ' + t('paymentMethod.transfer')
+                                    : p.method === 'app'
+                                    ? '📱 ' + t('paymentMethod.app')
+                                    : t('paymentMethod.other')}
+                                </Badge>
+                              </Td>
+                              <Td className="font-mono text-xs">
+                                <span className="font-bold text-ink block">{displayRef}</span>
+                                {p.notes && (
+                                  <span className="text-[10px] text-muted font-sans block truncate max-w-[140px]" title={p.notes}>
+                                    {p.notes}
+                                  </span>
+                                )}
+                              </Td>
+                              <Td className="text-xs text-muted font-mono whitespace-nowrap">
+                                {formatDateHuman(p.paid_on, lang)}
+                              </Td>
+                              <Td className="font-mono text-xs font-bold whitespace-nowrap">
+                                {isRefund ? (
+                                  <span className="text-danger">
+                                    - {formatIDR(Math.abs(numAmount))}
+                                  </span>
+                                ) : (
+                                  <span className="text-success">
+                                    + {formatIDR(numAmount)}
+                                  </span>
+                                )}
+                              </Td>
+                              <Td className="whitespace-nowrap no-print">
+                                {b?.id ? (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => navigate(`/bookings/${b.id}`)}
+                                    className="text-xs"
+                                  >
+                                    {t('common.details')}
+                                  </Button>
+                                ) : (
+                                  <span className="text-muted text-xs">—</span>
+                                )}
+                              </Td>
+                            </Tr>
+                          );
+                        })}
                       </Tbody>
                     </Table>
                   )}

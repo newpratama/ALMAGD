@@ -85,6 +85,13 @@ export const ar = {
     app: 'عبر التطبيق',
     other: 'أخرى',
   },
+  payment: {
+    amount: 'المبلغ المقبوض',
+    method: 'طريقة الدفع',
+    reference: 'رقم السند / المرجع',
+    paidOn: 'تاريخ الدفع',
+    title: 'المقبوضات اليومية',
+  },
   source: {
     walk_in: 'Walk-in',
     tiket: 'Tiket.com',

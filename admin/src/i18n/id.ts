@@ -85,6 +85,13 @@ export const id = {
     app: 'Aplikasi',
     other: 'Lainnya',
   },
+  payment: {
+    amount: 'Jumlah Diterima',
+    method: 'Metode Pembayaran',
+    reference: 'No. Kuitansi / Bukti',
+    paidOn: 'Tanggal Bayar',
+    title: 'Penerimaan Hari Ini',
+  },
   source: {
     walk_in: 'Walk-in',
     tiket: 'Tiket.com',
