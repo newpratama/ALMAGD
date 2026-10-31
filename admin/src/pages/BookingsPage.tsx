@@ -268,9 +268,10 @@ export const BookingsPage: React.FC = () => {
             <Tbody>
               {bookings.map((booking) => {
                 const srcCode = booking.source_code || '';
-                const srcInfo = sourceMap.get(srcCode) || {
-                  label: srcCode,
-                  color: '#536275',
+                const localizedLabel = (srcCode && t(`source.${srcCode}`)) || sourceMap.get(srcCode)?.label || srcCode;
+                const srcInfo = {
+                  label: localizedLabel,
+                  color: sourceMap.get(srcCode)?.color || '#536275',
                 };
 
                 return (

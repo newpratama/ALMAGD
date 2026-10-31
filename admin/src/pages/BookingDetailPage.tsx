@@ -43,6 +43,20 @@ import { PaymentForm } from '../components/booking/PaymentForm';
 import { BookingForm } from '../components/booking/BookingForm';
 import { useToast } from '../components/ui/Toast';
 
+function formatLocalizedNote(note: string | null | undefined, lang: string): string {
+  if (!note) return '—';
+  if (lang === 'ar') {
+    let res = note.replace(
+      /\[?Check-out awal pada (\d{4}-\d{2}-\d{2}) setelah menginap (\d+) malam dari (\d+) malam - Total akhir: (Rp [0-9.]+)\]?/g,
+      '[مغادرة مبكرة في $1 بعد قضاء $2 ليلة من أصل $3 - المبلغ النهائي: $4]'
+    );
+    res = res.replace(/Pengembalian dana karena check-out lebih awal/g, 'استرداد مالي بسبب المغادرة المبكرة');
+    res = res.replace(/Pengembalian dana tamu \(Refund\)/g, 'استرداد مالي للنزيل');
+    return res;
+  }
+  return note;
+}
+
 export const BookingDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -195,7 +209,10 @@ export const BookingDetailPage: React.FC = () => {
   };
 
   const matchedSource = sources.find((s) => s.code === booking.source_code);
-  const sourceLabel = matchedSource?.label || booking.source_code;
+  const sourceLabel =
+    (booking.source_code && t(`source.${booking.source_code}`)) ||
+    matchedSource?.label ||
+    booking.source_code;
   const sourceColor = matchedSource?.color || '#536275';
 
   return (
@@ -496,7 +513,9 @@ export const BookingDetailPage: React.FC = () => {
             <div className="py-2.5 flex justify-between">
               <dt className="text-muted">{t('booking.adults')} / {t('booking.children')}</dt>
               <dd className="text-ink">
-                {booking.adults} {t('booking.adults')}, {booking.children} {t('booking.children')}
+                {lang === 'ar'
+                  ? `${booking.adults} بالغ ، ${booking.children} أطفال`
+                  : `${booking.adults} ${t('booking.adults')}, ${booking.children} ${t('booking.children')}`}
               </dd>
             </div>
             {booking.due_date && (
@@ -511,7 +530,7 @@ export const BookingDetailPage: React.FC = () => {
               <div className="py-2.5">
                 <dt className="text-muted mb-1">{t('booking.notes')}</dt>
                 <dd className="p-2 bg-stone/40 rounded-lg text-xs text-ink whitespace-pre-wrap">
-                  {booking.notes}
+                  {formatLocalizedNote(booking.notes, lang)}
                 </dd>
               </div>
             )}
@@ -654,8 +673,8 @@ export const BookingDetailPage: React.FC = () => {
         isOpen={Boolean(deletingPayment)}
         onClose={() => setDeletingPayment(null)}
         onConfirm={handleDeletePaymentConfirm}
-        title={t('common.delete')}
-        message={t('common.deleteConfirm')}
+        title={t('booking.deletePaymentBtn')}
+        message={t('booking.deletePaymentConfirm')}
       />
 
       {/* Edit Booking Modal */}

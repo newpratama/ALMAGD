@@ -19,6 +19,20 @@ export interface PaymentListProps {
   canManage: boolean;
 }
 
+function formatLocalizedNote(note: string | null | undefined, lang: string): string {
+  if (!note) return '—';
+  if (lang === 'ar') {
+    let res = note.replace(
+      /\[?Check-out awal pada (\d{4}-\d{2}-\d{2}) setelah menginap (\d+) malam dari (\d+) malam - Total akhir: (Rp [0-9.]+)\]?/g,
+      '[مغادرة مبكرة في $1 بعد قضاء $2 ليلة من أصل $3 - المبلغ النهائي: $4]'
+    );
+    res = res.replace(/Pengembalian dana karena check-out lebih awal/g, 'استرداد مالي بسبب المغادرة المبكرة');
+    res = res.replace(/Pengembalian dana tamu \(Refund\)/g, 'استرداد مالي للنزيل');
+    return res;
+  }
+  return note;
+}
+
 export const PaymentList: React.FC<PaymentListProps> = ({
   payments,
   bookingCode,
@@ -56,12 +70,12 @@ export const PaymentList: React.FC<PaymentListProps> = ({
         <Table>
           <Thead>
             <Tr>
-              <Th>{t('booking.dueDate')}</Th>
+              <Th>{t('booking.paymentDate')}</Th>
               <Th>{t('booking.method')}</Th>
               <Th>{t('booking.reference')}</Th>
               <Th>{t('booking.notes')}</Th>
               <Th>{t('booking.amount')}</Th>
-              {canManage && <Th>{t('common.actions')}</Th>}
+              <Th>{t('common.actions')}</Th>
             </Tr>
           </Thead>
           <Tbody>
@@ -71,7 +85,7 @@ export const PaymentList: React.FC<PaymentListProps> = ({
 
               return (
                 <Tr key={p.id}>
-                  <Td className="text-xs text-muted">
+                  <Td className="text-xs text-muted whitespace-nowrap">
                     {formatDateHuman(p.paid_on, lang)}
                   </Td>
                   <Td>
@@ -112,13 +126,13 @@ export const PaymentList: React.FC<PaymentListProps> = ({
                       <span className="text-muted">—</span>
                     )}
                   </Td>
-                  <Td className="text-xs text-muted max-w-xs truncate">
-                    {p.notes || '—'}
+                  <Td className="text-xs text-muted max-w-xs truncate" title={formatLocalizedNote(p.notes, lang)}>
+                    {formatLocalizedNote(p.notes, lang)}
                   </Td>
-                  <Td className="text-xs font-bold">
+                  <Td className="text-xs font-bold whitespace-nowrap">
                     {isRefund ? (
                       <span className="text-danger">
-                        - {formatIDR(Math.abs(numAmount))} (Refund)
+                        - {formatIDR(Math.abs(numAmount))} ({t('booking.refund')})
                       </span>
                     ) : (
                       <span className="text-success">
@@ -126,8 +140,8 @@ export const PaymentList: React.FC<PaymentListProps> = ({
                       </span>
                     )}
                   </Td>
-                  {canManage && (
-                    <Td>
+                  <Td className="whitespace-nowrap">
+                    {canManage ? (
                       <div className="flex items-center gap-2">
                         {onEditPayment && (
                           <Button
@@ -135,7 +149,7 @@ export const PaymentList: React.FC<PaymentListProps> = ({
                             size="sm"
                             onClick={() => onEditPayment(p)}
                           >
-                            {t('common.edit')}
+                            ✏️ {t('common.edit')}
                           </Button>
                         )}
                         {onDeletePayment && (
@@ -144,12 +158,20 @@ export const PaymentList: React.FC<PaymentListProps> = ({
                             size="sm"
                             onClick={() => onDeletePayment(p)}
                           >
-                            {t('common.delete')}
+                            🗑️ {t('booking.deletePaymentBtn')}
                           </Button>
                         )}
                       </div>
-                    </Td>
-                  )}
+                    ) : (
+                      <span
+                        className="inline-flex items-center gap-1 text-[11px] text-slate-400 bg-stone/40 px-2 py-1 rounded-md"
+                        title={t('booking.managerOnlyAction')}
+                      >
+                        <span>🔒</span>
+                        <span>{t('booking.managerOnlyAction')}</span>
+                      </span>
+                    )}
+                  </Td>
                 </Tr>
               );
             })}
