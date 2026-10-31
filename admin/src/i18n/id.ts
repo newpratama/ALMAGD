@@ -128,6 +128,7 @@ export const id = {
   today: {
     checkInAction: 'Check-in',
     checkOutAction: 'Check-out',
+    payBalance: 'Bayar Sisa',
     noArrivals: 'Tidak ada kedatangan hari ini.',
     noDepartures: 'Tidak ada keberangkatan hari ini.',
     noUnpaid: 'Tidak ada tagihan tertunggak.',

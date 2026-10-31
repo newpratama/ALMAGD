@@ -128,6 +128,7 @@ export const ar = {
   today: {
     checkInAction: 'الوصول',
     checkOutAction: 'المغادرة',
+    payBalance: 'تسديد المتبقي',
     noArrivals: 'لا يوجد وصول مجدول اليوم.',
     noDepartures: 'لا توجد مغادرات مجدولة اليوم.',
     noUnpaid: 'لا توجد مستحقات معلقة.',

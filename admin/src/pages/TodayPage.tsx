@@ -788,20 +788,33 @@ export const TodayPage: React.FC = () => {
                             )}
                           </Td>
                           <Td>
-                            {b.status === 'confirmed' ? (
-                              <Button
-                                variant="primary"
-                                size="sm"
-                                onClick={() => handleCheckIn(b)}
-                                disabled={updateStatusMutation.isPending}
-                              >
-                                {t('today.checkInAction')}
-                              </Button>
-                            ) : (
-                              <Badge variant="navy">
-                                {t(`status.${b.status}`)}
-                              </Badge>
-                            )}
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              {b.status === 'confirmed' ? (
+                                <Button
+                                  variant="primary"
+                                  size="sm"
+                                  onClick={() => handleCheckIn(b)}
+                                  disabled={updateStatusMutation.isPending}
+                                >
+                                  {t('today.checkInAction')}
+                                </Button>
+                              ) : (
+                                <Badge variant="navy">
+                                  {t(`status.${b.status}`)}
+                                </Badge>
+                              )}
+
+                              {Number(b.balance || 0) > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => navigate(`/bookings/${b.id}?action=pay`)}
+                                  className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm transition-all whitespace-nowrap"
+                                >
+                                  <span>💳</span>
+                                  <span>{t('today.payBalance')}</span>
+                                </button>
+                              )}
+                            </div>
                           </Td>
                         </Tr>
                       ))}

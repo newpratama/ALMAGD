@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../auth/AuthProvider';
 import { useI18n } from '../i18n/I18nProvider';
@@ -52,10 +52,17 @@ export const BookingDetailPage: React.FC = () => {
   const queryClient = useQueryClient();
 
   const isManager = role === 'manager';
+  const [searchParams] = useSearchParams();
 
   // Modals & Dialogs state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddPaymentOpen, setIsAddPaymentOpen] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get('action') === 'pay') {
+      setIsAddPaymentOpen(true);
+    }
+  }, [searchParams]);
   const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
   const [deletingPayment, setDeletingPayment] = useState<Payment | null>(null);
   const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
