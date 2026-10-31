@@ -754,64 +754,92 @@ export const TodayPage: React.FC = () => {
                     </Thead>
                     <Tbody>
                       {arrivals.map((b) => (
-                        <Tr key={b.id} className="hover:bg-mist/80">
+                        <Tr key={b.id} className="hover:bg-blue-50/30 transition-colors">
                           <Td
-                            className="font-mono text-xs font-bold text-navy cursor-pointer"
+                            className="font-mono text-xs font-bold text-navy cursor-pointer whitespace-nowrap"
                             onClick={() => navigate(`/bookings/${b.id}`)}
                           >
-                            {b.code}
+                            <span className="inline-block px-2.5 py-1 rounded-md bg-stone/50 hover:bg-navy hover:text-white border border-line/70 transition-all">
+                              {b.code}
+                            </span>
                           </Td>
-                          <Td className="font-semibold text-ink">
-                            {b.guest_name || '—'}
+                          <Td>
+                            <div className="flex flex-col">
+                              <span className="font-bold text-ink text-xs">{b.guest_name || '—'}</span>
+                              {b.guest_phone && (
+                                <span className="text-[10px] text-muted font-mono mt-0.5">
+                                  📞 {b.guest_phone}
+                                </span>
+                              )}
+                            </div>
                           </Td>
-                          <Td className="text-xs font-medium">
+                          <Td className="whitespace-nowrap">
                             <div className="flex items-center gap-2">
-                              <span>{b.unit_name}</span>
+                              <span className="font-bold text-navy text-xs">{b.unit_name}</span>
                               {b.unit_id && <HousekeepingBadge unitId={b.unit_id} size="sm" />}
                             </div>
                           </Td>
-                          <Td className="text-xs font-semibold">
-                            {b.nights}
+                          <Td className="text-xs whitespace-nowrap">
+                            <span className="inline-block px-2 py-0.5 rounded bg-mist text-muted font-mono text-[11px] font-semibold">
+                              {t('booking.nightsCount', { count: b.nights || 1 })}
+                            </span>
                           </Td>
-                          <Td>
+                          <Td className="whitespace-nowrap">
                             <StatusBadge status={b.status} />
                           </Td>
-                          <Td className="text-xs font-semibold whitespace-nowrap">
+                          <Td className="text-xs whitespace-nowrap">
                             {isOtaSource(b.source_code) && Number(b.balance || 0) > 0 ? (
-                              <span className="text-navy font-semibold text-[11px]" title={t('booking.otaPayoutNote')}>
+                              <span
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-blue-50 text-navy border border-blue-200"
+                                title={t('booking.otaPayoutNote')}
+                              >
                                 📱 {t('paymentStatus.otaPrepaid')}
                               </span>
                             ) : Number(b.balance || 0) > 0 ? (
-                              <span className="text-danger">{formatIDR(Number(b.balance))}</span>
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-rose-50 text-rose-700 border border-rose-200 shadow-xs">
+                                ⚠️ {formatIDR(Number(b.balance))}
+                              </span>
                             ) : (
-                              <span className="text-success">0</span>
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                ✓ {t('paymentStatus.paid')}
+                              </span>
                             )}
                           </Td>
-                          <Td>
-                            <div className="flex items-center gap-1.5 flex-wrap">
+                          <Td className="whitespace-nowrap">
+                            <div className="flex items-center gap-2">
                               {b.status === 'confirmed' ? (
                                 <Button
                                   variant="primary"
                                   size="sm"
                                   onClick={() => handleCheckIn(b)}
                                   disabled={updateStatusMutation.isPending}
+                                  className="text-xs font-bold px-3 py-1.5"
                                 >
                                   {t('today.checkInAction')}
                                 </Button>
                               ) : (
-                                <Badge variant="navy">
+                                <Badge variant="navy" className="text-xs py-1 px-2.5">
                                   {t(`status.${b.status}`)}
                                 </Badge>
                               )}
 
-                              {Number(b.balance || 0) > 0 && (
+                              {Number(b.balance || 0) > 0 ? (
                                 <button
                                   type="button"
                                   onClick={() => navigate(`/bookings/${b.id}?action=pay`)}
-                                  className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm transition-all whitespace-nowrap"
+                                  className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-xs transition-all whitespace-nowrap"
+                                  title={t('today.payBalance')}
                                 >
                                   <span>💳</span>
                                   <span>{t('today.payBalance')}</span>
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => navigate(`/bookings/${b.id}`)}
+                                  className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-stone/40 hover:bg-stone/70 text-ink font-medium border border-line/60 transition-all whitespace-nowrap"
+                                >
+                                  <span>{t('common.details')}</span>
                                 </button>
                               )}
                             </div>
@@ -881,54 +909,95 @@ export const TodayPage: React.FC = () => {
                     </Thead>
                     <Tbody>
                       {departures.map((b) => (
-                        <Tr key={b.id} className="hover:bg-mist/80">
+                        <Tr key={b.id} className="hover:bg-blue-50/30 transition-colors">
                           <Td
-                            className="font-mono text-xs font-bold text-navy cursor-pointer"
+                            className="font-mono text-xs font-bold text-navy cursor-pointer whitespace-nowrap"
                             onClick={() => navigate(`/bookings/${b.id}`)}
                           >
-                            {b.code}
+                            <span className="inline-block px-2.5 py-1 rounded-md bg-stone/50 hover:bg-navy hover:text-white border border-line/70 transition-all">
+                              {b.code}
+                            </span>
                           </Td>
-                          <Td className="font-semibold text-ink">
-                            {b.guest_name || '—'}
+                          <Td>
+                            <div className="flex flex-col">
+                              <span className="font-bold text-ink text-xs">{b.guest_name || '—'}</span>
+                              {b.guest_phone && (
+                                <span className="text-[10px] text-muted font-mono mt-0.5">
+                                  📞 {b.guest_phone}
+                                </span>
+                              )}
+                            </div>
                           </Td>
-                          <Td className="text-xs font-medium">
+                          <Td className="whitespace-nowrap">
                             <div className="flex items-center gap-2">
-                              <span>{b.unit_name}</span>
+                              <span className="font-bold text-navy text-xs">{b.unit_name}</span>
                               {b.unit_id && <HousekeepingBadge unitId={b.unit_id} size="sm" />}
                             </div>
                           </Td>
-                          <Td className="text-xs font-semibold">
-                            {b.nights}
+                          <Td className="text-xs whitespace-nowrap">
+                            <span className="inline-block px-2 py-0.5 rounded bg-mist text-muted font-mono text-[11px] font-semibold">
+                              {t('booking.nightsCount', { count: b.nights || 1 })}
+                            </span>
                           </Td>
-                          <Td>
+                          <Td className="whitespace-nowrap">
                             <StatusBadge status={b.status} />
                           </Td>
-                          <Td className="text-xs font-semibold whitespace-nowrap">
+                          <Td className="text-xs whitespace-nowrap">
                             {isOtaSource(b.source_code) && Number(b.balance || 0) > 0 ? (
-                              <span className="text-navy font-semibold text-[11px]" title={t('booking.otaPayoutNote')}>
+                              <span
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-blue-50 text-navy border border-blue-200"
+                                title={t('booking.otaPayoutNote')}
+                              >
                                 📱 {t('paymentStatus.otaPrepaid')}
                               </span>
                             ) : Number(b.balance || 0) > 0 ? (
-                              <span className="text-danger">{formatIDR(Number(b.balance))}</span>
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-rose-50 text-rose-700 border border-rose-200 shadow-xs">
+                                ⚠️ {formatIDR(Number(b.balance))}
+                              </span>
                             ) : (
-                              <span className="text-success">0</span>
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                ✓ {t('paymentStatus.paid')}
+                              </span>
                             )}
                           </Td>
-                          <Td>
-                            {b.status === 'checked_in' || b.status === 'confirmed' ? (
-                              <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={() => handleCheckOut(b)}
-                                disabled={updateStatusMutation.isPending}
-                              >
-                                {t('today.checkOutAction')}
-                              </Button>
-                            ) : (
-                              <Badge variant="default">
-                                {t(`status.${b.status}`)}
-                              </Badge>
-                            )}
+                          <Td className="whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              {b.status === 'checked_in' || b.status === 'confirmed' ? (
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  onClick={() => handleCheckOut(b)}
+                                  disabled={updateStatusMutation.isPending}
+                                  className="text-xs font-bold px-3 py-1.5"
+                                >
+                                  {t('today.checkOutAction')}
+                                </Button>
+                              ) : (
+                                <Badge variant="default" className="text-xs py-1 px-2.5">
+                                  {t(`status.${b.status}`)}
+                                </Badge>
+                              )}
+
+                              {Number(b.balance || 0) > 0 ? (
+                                <button
+                                  type="button"
+                                  onClick={() => navigate(`/bookings/${b.id}?action=pay`)}
+                                  className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-xs transition-all whitespace-nowrap"
+                                  title={t('today.payBalance')}
+                                >
+                                  <span>💳</span>
+                                  <span>{t('today.payBalance')}</span>
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => navigate(`/bookings/${b.id}`)}
+                                  className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-stone/40 hover:bg-stone/70 text-ink font-medium border border-line/60 transition-all whitespace-nowrap"
+                                >
+                                  <span>{t('common.details')}</span>
+                                </button>
+                              )}
+                            </div>
                           </Td>
                         </Tr>
                       ))}
