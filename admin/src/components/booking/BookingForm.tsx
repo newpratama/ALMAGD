@@ -4,7 +4,8 @@ import { useI18n } from '../../i18n/I18nProvider';
 import { useBookingSources, useCreateBooking, useUpdateBooking } from '../../api/bookings';
 import type { Booking, BookingInsert, BookingUpdate } from '../../api/bookings';
 import type { Unit } from '../../api/units';
-import { todayISO, addDaysISO, nightsBetween } from '../../lib/dates';
+import { todayISO, addDaysISO, nightsBetween, formatDateHuman } from '../../lib/dates';
+import { isOtaSource } from '../../lib/bookingHelpers';
 import { formatIDRWithCommas } from '../../lib/money';
 import { MoneyInput } from '../ui/MoneyInput';
 import { friendlyError } from '../../lib/errors';
@@ -35,7 +36,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
   onSuccess,
   onCancel,
 }) => {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { showToast } = useToast();
 
   const isEdit = Boolean(initialBooking);
@@ -87,6 +88,8 @@ export const BookingForm: React.FC<BookingFormProps> = ({
 
   // Sources query
   const { data: sources = [] } = useBookingSources();
+  const isOta = isOtaSource(sourceCode);
+  const sourceObj = sources.find((s) => s.code === sourceCode);
 
   // Mutations
   const createBookingMutation = useCreateBooking();
@@ -111,6 +114,9 @@ export const BookingForm: React.FC<BookingFormProps> = ({
     setCheckIn(newIn);
     if (!checkOut || checkOut <= newIn) {
       setCheckOut(addDaysISO(newIn, 1));
+    }
+    if (isOtaSource(sourceCode)) {
+      setDueDate(newIn);
     }
   };
 
@@ -384,8 +390,9 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                   const val = e.target.value;
                   setSourceCode(val);
                   if (!isEdit) {
-                    if (val !== 'walk_in' && val !== 'direct') {
+                    if (isOtaSource(val)) {
                       setPaymentMethod('app');
+                      setDueDate(checkIn);
                       if (otaReference) setPaymentRef(otaReference);
                     } else {
                       if (paymentMethod === 'app') {
@@ -456,13 +463,20 @@ export const BookingForm: React.FC<BookingFormProps> = ({
         </div>
       </Card>
 
-      {/* 5. First Payment Section (Optional, on new bookings) */}
+      {/* 5. Payment / OTA Settlement Section (Optional, on new bookings) */}
       {!isEdit && (
-        <Card>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-bold text-navy">
-              5. {t('booking.firstPaymentOptional')}
-            </h3>
+        <Card className={isOta ? 'border-blue-200 bg-blue-50/20 shadow-xs' : ''}>
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-bold text-navy">
+                5. {isOta ? t('booking.otaPaymentSectionTitle') : t('booking.firstPaymentOptional')}
+              </h3>
+              {isOta && (
+                <span className="text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-blue-100 text-blue-800 border border-blue-200">
+                  {sourceObj?.label || sourceCode.toUpperCase()}
+                </span>
+              )}
+            </div>
             <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-ink">
               <input
                 type="checkbox"
@@ -470,14 +484,33 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                 onChange={(e) => setHasFirstPayment(e.target.checked)}
                 className="w-4 h-4 text-navy rounded border-line"
               />
-              <span>{t('booking.firstPayment')}</span>
+              <span>{isOta ? t('booking.otaPaymentCheckbox') : t('booking.firstPayment')}</span>
             </label>
           </div>
 
-          {hasFirstPayment && (
+          {/* Explanation banner for OTA */}
+          {isOta && (
+            <div className="mb-4 p-3.5 rounded-xl bg-blue-50/90 border border-blue-200 text-xs text-blue-900 leading-relaxed space-y-1.5 text-start">
+              <div className="font-semibold flex items-center gap-2">
+                <span className="text-base shrink-0">📱</span>
+                <span>
+                  {t('booking.otaPaymentExplanation', {
+                    source: sourceObj?.label || sourceCode.toUpperCase(),
+                    checkIn: checkIn ? formatDateHuman(checkIn, lang) : '—',
+                  })}
+                </span>
+              </div>
+              <div className="text-[11px] text-blue-700/90 font-medium flex items-center gap-2 ps-6">
+                <span>🗓️</span>
+                <span>{t('booking.otaPaymentPaidOnHint', { checkIn: checkIn ? formatDateHuman(checkIn, lang) : '—' })}</span>
+              </div>
+            </div>
+          )}
+
+          {hasFirstPayment ? (
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Field label={t('booking.amount')} required>
+                <Field label={isOta ? 'المبلغ المعتمد من المنصة' : t('booking.amount')} required>
                   <MoneyInput
                     value={paymentAmount}
                     onChange={(val) => setPaymentAmount(val)}
@@ -543,7 +576,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
               {/* Live remaining balance calculation badge */}
               <div className="p-3 rounded-lg border text-xs flex items-center justify-between gap-2 bg-stone/30 border-line/60">
                 <span className="font-medium text-ink">
-                  {t('booking.remainingBalance')}:
+                  {isOta ? 'المتبقي للتحصيل من النزيل عند الاستقبال:' : `${t('booking.remainingBalance')}:`}
                 </span>
                 <span
                   className={`font-bold px-2 py-0.5 rounded text-xs ${
@@ -553,12 +586,17 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                   }`}
                 >
                   {totalAmount - paymentAmount <= 0
-                    ? t('booking.fullyPaidBadge')
+                    ? isOta ? 'Rp 0 (مسدد عبر التطبيق بالكامل)' : t('booking.fullyPaidBadge')
                     : `${formatIDRWithCommas(Math.max(0, totalAmount - paymentAmount))}`}
                 </span>
               </div>
             </div>
-          )}
+          ) : isOta ? (
+            <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-2.5 text-start">
+              <span className="text-base shrink-0">⚠️</span>
+              <span className="leading-relaxed">{t('booking.otaPayAtHotelWarning')}</span>
+            </div>
+          ) : null}
         </Card>
       )}
 
