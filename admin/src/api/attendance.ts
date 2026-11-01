@@ -17,6 +17,12 @@ export interface AttendanceRecord {
   createdAt?: string;
 }
 
+export interface BiometricEmployee {
+  pin: string;
+  name: string;
+  role?: string;
+}
+
 export interface AttendanceSettings {
   deviceIp: string;
   devicePort: number;
@@ -28,6 +34,7 @@ export interface AttendanceSettings {
   lateTolerance: number; // 15 mins
   autoSync: boolean;
   pinMapping: Record<string, string>; // staffId -> pin (e.g. { "uuid-1": "1", "uuid-2": "2" })
+  customEmployees?: BiometricEmployee[];
 }
 
 export interface DailyStaffAttendance {
@@ -57,7 +64,10 @@ export const DEFAULT_ATTENDANCE_SETTINGS: AttendanceSettings = {
   shiftEnd: '16:00',
   lateTolerance: 15,
   autoSync: true,
-  pinMapping: {},
+  pinMapping: {
+    '601b35d5-484c-4ceb-9eef-668ffd2ec078': '1',
+  },
+  customEmployees: [],
 };
 
 // ---------------------------------------------------------------------------
@@ -85,7 +95,8 @@ export async function fetchAttendanceSettings(): Promise<AttendanceSettings> {
           shiftEnd: data.shift_end || DEFAULT_ATTENDANCE_SETTINGS.shiftEnd,
           lateTolerance: data.late_tolerance ?? DEFAULT_ATTENDANCE_SETTINGS.lateTolerance,
           autoSync: data.auto_sync ?? DEFAULT_ATTENDANCE_SETTINGS.autoSync,
-          pinMapping: (data.pin_mapping as Record<string, string>) || {},
+          pinMapping: (data.pin_mapping as Record<string, string>) || DEFAULT_ATTENDANCE_SETTINGS.pinMapping,
+          customEmployees: (data.custom_employees as BiometricEmployee[]) || [],
         };
       }
     } catch {
@@ -97,7 +108,13 @@ export async function fetchAttendanceSettings(): Promise<AttendanceSettings> {
   const saved = localStorage.getItem(LOCAL_STORAGE_SETTINGS_KEY);
   if (saved) {
     try {
-      return { ...DEFAULT_ATTENDANCE_SETTINGS, ...JSON.parse(saved) };
+      const parsed = JSON.parse(saved);
+      return {
+        ...DEFAULT_ATTENDANCE_SETTINGS,
+        ...parsed,
+        pinMapping: { ...DEFAULT_ATTENDANCE_SETTINGS.pinMapping, ...(parsed.pinMapping || {}) },
+        customEmployees: parsed.customEmployees || [],
+      };
     } catch {
       // ignore
     }
@@ -122,6 +139,7 @@ export async function saveAttendanceSettings(settings: AttendanceSettings): Prom
         late_tolerance: settings.lateTolerance,
         auto_sync: settings.autoSync,
         pin_mapping: settings.pinMapping,
+        custom_employees: settings.customEmployees || [],
         updated_at: new Date().toISOString(),
       });
     } catch (e) {
@@ -443,44 +461,79 @@ export function calculateDailyAttendance(
   punches: AttendanceRecord[],
   settings: AttendanceSettings
 ): DailyStaffAttendance[] {
-  // Map PIN to Staff Member
-  const pinToStaffId = new Map<string, string>();
-  const staffIdToPin = new Map<string, string>();
+  // 1. Filter staff list to only active staff
+  const activeStaff = (staffList || []).filter((s) => s.active !== false);
 
-  // Load from pinMapping
-  for (const [staffId, pin] of Object.entries(settings.pinMapping || {})) {
-    if (pin) {
-      pinToStaffId.set(String(pin), staffId);
-      staffIdToPin.set(staffId, String(pin));
-    }
+  // 2. Build complete roster: active PMS staff + custom biometric employees + any scanned PIN
+  interface RosterMember {
+    id: string;
+    name: string;
+    role: string;
+    pin: string;
   }
 
-  // If no mapping, provide sequential fallback (1, 2, 3...)
-  let fallbackIndex = 1;
-  for (const s of staffList) {
-    if (!staffIdToPin.has(s.id)) {
-      const pin = String(fallbackIndex);
-      staffIdToPin.set(s.id, pin);
-      if (!pinToStaffId.has(pin)) {
-        pinToStaffId.set(pin, s.id);
+  const roster: RosterMember[] = [];
+  const assignedPins = new Set<string>();
+
+  // Add active PMS staff (e.g. omar)
+  for (const s of activeStaff) {
+    let pin = settings.pinMapping?.[s.id];
+    if (!pin) {
+      if (s.full_name.toLowerCase().includes('omar')) {
+        pin = '1';
+      } else {
+        pin = String(roster.length + 1);
       }
-      fallbackIndex++;
+    }
+    assignedPins.add(String(pin));
+    roster.push({
+      id: s.id,
+      name: s.full_name,
+      role: s.role,
+      pin: String(pin),
+    });
+  }
+
+  // Add custom biometric employees from settings
+  for (const ce of settings.customEmployees || []) {
+    if (ce.pin && !assignedPins.has(String(ce.pin))) {
+      assignedPins.add(String(ce.pin));
+      roster.push({
+        id: `custom-${ce.pin}`,
+        name: ce.name,
+        role: ce.role || 'موظف',
+        pin: String(ce.pin),
+      });
     }
   }
 
   // Group punches by PIN
   const punchesByPin = new Map<string, AttendanceRecord[]>();
   for (const p of punches) {
-    const arr = punchesByPin.get(p.pin) || [];
+    const pinStr = String(p.pin);
+    const arr = punchesByPin.get(pinStr) || [];
     arr.push(p);
-    punchesByPin.set(p.pin, arr);
+    punchesByPin.set(pinStr, arr);
+  }
+
+  // Include any PIN scanned today that is not yet in roster
+  for (const pinStr of punchesByPin.keys()) {
+    if (!assignedPins.has(pinStr)) {
+      assignedPins.add(pinStr);
+      const fallbackName = pinStr === '1' ? 'omar' : `موظف #${pinStr}`;
+      roster.push({
+        id: `biometric-${pinStr}`,
+        name: fallbackName,
+        role: 'موظف بصمة',
+        pin: pinStr,
+      });
+    }
   }
 
   const results: DailyStaffAttendance[] = [];
 
-  for (const s of staffList) {
-    const pin = staffIdToPin.get(s.id) || '—';
-    const staffPunches = (punchesByPin.get(pin) || []).slice().sort((a, b) => a.scanTime.localeCompare(b.scanTime));
+  for (const member of roster) {
+    const staffPunches = (punchesByPin.get(member.pin) || []).slice().sort((a, b) => a.scanTime.localeCompare(b.scanTime));
 
     let firstIn: string | null = null;
     let lastOut: string | null = null;
@@ -541,10 +594,10 @@ export function calculateDailyAttendance(
     }
 
     results.push({
-      staffId: s.id,
-      staffName: s.full_name,
-      role: s.role,
-      pin,
+      staffId: member.id,
+      staffName: member.name,
+      role: member.role,
+      pin: member.pin,
       date,
       firstIn,
       lastOut,
@@ -554,6 +607,14 @@ export function calculateDailyAttendance(
       punches: staffPunches,
     });
   }
+
+  // Sort roster by PIN numerically
+  results.sort((a, b) => {
+    const na = parseInt(a.pin, 10);
+    const nb = parseInt(b.pin, 10);
+    if (!isNaN(na) && !isNaN(nb)) return na - nb;
+    return a.pin.localeCompare(b.pin);
+  });
 
   return results;
 }

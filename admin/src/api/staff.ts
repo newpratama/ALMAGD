@@ -11,6 +11,7 @@ export async function fetchStaffList(): Promise<StaffMember[]> {
   const { data, error } = await supabase
     .from('staff')
     .select('*')
+    .eq('active', true)
     .order('created_at', { ascending: true });
 
   if (error) throw error;

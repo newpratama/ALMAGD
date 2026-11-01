@@ -20,6 +20,8 @@ import {
   Check,
   X,
   Wifi,
+  Trash2,
+  Users,
 } from 'lucide-react';
 import { useI18n } from '../i18n/I18nProvider';
 import { useToast } from '../components/ui/Toast';
@@ -73,6 +75,9 @@ export const AttendancePage: React.FC = () => {
 
   // Settings form draft state
   const [settingsDraft, setSettingsDraft] = useState<AttendanceSettings | null>(null);
+  const [newEmpName, setNewEmpName] = useState('');
+  const [newEmpRole, setNewEmpRole] = useState('');
+  const [newEmpPin, setNewEmpPin] = useState('');
 
   // Manual punch form state
   const [manualStaffId, setManualStaffId] = useState('');
@@ -123,21 +128,70 @@ export const AttendancePage: React.FC = () => {
     }
 
     return {
-      totalStaff: staffList.length,
+      totalStaff: dailyAttendance.length,
       presentOnTime,
       late,
       earlyLeave,
       absent,
       totalWorkHours: Math.round(totalWorkHours * 10) / 10,
     };
-  }, [dailyAttendance, staffList]);
+  }, [dailyAttendance]);
 
   // Open settings modal and clone draft
   const handleOpenSettings = () => {
     if (settings) {
-      setSettingsDraft({ ...settings, pinMapping: { ...(settings.pinMapping || {}) } });
+      setSettingsDraft({
+        ...settings,
+        pinMapping: { ...(settings.pinMapping || {}) },
+        customEmployees: [...(settings.customEmployees || [])],
+      });
+      setNewEmpName('');
+      setNewEmpRole('');
+      setNewEmpPin('');
     }
     setIsSettingsOpen(true);
+  };
+
+  const handleAddCustomEmployee = () => {
+    if (!settingsDraft) return;
+    const name = newEmpName.trim();
+    const pin = newEmpPin.trim();
+    const role = newEmpRole.trim() || (isAr ? 'موظف' : 'Karyawan');
+
+    if (!name) {
+      showToast('warning', isAr ? 'يرجى كتابة اسم الموظف' : 'Silakan masukkan nama karyawan');
+      return;
+    }
+    if (!pin) {
+      showToast('warning', isAr ? 'يرجى تحديد رقم البصمة (PIN)' : 'Silakan tentukan PIN mesin');
+      return;
+    }
+
+    const currentList = settingsDraft.customEmployees || [];
+    if (currentList.some((e) => e.pin === pin)) {
+      showToast('warning', isAr ? 'رقم البصمة هذا مسجل بالفعل لموظف آخر' : 'PIN ini sudah terdaftar');
+      return;
+    }
+
+    setSettingsDraft({
+      ...settingsDraft,
+      customEmployees: [
+        ...currentList,
+        { pin, name, role },
+      ],
+    });
+
+    setNewEmpName('');
+    setNewEmpRole('');
+    setNewEmpPin('');
+  };
+
+  const handleRemoveCustomEmployee = (pinToRemove: string) => {
+    if (!settingsDraft) return;
+    setSettingsDraft({
+      ...settingsDraft,
+      customEmployees: (settingsDraft.customEmployees || []).filter((e) => e.pin !== pinToRemove),
+    });
   };
 
   // Save settings handler
@@ -147,7 +201,7 @@ export const AttendancePage: React.FC = () => {
 
     try {
       await saveSettingsMutation.mutateAsync(settingsDraft);
-      showToast('success', isAr ? 'تم حفظ إعدادات البصمة بنجاح' : 'Pengaturan presensi berhasil disimpan');
+      showToast('success', isAr ? 'تم حفظ إعدادات البصمة وقائمة الموظفين بنجاح' : 'Pengaturan presensi & karyawan berhasil disimpan');
       setIsSettingsOpen(false);
       refetchLogs();
     } catch {
@@ -199,22 +253,23 @@ export const AttendancePage: React.FC = () => {
       return;
     }
 
-    const staff = staffList.find((s) => s.id === manualStaffId);
-    if (!staff || !settings) return;
+    const person = dailyAttendance.find((r) => r.staffId === manualStaffId);
+    if (!person || !settings) return;
 
-    const pin = settings.pinMapping?.[staff.id] || '1';
+    const pin = person.pin;
     const scanTime = `${selectedDate} ${manualTime}:00`;
 
     try {
       await addManualPunchMutation.mutateAsync({
         pin,
-        staffId: staff.id,
-        staffName: staff.full_name,
+        staffId: person.staffId.startsWith('custom-') || person.staffId.startsWith('biometric-') ? undefined : person.staffId,
+        staffName: person.staffName,
         scanTime,
         punchType: manualPunchType,
         verifyType: 'manual',
         deviceSn: settings.deviceSn,
         source: 'manual',
+        notes: manualNote.trim() || undefined,
       });
 
       showToast('success', isAr ? 'تم تسجيل البصمة اليدوية بنجاح' : 'Scan manual berhasil disimpan');
@@ -314,7 +369,7 @@ export const AttendancePage: React.FC = () => {
             variant="secondary"
             size="sm"
             onClick={() => {
-              setManualStaffId(staffList[0]?.id || '');
+              setManualStaffId(dailyAttendance[0]?.staffId || staffList[0]?.id || '');
               setIsManualPunchOpen(true);
             }}
             className="bg-white/10 hover:bg-white/20 text-white border-white/20 shadow-xs"
@@ -848,49 +903,151 @@ export const AttendancePage: React.FC = () => {
               </div>
             </div>
 
-            {/* Staff to PIN Mapping */}
-            <div className="pt-4 border-t border-line">
-              <div className="flex items-center justify-between mb-2">
+            {/* Staff to PIN Mapping & Biometric Employees */}
+            <div className="pt-4 border-t border-line space-y-4">
+              <div className="flex items-center justify-between">
                 <h4 className="font-bold text-ink flex items-center gap-2">
                   <Fingerprint className="w-4 h-4 text-navy" />
-                  {isAr ? 'ربط أرقام البصمة (PIN) بالموظفين' : 'Pemetaan PIN Mesin ke Karyawan'}
+                  {isAr ? 'موظفو البصمة وأرقام الـ PIN' : 'Karyawan & Pemetaan PIN Mesin'}
                 </h4>
                 <span className="text-xs text-muted">
                   {isAr ? 'حدد رقم البصمة المسجل في الجهاز لكل موظف' : 'Nomor ID di mesin absensi'}
                 </span>
               </div>
 
-              <div className="max-h-56 overflow-y-auto border border-line rounded-lg divide-y divide-line/70 bg-stone/20">
-                {staffList.map((s) => {
-                  const currentPin = settingsDraft.pinMapping?.[s.id] || '';
-                  return (
-                    <div key={s.id} className="p-2.5 flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-ink">{s.full_name}</span>
-                        <span className="text-xs text-muted">({s.role})</span>
+              {/* PMS Staff (Omar / Manager) */}
+              <div className="space-y-2">
+                <div className="text-xs font-bold text-navy flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>{isAr ? 'حسابات النظام الأساسية:' : 'Pengguna Sistem:'}</span>
+                </div>
+                <div className="border border-line rounded-lg divide-y divide-line/70 bg-stone/20">
+                  {staffList.filter((s) => s.active !== false).map((s) => {
+                    const currentPin =
+                      settingsDraft.pinMapping?.[s.id] ||
+                      (s.full_name.toLowerCase().includes('omar') ? '1' : '');
+                    return (
+                      <div key={s.id} className="p-2.5 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-ink">{s.full_name}</span>
+                          <span className="text-xs text-muted">({s.role})</span>
+                          {s.full_name.toLowerCase().includes('omar') && (
+                            <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
+                              {isAr ? 'المدير' : 'Manager'}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted font-medium">PIN #</span>
+                          <input
+                            type="text"
+                            value={currentPin}
+                            placeholder="1"
+                            onChange={(e) => {
+                              const val = e.target.value.trim();
+                              setSettingsDraft({
+                                ...settingsDraft,
+                                pinMapping: {
+                                  ...settingsDraft.pinMapping,
+                                  [s.id]: val,
+                                },
+                              });
+                            }}
+                            className="w-20 px-2 py-1 text-center font-mono font-bold rounded border border-line bg-white focus:outline-none focus:ring-1.5 focus:ring-gold text-xs"
+                          />
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted font-medium">PIN #</span>
-                        <input
-                          type="text"
-                          value={currentPin}
-                          placeholder="مثال: 1"
-                          onChange={(e) => {
-                            const val = e.target.value.trim();
-                            setSettingsDraft({
-                              ...settingsDraft,
-                              pinMapping: {
-                                ...settingsDraft.pinMapping,
-                                [s.id]: val,
-                              },
-                            });
-                          }}
-                          className="w-20 px-2 py-1 text-center font-mono font-bold rounded border border-line bg-white focus:outline-none focus:ring-1.5 focus:ring-gold text-xs"
-                        />
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Custom Biometric Employees (e.g. Cleaners, Drivers, Receptionists) */}
+              <div className="space-y-2 pt-2 border-t border-line/50">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-navy flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5 text-navy" />
+                    <span>{isAr ? 'موظفو الفندق الإضافيون (استقبال، نظافة، حراسة...):' : 'Karyawan Tambahan:'}</span>
+                  </span>
+                  <span className="text-[11px] text-muted">
+                    {isAr ? 'موظفون يبصمون على الجهاز بدون حساب دخول' : 'Karyawan tanpa akun sistem'}
+                  </span>
+                </div>
+
+                {/* List of custom employees */}
+                {(settingsDraft.customEmployees || []).length > 0 ? (
+                  <div className="border border-line rounded-lg divide-y divide-line/70 bg-white">
+                    {(settingsDraft.customEmployees || []).map((emp) => (
+                      <div key={emp.pin} className="p-2.5 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5">
+                          <span className="font-mono font-bold bg-navy text-gold-light text-xs px-2 py-0.5 rounded">
+                            PIN #{emp.pin}
+                          </span>
+                          <span className="font-bold text-ink">{emp.name}</span>
+                          <span className="text-xs text-muted">({emp.role || (isAr ? 'موظف' : 'Karyawan')})</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCustomEmployee(emp.pin)}
+                          className="p-1 rounded text-danger hover:bg-danger/10 transition"
+                          title={isAr ? 'حذف الموظف' : 'Hapus'}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-3 text-center text-xs text-muted bg-stone/20 rounded-lg border border-dashed border-line">
+                    {isAr ? 'لا يوجد موظفون إضافيون مسجلون حالياً' : 'Belum ada karyawan tambahan'}
+                  </div>
+                )}
+
+                {/* Add new employee form */}
+                <div className="p-3 bg-stone/30 rounded-lg border border-line space-y-2">
+                  <span className="text-xs font-bold text-ink block">
+                    {isAr ? 'إضافة موظف جديد للبصمة:' : 'Tambah Karyawan Baru:'}
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-7 gap-2">
+                    <div className="sm:col-span-3">
+                      <input
+                        type="text"
+                        value={newEmpName}
+                        onChange={(e) => setNewEmpName(e.target.value)}
+                        placeholder={isAr ? 'اسم الموظف (مثلاً: أحمد)' : 'Nama Karyawan'}
+                        className="w-full px-2.5 py-1.5 rounded border border-line bg-white text-xs focus:outline-none focus:ring-1.5 focus:ring-gold"
+                      />
                     </div>
-                  );
-                })}
+                    <div className="sm:col-span-2">
+                      <input
+                        type="text"
+                        value={newEmpRole}
+                        onChange={(e) => setNewEmpRole(e.target.value)}
+                        placeholder={isAr ? 'الوظيفة (مثلاً: استقبال)' : 'Jabatan'}
+                        className="w-full px-2.5 py-1.5 rounded border border-line bg-white text-xs focus:outline-none focus:ring-1.5 focus:ring-gold"
+                      />
+                    </div>
+                    <div className="sm:col-span-1">
+                      <input
+                        type="text"
+                        value={newEmpPin}
+                        onChange={(e) => setNewEmpPin(e.target.value)}
+                        placeholder="PIN #"
+                        className="w-full px-2 py-1.5 text-center font-mono font-bold rounded border border-line bg-white text-xs focus:outline-none focus:ring-1.5 focus:ring-gold"
+                      />
+                    </div>
+                    <div className="sm:col-span-1">
+                      <button
+                        type="button"
+                        onClick={handleAddCustomEmployee}
+                        className="w-full h-full min-h-[30px] flex items-center justify-center gap-1 rounded bg-navy text-gold-light font-bold text-xs hover:bg-navy-dark transition shadow-sm"
+                      >
+                        <PlusCircle className="w-3.5 h-3.5" />
+                        <span>{isAr ? 'إضافة' : 'Tambah'}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1028,9 +1185,9 @@ export const AttendancePage: React.FC = () => {
                 onChange={(e) => setManualStaffId(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg border border-line bg-white text-ink text-xs sm:text-sm focus:outline-none focus:ring-1.5 focus:ring-gold"
               >
-                {staffList.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.full_name} ({s.role})
+                {dailyAttendance.map((row) => (
+                  <option key={row.staffId} value={row.staffId}>
+                    {row.staffName} ({row.role}) - PIN #{row.pin}
                   </option>
                 ))}
               </select>
