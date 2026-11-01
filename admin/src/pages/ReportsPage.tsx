@@ -232,7 +232,6 @@ export const ReportsPage: React.FC = () => {
         paymentsByBooking.set(p.booking_id, arr);
       }
 
-      const inHouseBookingIds = new Set(inHouse.map((b) => b.id).filter(Boolean) as string[]);
       const inHouseByUnitId = new Map<number, BookingOverview[]>();
       const inHouseByUnitName = new Map<string, BookingOverview[]>();
       const processedInHouseIds = new Set<string>();
@@ -347,52 +346,6 @@ export const ReportsPage: React.FC = () => {
             payments,
             totalAmount: Number(b.total_amount || 0),
             balance: Number(b.balance || 0),
-            status: b.status || 'confirmed',
-          });
-        }
-      }
-
-      // B. Payments outside today stay (Cash & Transfer only per user rule)
-      for (const p of paymentsToday) {
-        if (p.booking_id && !inHouseBookingIds.has(p.booking_id)) {
-          if (p.method === 'app') continue; // per user rule: app payments only recognized on check-in day
-          const b = p.bookings as any;
-          if (!b) continue;
-
-          const checkInDate = new Date(b.check_in);
-          const checkOutDate = new Date(b.check_out);
-          const stayNights = Math.max(1, Math.round((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24)));
-          const unitSort = b.units?.sort_order ?? 999;
-
-          rows.push({
-            id: p.id,
-            unitId: b.unit_id || null,
-            unitName: b.units?.name || '—',
-            unitKind: b.units?.kind || 'room',
-            sortOrder: unitSort + 0.1, // place adjacent to the unit!
-            guestName: b.guests?.full_name || '—',
-            guestPhone: b.guests?.phone || null,
-            bookingCode: b.code || '—',
-            bookingId: b.id,
-            stayType: 'outsideTodayStay',
-            isOutsideStay: true,
-            isVacant: false,
-            checkIn: b.check_in || '—',
-            checkOut: b.check_out || '—',
-            nights: stayNights,
-            sourceCode: b.source_code || 'walk_in',
-            todayCollected: Number(p.amount || 0),
-            payments: [
-              {
-                id: p.id,
-                amount: Number(p.amount || 0),
-                method: p.method,
-                seq: seqMap.get(p.id) || 1,
-                reference: p.reference,
-              },
-            ],
-            totalAmount: Number(b.total_amount || 0),
-            balance: 0,
             status: b.status || 'confirmed',
           });
         }
@@ -988,11 +941,6 @@ export const ReportsPage: React.FC = () => {
                         <span className="text-[11px] bg-slate-100 text-slate-700 border border-slate-300 px-2 py-0.5 rounded-full font-bold">
                           {operationalReport.vacantCount} {t('report.availableCountLabel')}
                         </span>
-                        {operationalReport.outsideCount > 0 && (
-                          <span className="text-[11px] bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-full font-bold">
-                            {operationalReport.outsideCount} {t('report.stayTypeOutsideStay')}
-                          </span>
-                        )}
                       </>
                     )}
                   </h3>
@@ -1059,7 +1007,7 @@ export const ReportsPage: React.FC = () => {
                           : 'bg-white text-muted hover:text-ink border border-line'
                       }`}
                     >
-                      {t('report.filterOccupiedOnly')} ({operationalReport.inHouseCount + operationalReport.outsideCount})
+                      {t('report.filterOccupiedOnly')} ({operationalReport.inHouseCount})
                     </button>
                     <button
                       type="button"
