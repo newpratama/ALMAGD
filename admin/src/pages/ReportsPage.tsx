@@ -33,9 +33,9 @@ import { StatusBadge } from '../components/booking/StatusBadge';
 import { Spinner } from '../components/ui/Spinner';
 import { EmptyState } from '../components/ui/EmptyState';
 
-type PeriodMode = 'today' | 'yesterday' | 'thisMonth' | 'lastMonth' | 'thisQuarter' | 'thisYear' | 'custom';
+type PeriodMode = 'today' | 'yesterday' | 'singleDay' | 'thisMonth' | 'lastMonth' | 'thisQuarter' | 'thisYear' | 'custom';
 
-function getPeriodDates(mode: PeriodMode): { from: string; to: string } {
+function getPeriodDates(mode: PeriodMode, singleDate?: string): { from: string; to: string } {
   const today = todayISO();
 
   if (mode === 'today') {
@@ -45,6 +45,11 @@ function getPeriodDates(mode: PeriodMode): { from: string; to: string } {
   if (mode === 'yesterday') {
     const yesterday = addDaysISO(today, -1);
     return { from: yesterday, to: yesterday };
+  }
+
+  if (mode === 'singleDay') {
+    const d = singleDate || today;
+    return { from: d, to: d };
   }
 
   const now = new Date();
@@ -86,14 +91,17 @@ function getPeriodDates(mode: PeriodMode): { from: string; to: string } {
 
 export interface DailyReportRow {
   id: string;
+  unitId?: number | null;
   unitName: string;
   unitKind: string;
+  sortOrder: number;
   guestName: string;
   guestPhone: string | null;
   bookingCode: string;
-  bookingId: string;
-  stayType: 'checkInToday' | 'stayover' | 'outsideTodayStay';
+  bookingId?: string | null;
+  stayType: 'checkInToday' | 'stayover' | 'outsideTodayStay' | 'vacant';
   isOutsideStay: boolean;
+  isVacant: boolean;
   checkIn: string;
   checkOut: string;
   nights: number;
@@ -115,16 +123,25 @@ export const ReportsPage: React.FC = () => {
   const { t, lang } = useI18n();
   const navigate = useNavigate();
 
-  const [periodMode, setPeriodMode] = useState<PeriodMode>('thisMonth');
+  const [periodMode, setPeriodMode] = useState<PeriodMode>('today');
+  const [singleDayDate, setSingleDayDate] = useState<string>(todayISO());
   const [customFrom, setCustomFrom] = useState(addDaysISO(todayISO(), -30));
   const [customTo, setCustomTo] = useState(todayISO());
 
+  // Density & View filters for operational report
+  const [isDense, setIsDense] = useState<boolean>(true);
+  const [unitViewFilter, setUnitViewFilter] = useState<'all' | 'occupied' | 'villas' | 'rooms'>('all');
+  const [unitSearch, setUnitSearch] = useState<string>('');
+
   const { from, to } = useMemo(() => {
+    if (periodMode === 'singleDay') {
+      return { from: singleDayDate, to: singleDayDate };
+    }
     if (periodMode === 'custom') {
       return { from: customFrom, to: customTo };
     }
-    return getPeriodDates(periodMode);
-  }, [periodMode, customFrom, customTo]);
+    return getPeriodDates(periodMode, singleDayDate);
+  }, [periodMode, singleDayDate, customFrom, customTo]);
 
   const { data: daily = [], isLoading: loadingDaily } = useReportDaily(from, to);
   const { data: bySource = [], isLoading: loadingSource } = useReportBySource(from, to);
@@ -148,6 +165,14 @@ export const ReportsPage: React.FC = () => {
     queryFn: async () => {
       if (!supabase || !isSingleDay) return null;
 
+      // 0. Fetch all units for complete property listing
+      const { data: allUnitsData, error: unitsErr } = await supabase
+        .from('units')
+        .select('id, name, kind, sort_order, active')
+        .order('sort_order', { ascending: true });
+      if (unitsErr) throw unitsErr;
+      const allUnits = allUnitsData || [];
+
       // 1. In-house stays on selected date (non-cancelled)
       const { data: inHouseData, error: inHouseErr } = await supabase
         .from('booking_overview')
@@ -162,7 +187,7 @@ export const ReportsPage: React.FC = () => {
       // 2. Payments collected on this date
       const { data: paymentsData, error: payErr } = await supabase
         .from('payments')
-        .select('*, bookings(id, code, unit_id, check_in, check_out, total_amount, source_code, status, guests(full_name, phone), units(name, kind, sort_order))')
+        .select('*, bookings(id, code, unit_id, check_in, check_out, total_amount, source_code, status, guests(full_name, phone), units(id, name, kind, sort_order))')
         .eq('paid_on', from)
         .order('created_at', { ascending: true });
       if (payErr) throw payErr;
@@ -208,36 +233,123 @@ export const ReportsPage: React.FC = () => {
       }
 
       const inHouseBookingIds = new Set(inHouse.map((b) => b.id).filter(Boolean) as string[]);
-      const rows: DailyReportRow[] = [];
+      const inHouseByUnitId = new Map<number, BookingOverview[]>();
+      const inHouseByUnitName = new Map<string, BookingOverview[]>();
+      const processedInHouseIds = new Set<string>();
 
-      // A. In-house rows
       for (const b of inHouse) {
         if (!b.id) continue;
-        const isCheckInToday = b.check_in === from;
-        const stayType: 'checkInToday' | 'stayover' = isCheckInToday ? 'checkInToday' : 'stayover';
-        const payments = paymentsByBooking.get(b.id) || [];
-        const todayCollected = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+        if (b.unit_id) {
+          const arr = inHouseByUnitId.get(b.unit_id) || [];
+          arr.push(b);
+          inHouseByUnitId.set(b.unit_id, arr);
+        }
+        if (b.unit_name) {
+          const arr = inHouseByUnitName.get(b.unit_name) || [];
+          arr.push(b);
+          inHouseByUnitName.set(b.unit_name, arr);
+        }
+      }
 
-        rows.push({
-          id: b.id,
-          unitName: b.unit_name || '—',
-          unitKind: b.unit_kind || 'room',
-          guestName: b.guest_name || '—',
-          guestPhone: b.guest_phone || null,
-          bookingCode: b.code || '—',
-          bookingId: b.id,
-          stayType,
-          isOutsideStay: false,
-          checkIn: b.check_in || '—',
-          checkOut: b.check_out || '—',
-          nights: b.nights ?? 1,
-          sourceCode: b.source_code || 'walk_in',
-          todayCollected,
-          payments,
-          totalAmount: Number(b.total_amount || 0),
-          balance: Number(b.balance || 0),
-          status: b.status || 'confirmed',
-        });
+      const rows: DailyReportRow[] = [];
+
+      // A. Populate from allUnits to guarantee complete property display
+      for (const u of allUnits) {
+        const unitBookings = inHouseByUnitId.get(u.id) || inHouseByUnitName.get(u.name) || [];
+
+        if (unitBookings.length > 0) {
+          for (const b of unitBookings) {
+            if (!b.id) continue;
+            processedInHouseIds.add(b.id);
+            const isCheckInToday = b.check_in === from;
+            const stayType: 'checkInToday' | 'stayover' = isCheckInToday ? 'checkInToday' : 'stayover';
+            const payments = paymentsByBooking.get(b.id) || [];
+            const todayCollected = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+
+            rows.push({
+              id: b.id,
+              unitId: u.id,
+              unitName: u.name,
+              unitKind: u.kind,
+              sortOrder: u.sort_order,
+              guestName: b.guest_name || '—',
+              guestPhone: b.guest_phone || null,
+              bookingCode: b.code || '—',
+              bookingId: b.id,
+              stayType,
+              isOutsideStay: false,
+              isVacant: false,
+              checkIn: b.check_in || '—',
+              checkOut: b.check_out || '—',
+              nights: b.nights ?? 1,
+              sourceCode: b.source_code || 'walk_in',
+              todayCollected,
+              payments,
+              totalAmount: Number(b.total_amount || 0),
+              balance: Number(b.balance || 0),
+              status: b.status || 'confirmed',
+            });
+          }
+        } else {
+          // Vacant unit
+          rows.push({
+            id: `vacant-${u.id}`,
+            unitId: u.id,
+            unitName: u.name,
+            unitKind: u.kind,
+            sortOrder: u.sort_order,
+            guestName: '—',
+            guestPhone: null,
+            bookingCode: '—',
+            bookingId: null,
+            stayType: 'vacant',
+            isOutsideStay: false,
+            isVacant: true,
+            checkIn: '',
+            checkOut: '',
+            nights: 0,
+            sourceCode: '—',
+            todayCollected: 0,
+            payments: [],
+            totalAmount: 0,
+            balance: 0,
+            status: 'available',
+          });
+        }
+      }
+
+      // Any in-house bookings not matched to allUnits
+      for (const b of inHouse) {
+        if (b.id && !processedInHouseIds.has(b.id)) {
+          const isCheckInToday = b.check_in === from;
+          const stayType: 'checkInToday' | 'stayover' = isCheckInToday ? 'checkInToday' : 'stayover';
+          const payments = paymentsByBooking.get(b.id) || [];
+          const todayCollected = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+
+          rows.push({
+            id: b.id,
+            unitId: b.unit_id || null,
+            unitName: b.unit_name || '—',
+            unitKind: b.unit_kind || 'room',
+            sortOrder: 9999,
+            guestName: b.guest_name || '—',
+            guestPhone: b.guest_phone || null,
+            bookingCode: b.code || '—',
+            bookingId: b.id,
+            stayType,
+            isOutsideStay: false,
+            isVacant: false,
+            checkIn: b.check_in || '—',
+            checkOut: b.check_out || '—',
+            nights: b.nights ?? 1,
+            sourceCode: b.source_code || 'walk_in',
+            todayCollected,
+            payments,
+            totalAmount: Number(b.total_amount || 0),
+            balance: Number(b.balance || 0),
+            status: b.status || 'confirmed',
+          });
+        }
       }
 
       // B. Payments outside today stay (Cash & Transfer only per user rule)
@@ -250,17 +362,21 @@ export const ReportsPage: React.FC = () => {
           const checkInDate = new Date(b.check_in);
           const checkOutDate = new Date(b.check_out);
           const stayNights = Math.max(1, Math.round((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24)));
+          const unitSort = b.units?.sort_order ?? 999;
 
           rows.push({
             id: p.id,
+            unitId: b.unit_id || null,
             unitName: b.units?.name || '—',
             unitKind: b.units?.kind || 'room',
+            sortOrder: unitSort + 0.1, // place adjacent to the unit!
             guestName: b.guests?.full_name || '—',
             guestPhone: b.guests?.phone || null,
             bookingCode: b.code || '—',
             bookingId: b.id,
             stayType: 'outsideTodayStay',
             isOutsideStay: true,
+            isVacant: false,
             checkIn: b.check_in || '—',
             checkOut: b.check_out || '—',
             nights: stayNights,
@@ -282,8 +398,11 @@ export const ReportsPage: React.FC = () => {
         }
       }
 
-      // Sort rows by unit name (natural sort)
-      rows.sort((a, b) => (a.unitName || '').localeCompare(b.unitName || '', undefined, { numeric: true }));
+      // Sort rows by sortOrder, then unitName
+      rows.sort((a, b) => {
+        if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
+        return (a.unitName || '').localeCompare(b.unitName || '', undefined, { numeric: true });
+      });
 
       // Financial summary
       let totalCash = 0;
@@ -305,8 +424,12 @@ export const ReportsPage: React.FC = () => {
 
       return {
         rows,
+        totalCount: allUnits.length,
         inHouseCount: inHouse.length,
+        vacantCount: Math.max(0, allUnits.length - inHouse.length),
         outsideCount: rows.filter((r) => r.isOutsideStay).length,
+        villaCount: allUnits.filter((u) => u.kind === 'villa').length,
+        roomCount: allUnits.filter((u) => u.kind === 'room').length,
         summary: {
           totalCash,
           totalTransfer,
@@ -318,6 +441,32 @@ export const ReportsPage: React.FC = () => {
     },
     enabled: isSingleDay,
   });
+
+  const filteredRows = useMemo(() => {
+    if (!operationalReport) return [];
+    let list = operationalReport.rows;
+
+    if (unitViewFilter === 'occupied') {
+      list = list.filter((r) => !r.isVacant);
+    } else if (unitViewFilter === 'villas') {
+      list = list.filter((r) => r.unitKind === 'villa');
+    } else if (unitViewFilter === 'rooms') {
+      list = list.filter((r) => r.unitKind === 'room');
+    }
+
+    if (unitSearch.trim()) {
+      const q = unitSearch.toLowerCase().trim();
+      list = list.filter(
+        (r) =>
+          r.unitName.toLowerCase().includes(q) ||
+          r.guestName.toLowerCase().includes(q) ||
+          r.bookingCode.toLowerCase().includes(q) ||
+          (r.guestPhone && r.guestPhone.includes(q))
+      );
+    }
+
+    return list;
+  }, [operationalReport, unitViewFilter, unitSearch]);
 
   // Compute KPIs
   const kpis = useMemo(() => {
@@ -506,23 +655,25 @@ export const ReportsPage: React.FC = () => {
               ? 'Kamar Villa (غرفة ضمن فيلا)'
               : 'Kamar Lepas (غرفة مستقلة)',
           'Tipe Tamu / نوع النزيل':
-            r.stayType === 'checkInToday'
+            r.isVacant
+              ? 'شاغرة / متاحة (Kosong)'
+              : r.stayType === 'checkInToday'
               ? 'دخول اليوم (Check-in)'
               : r.stayType === 'stayover'
               ? 'نزيل مقيم / قديم (Stayover)'
               : 'خارج إقامة اليوم (Outside Stay)',
-          'Nama Tamu / اسم الضيف': r.guestName + (r.isOutsideStay ? ' (دفعة خارج إقامة اليوم)' : ''),
+          'Nama Tamu / اسم الضيف': r.isVacant ? '—' : r.guestName + (r.isOutsideStay ? ' (دفعة خارج إقامة اليوم)' : ''),
           'Telepon / الهاتف': r.guestPhone || '—',
-          'Kode Booking / رمز الحجز': r.bookingCode,
-          'Sumber / المصدر': r.sourceCode,
-          'Check-in / الدخول': r.checkIn,
-          'Check-out / الخروج': r.checkOut,
-          'Malam / عدد الليالي': r.nights,
+          'Kode Booking / رمز الحجز': r.bookingCode || '—',
+          'Sumber / المصدر': r.sourceCode || '—',
+          'Check-in / الدخول': r.checkIn || '—',
+          'Check-out / الخروج': r.checkOut || '—',
+          'Malam / عدد الليالي': r.nights || 0,
           'Diterima Hari Ini (Rp) / المقبوض اليوم': r.todayCollected,
           'Detail Pembayaran / تفاصيل الدفعة': payDetails,
           'Total Booking (Rp) / إجمالي الحجز': r.totalAmount,
           'Sisa (Rp) / المتبقي': r.balance,
-          'Status / الحالة': r.status,
+          'Status / الحالة': r.isVacant ? 'Tersedia' : r.status,
         };
       });
       const wsOcc = XLSX.utils.json_to_sheet(occRows);
@@ -562,12 +713,17 @@ export const ReportsPage: React.FC = () => {
       {/* Period Picker */}
       <div className="bg-white p-4 rounded-xl border border-line shadow-sm space-y-3">
         <div className="flex items-center gap-2 flex-wrap">
-          {(['today', 'yesterday', 'thisMonth', 'lastMonth', 'thisQuarter', 'thisYear', 'custom'] as PeriodMode[]).map(
+          {(['today', 'yesterday', 'singleDay', 'thisMonth', 'lastMonth', 'thisQuarter', 'thisYear', 'custom'] as PeriodMode[]).map(
             (mode) => (
               <button
                 key={mode}
                 type="button"
-                onClick={() => setPeriodMode(mode)}
+                onClick={() => {
+                  setPeriodMode(mode);
+                  if (mode === 'singleDay' && !singleDayDate) {
+                    setSingleDayDate(todayISO());
+                  }
+                }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                   periodMode === mode
                     ? 'bg-navy text-white shadow-sm'
@@ -579,6 +735,61 @@ export const ReportsPage: React.FC = () => {
             )
           )}
         </div>
+
+        {/* Dedicated Single Day Selector */}
+        {periodMode === 'singleDay' && (
+          <div className="flex flex-wrap items-center gap-3 p-3 bg-gold/10 border border-gold/30 rounded-xl">
+            <div className="flex items-center gap-2">
+              <span className="text-base">📅</span>
+              <label className="text-xs font-bold text-navy whitespace-nowrap">
+                {t('report.singleDayPickerLabel')}:
+              </label>
+              <Input
+                type="date"
+                value={singleDayDate}
+                onChange={(e) => {
+                  if (e.target.value) setSingleDayDate(e.target.value);
+                }}
+                className="font-mono text-xs w-44 bg-white border-gold/60 focus:border-navy"
+              />
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setSingleDayDate(addDaysISO(singleDayDate, -1))}
+                className="text-xs font-mono"
+                title={t('report.prevDay')}
+              >
+                ◀ {t('report.prevDay')}
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setSingleDayDate(todayISO())}
+                className="text-xs font-semibold"
+              >
+                {t('report.today')}
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setSingleDayDate(addDaysISO(singleDayDate, 1))}
+                className="text-xs font-mono"
+                title={t('report.nextDay')}
+              >
+                {t('report.nextDay')} ▶
+              </Button>
+            </div>
+
+            <div className="ms-auto flex items-center gap-2">
+              <span className="text-xs font-bold text-navy bg-white px-3 py-1.5 rounded-lg border border-line shadow-2xs font-mono">
+                {formatDateHuman(singleDayDate, lang)}
+              </span>
+            </div>
+          </div>
+        )}
 
         {periodMode === 'custom' && (
           <div className="flex items-center gap-3 pt-2">
@@ -760,30 +971,152 @@ export const ReportsPage: React.FC = () => {
           {/* Single Day Operational & Collection Report (تقرير إشغال وتحصيل الوحدات اليومي) */}
           {isSingleDay && (
             <Card className="border-gold/40 shadow-xs">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+              {/* Header with Title, Counts, and Quick Day Navigation */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4 border-b border-line pb-3">
                 <div>
                   <h3 className="text-base font-bold text-navy flex items-center gap-2 flex-wrap">
                     <span>🏛️</span>
                     <span>{t('report.dailyOperationalReportTitle')}</span>
-                    <span className="text-xs bg-navy text-white px-2.5 py-0.5 rounded-full font-mono font-bold">
-                      {operationalReport?.rows.length || 0}
-                    </span>
                     {operationalReport && (
-                      <span className="text-[11px] bg-gold/20 text-gold-text px-2 py-0.5 rounded-full font-bold">
-                        {operationalReport.inHouseCount} {t('today.wholeVillaBadge')} / {t('unitKind.room')}
-                      </span>
-                    )}
-                    {operationalReport && operationalReport.outsideCount > 0 && (
-                      <span className="text-[11px] bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-full font-bold">
-                        {operationalReport.outsideCount} {t('report.stayTypeOutsideStay')}
-                      </span>
+                      <>
+                        <span className="text-xs bg-navy text-white px-2.5 py-0.5 rounded-full font-mono font-bold" title={t('report.filterAllUnits')}>
+                          {operationalReport.totalCount} {t('today.wholeVillaBadge')} / {t('unitKind.room')}
+                        </span>
+                        <span className="text-[11px] bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-full font-bold">
+                          {operationalReport.inHouseCount} {t('report.filterOccupiedOnly')}
+                        </span>
+                        <span className="text-[11px] bg-slate-100 text-slate-700 border border-slate-300 px-2 py-0.5 rounded-full font-bold">
+                          {operationalReport.vacantCount} {t('report.availableCountLabel')}
+                        </span>
+                        {operationalReport.outsideCount > 0 && (
+                          <span className="text-[11px] bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-full font-bold">
+                            {operationalReport.outsideCount} {t('report.stayTypeOutsideStay')}
+                          </span>
+                        )}
+                      </>
                     )}
                   </h3>
                   <p className="text-xs text-muted mt-0.5">
                     {t('report.dailyOperationalReportSubtitle')} ({formatDateHuman(from, lang)})
                   </p>
                 </div>
+
+                {/* Day navigation buttons in header */}
+                <div className="flex items-center gap-1.5 self-start md:self-auto">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      const prevD = addDaysISO(from, -1);
+                      setSingleDayDate(prevD);
+                      setPeriodMode('singleDay');
+                    }}
+                    className="text-xs font-mono"
+                    title={t('report.prevDay')}
+                  >
+                    ◀ {t('report.prevDay')}
+                  </Button>
+                  <span className="text-xs font-bold text-navy bg-stone/40 px-2.5 py-1.5 rounded-lg border border-line font-mono">
+                    {from}
+                  </span>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      const nextD = addDaysISO(from, 1);
+                      setSingleDayDate(nextD);
+                      setPeriodMode('singleDay');
+                    }}
+                    className="text-xs font-mono"
+                    title={t('report.nextDay')}
+                  >
+                    {t('report.nextDay')} ▶
+                  </Button>
+                </div>
               </div>
+
+              {/* View Filters Bar: Tabs, Search, and Density Toggle */}
+              {operationalReport && (
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 mb-3 p-2 bg-stone/30 rounded-xl border border-line">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => setUnitViewFilter('all')}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                        unitViewFilter === 'all'
+                          ? 'bg-navy text-white shadow-xs'
+                          : 'bg-white text-muted hover:text-ink border border-line'
+                      }`}
+                    >
+                      {t('report.filterAllUnits')} ({operationalReport.totalCount})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setUnitViewFilter('occupied')}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                        unitViewFilter === 'occupied'
+                          ? 'bg-navy text-white shadow-xs'
+                          : 'bg-white text-muted hover:text-ink border border-line'
+                      }`}
+                    >
+                      {t('report.filterOccupiedOnly')} ({operationalReport.inHouseCount + operationalReport.outsideCount})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setUnitViewFilter('villas')}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                        unitViewFilter === 'villas'
+                          ? 'bg-navy text-white shadow-xs'
+                          : 'bg-white text-muted hover:text-ink border border-line'
+                      }`}
+                    >
+                      {t('report.filterVillasOnly')} ({operationalReport.villaCount})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setUnitViewFilter('rooms')}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                        unitViewFilter === 'rooms'
+                          ? 'bg-navy text-white shadow-xs'
+                          : 'bg-white text-muted hover:text-ink border border-line'
+                      }`}
+                    >
+                      {t('report.filterRoomsOnly')} ({operationalReport.roomCount})
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {/* Search box */}
+                    <div className="relative flex-1 sm:w-56">
+                      <Input
+                        type="text"
+                        placeholder={t('report.searchUnitOrGuest')}
+                        value={unitSearch}
+                        onChange={(e) => setUnitSearch(e.target.value)}
+                        className="h-8 text-xs ps-8 bg-white"
+                      />
+                      <span className="absolute start-2.5 top-2 text-muted text-xs pointer-events-none">
+                        🔍
+                      </span>
+                    </div>
+
+                    {/* Density Toggle (أسطر صغيرة / أسطر عادية) */}
+                    <button
+                      type="button"
+                      onClick={() => setIsDense(!isDense)}
+                      className={`px-2.5 py-1 h-8 rounded-lg text-xs font-bold border transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+                        isDense
+                          ? 'bg-navy text-white border-navy shadow-xs'
+                          : 'bg-white text-navy border-line hover:bg-mist'
+                      }`}
+                      title={isDense ? t('report.denseView') : t('report.comfortableView')}
+                    >
+                      <span>{isDense ? '📏' : '📐'}</span>
+                      <span>{isDense ? t('report.denseView') : t('report.comfortableView')}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {loadingOperational ? (
                 <div className="py-12 flex justify-center">
@@ -793,42 +1126,117 @@ export const ReportsPage: React.FC = () => {
                 <EmptyState title={t('today.noOccupiedUnits')} className="py-6" />
               ) : (
                 <div className="space-y-4">
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <Thead>
-                        <Tr>
-                          <Th>{t('booking.unit')}</Th>
-                          <Th>{t('report.stayTypeHeader')}</Th>
-                          <Th>{t('booking.guest')}</Th>
-                          <Th>{t('booking.code')}</Th>
-                          <Th>{t('booking.checkIn')} / {t('booking.checkOut')}</Th>
-                          <Th>{t('booking.source')}</Th>
-                          <Th className="bg-gold/10 font-bold text-navy">{t('report.collectedToday')}</Th>
-                          <Th>{t('report.totalBookingAmount')}</Th>
-                          <Th>{t('common.status')}</Th>
-                        </Tr>
-                      </Thead>
-                      <Tbody>
-                        {operationalReport.rows.map((r) => {
+                  <div className="overflow-x-auto border border-line rounded-xl">
+                    <table className="w-full text-start text-sm">
+                      <thead className="bg-stone/60 text-muted uppercase font-bold border-b border-line sticky top-0 backdrop-blur z-10">
+                        <tr>
+                          <th className={isDense ? 'px-2.5 py-1.5 text-[10px] text-start font-bold' : 'px-4 py-3 text-start text-xs font-semibold'}>{t('booking.unit')}</th>
+                          <th className={isDense ? 'px-2.5 py-1.5 text-[10px] text-start font-bold' : 'px-4 py-3 text-start text-xs font-semibold'}>{t('report.stayTypeHeader')}</th>
+                          <th className={isDense ? 'px-2.5 py-1.5 text-[10px] text-start font-bold' : 'px-4 py-3 text-start text-xs font-semibold'}>{t('booking.guest')}</th>
+                          <th className={isDense ? 'px-2.5 py-1.5 text-[10px] text-start font-bold' : 'px-4 py-3 text-start text-xs font-semibold'}>{t('booking.code')}</th>
+                          <th className={isDense ? 'px-2.5 py-1.5 text-[10px] text-start font-bold' : 'px-4 py-3 text-start text-xs font-semibold'}>{t('booking.checkIn')} / {t('booking.checkOut')}</th>
+                          <th className={isDense ? 'px-2.5 py-1.5 text-[10px] text-start font-bold' : 'px-4 py-3 text-start text-xs font-semibold'}>{t('booking.source')}</th>
+                          <th className={isDense ? 'px-2.5 py-1.5 text-[10px] text-start font-bold bg-gold/15 text-navy' : 'px-4 py-3 text-start text-xs font-semibold bg-gold/10 text-navy'}>{t('report.collectedToday')}</th>
+                          <th className={isDense ? 'px-2.5 py-1.5 text-[10px] text-start font-bold' : 'px-4 py-3 text-start text-xs font-semibold'}>{t('report.totalBookingAmount')}</th>
+                          <th className={isDense ? 'px-2.5 py-1.5 text-[10px] text-start font-bold' : 'px-4 py-3 text-start text-xs font-semibold'}>{t('common.status')}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-line bg-white">
+                        {filteredRows.map((r) => {
                           const isVilla = r.unitKind === 'villa';
                           const isChildRoom = r.unitKind === 'room' && (r.unitName || '').includes(' - ');
+                          const tdClass = isDense
+                            ? 'px-2.5 py-1 text-xs text-ink align-middle whitespace-nowrap'
+                            : 'px-4 py-3 text-xs text-ink align-middle whitespace-nowrap';
+
+                          if (r.isVacant) {
+                            return (
+                              <tr
+                                key={r.id}
+                                className="bg-slate-50/30 hover:bg-slate-100/50 transition-colors text-slate-500"
+                              >
+                                {/* 1. Unit */}
+                                <td className={tdClass}>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-bold text-navy text-xs">
+                                      {r.unitName}
+                                    </span>
+                                    <Badge
+                                      variant={isVilla ? 'gold' : isChildRoom ? 'info' : 'navy'}
+                                      className="text-[9px] py-0 px-1"
+                                    >
+                                      {isVilla
+                                        ? t('today.wholeVillaBadge')
+                                        : isChildRoom
+                                        ? t('today.roomInVillaBadge')
+                                        : t('today.independentRoomBadge')}
+                                    </Badge>
+                                  </div>
+                                </td>
+
+                                {/* 2. Stay Type */}
+                                <td className={tdClass}>
+                                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-500 border border-slate-200">
+                                    🟢 {t('report.unitVacant')}
+                                  </span>
+                                </td>
+
+                                {/* 3. Guest */}
+                                <td className={tdClass}>
+                                  <span className="text-slate-400 font-mono">—</span>
+                                </td>
+
+                                {/* 4. Booking Code */}
+                                <td className={tdClass}>
+                                  <span className="text-slate-400 font-mono">—</span>
+                                </td>
+
+                                {/* 5. Stay Dates */}
+                                <td className={tdClass}>
+                                  <span className="text-slate-400 font-mono">—</span>
+                                </td>
+
+                                {/* 6. Source */}
+                                <td className={tdClass}>
+                                  <span className="text-slate-400 font-mono">—</span>
+                                </td>
+
+                                {/* 7. Collected Today */}
+                                <td className={`${tdClass} bg-gold/5`}>
+                                  <span className="text-slate-400 font-mono">—</span>
+                                </td>
+
+                                {/* 8. Total Amount */}
+                                <td className={tdClass}>
+                                  <span className="text-slate-400 font-mono">—</span>
+                                </td>
+
+                                {/* 9. Status */}
+                                <td className={tdClass}>
+                                  <span className="text-[10px] text-slate-400 font-medium">
+                                    {t('report.unitVacantBadge')}
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          }
 
                           return (
-                            <Tr
+                            <tr
                               key={r.id}
                               className={`hover:bg-mist/80 transition-colors ${
-                                r.isOutsideStay ? 'bg-amber-50/50' : ''
+                                r.isOutsideStay ? 'bg-amber-50/60' : ''
                               }`}
                             >
                               {/* 1. Unit */}
-                              <Td className="whitespace-nowrap">
+                              <td className={tdClass}>
                                 <div className="flex items-center gap-1.5">
                                   <span className="font-bold text-navy text-xs">
                                     {r.unitName}
                                   </span>
                                   <Badge
                                     variant={isVilla ? 'gold' : isChildRoom ? 'info' : 'navy'}
-                                    className="text-[10px]"
+                                    className="text-[9px] py-0 px-1"
                                   >
                                     {isVilla
                                       ? t('today.wholeVillaBadge')
@@ -837,128 +1245,139 @@ export const ReportsPage: React.FC = () => {
                                       : t('today.independentRoomBadge')}
                                   </Badge>
                                 </div>
-                              </Td>
+                              </td>
 
                               {/* 2. Stay Type */}
-                              <Td className="whitespace-nowrap">
+                              <td className={tdClass}>
                                 {r.stayType === 'checkInToday' ? (
-                                  <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-success/15 text-success border border-success/30 whitespace-nowrap">
+                                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-success/15 text-success border border-success/30">
                                     ✨ {t('report.stayTypeCheckInToday')}
                                   </span>
                                 ) : r.stayType === 'stayover' ? (
-                                  <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-navy/10 text-navy border border-navy/20 whitespace-nowrap">
+                                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-navy/10 text-navy border border-navy/20">
                                     🏠 {t('report.stayTypeStayover')}
                                   </span>
                                 ) : (
-                                  <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300 whitespace-nowrap">
+                                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
                                     📌 {t('report.stayTypeOutsideStay')}
                                   </span>
                                 )}
-                              </Td>
+                              </td>
 
                               {/* 3. Guest */}
-                              <Td>
-                                <div className="font-semibold text-ink text-xs">
-                                  {r.guestName}
+                              <td className={tdClass}>
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="font-semibold text-ink text-xs">
+                                    {r.guestName}
+                                  </span>
+                                  {r.isOutsideStay && (
+                                    <span className="text-[10px] text-amber-800 font-bold bg-amber-100/80 px-1 py-0.2 rounded border border-amber-200">
+                                      ({t('report.outsideStayLabel')})
+                                    </span>
+                                  )}
+                                  {r.guestPhone && !isDense && (
+                                    <span className="text-[10px] text-muted font-mono">
+                                      📞 {r.guestPhone}
+                                    </span>
+                                  )}
                                 </div>
-                                {r.isOutsideStay && (
-                                  <div className="text-[10px] text-amber-800 font-bold mt-0.5">
-                                    ({t('report.outsideStayLabel')})
-                                  </div>
-                                )}
-                                {r.guestPhone && (
-                                  <div className="text-[10px] text-muted font-mono">
-                                    📞 {r.guestPhone}
-                                  </div>
-                                )}
-                              </Td>
+                              </td>
 
                               {/* 4. Booking Code */}
-                              <Td className="font-mono text-xs font-bold text-navy">
-                                <span
-                                  onClick={() => navigate(`/bookings/${r.bookingId}`)}
-                                  className="cursor-pointer hover:underline"
-                                >
-                                  {r.bookingCode}
-                                </span>
-                              </Td>
+                              <td className={`${tdClass} font-mono font-bold text-navy`}>
+                                {r.bookingId ? (
+                                  <span
+                                    onClick={() => navigate(`/bookings/${r.bookingId}`)}
+                                    className="cursor-pointer hover:underline"
+                                    title={r.guestPhone ? `📞 ${r.guestPhone}` : undefined}
+                                  >
+                                    {r.bookingCode}
+                                  </span>
+                                ) : (
+                                  <span className="text-muted font-normal font-sans">—</span>
+                                )}
+                              </td>
 
                               {/* 5. Stay Dates & Nights */}
-                              <Td className="text-xs text-muted font-mono whitespace-nowrap">
-                                {r.checkIn} ➔ {r.checkOut}
-                                <span className="ms-1.5 text-[11px] text-navy font-sans font-bold">
-                                  ({t('booking.nightsCount', { count: r.nights })})
-                                </span>
-                              </Td>
+                              <td className={`${tdClass} text-muted font-mono`}>
+                                {r.checkIn ? (
+                                  <span>
+                                    {r.checkIn.slice(5)} ➔ {r.checkOut.slice(5)}
+                                    <span className="ms-1 text-navy font-sans font-bold text-[11px]">
+                                      ({t('booking.nightsCount', { count: r.nights })})
+                                    </span>
+                                  </span>
+                                ) : (
+                                  '—'
+                                )}
+                              </td>
 
                               {/* 6. Source */}
-                              <Td className="whitespace-nowrap">
+                              <td className={tdClass}>
                                 <span
-                                  className="px-2 py-0.5 rounded text-[10px] font-bold text-white shadow-2xs"
+                                  className="px-1.5 py-0.2 rounded text-[10px] font-bold text-white shadow-2xs"
                                   style={{ backgroundColor: sourceColorMap.get(r.sourceCode) || '#536275' }}
                                 >
                                   {sourceLabelMap.get(r.sourceCode) || r.sourceCode}
                                 </span>
-                              </Td>
+                              </td>
 
                               {/* 7. Collected Today */}
-                              <Td className="whitespace-nowrap bg-gold/5">
+                              <td className={`${tdClass} bg-gold/5`}>
                                 {r.todayCollected > 0 ? (
-                                  <div className="space-y-1">
-                                    <div className="font-mono text-xs font-black text-emerald-800">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className="font-mono text-xs font-black text-emerald-800">
                                       {formatIDR(r.todayCollected)}
-                                    </div>
-                                    <div className="flex flex-wrap gap-1">
-                                      {r.payments.map((p) => (
-                                        <span
-                                          key={p.id}
-                                          className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${
-                                            p.method === 'cash'
-                                              ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
-                                              : p.method === 'transfer'
-                                              ? 'bg-blue-50 text-blue-700 border-blue-300'
-                                              : 'bg-purple-50 text-purple-700 border-purple-300'
-                                          }`}
-                                        >
-                                          {t('report.paymentNumberLabel', { num: p.seq })} ({t(`paymentMethod.${p.method}`) || p.method})
-                                        </span>
-                                      ))}
-                                    </div>
+                                    </span>
+                                    {r.payments.map((p) => (
+                                      <span
+                                        key={p.id}
+                                        className={`text-[9px] font-bold px-1 py-0.2 rounded border ${
+                                          p.method === 'cash'
+                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                                            : p.method === 'transfer'
+                                            ? 'bg-blue-50 text-blue-700 border-blue-300'
+                                            : 'bg-purple-50 text-purple-700 border-purple-300'
+                                        }`}
+                                      >
+                                        {t('report.paymentNumberLabel', { num: p.seq })} ({t(`paymentMethod.${p.method}`) || p.method})
+                                      </span>
+                                    ))}
                                   </div>
                                 ) : (
                                   <span className="text-muted font-mono text-xs">
                                     —
                                   </span>
                                 )}
-                              </Td>
+                              </td>
 
                               {/* 8. Total Booking & Balance */}
-                              <Td className="whitespace-nowrap">
-                                <div className="text-[11px] font-mono text-muted">
-                                  {formatIDR(r.totalAmount)}
-                                </div>
-                                <div className="mt-0.5">
+                              <td className={tdClass}>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[11px] font-mono text-muted">
+                                    {formatIDR(r.totalAmount)}
+                                  </span>
                                   {r.balance > 0 ? (
-                                    <Badge variant="danger" className="text-[9px] font-mono">
+                                    <Badge variant="danger" className="text-[9px] py-0 px-1 font-mono">
                                       ⚠️ {formatIDR(r.balance)}
                                     </Badge>
                                   ) : (
-                                    <Badge variant="success" className="text-[9px]">
+                                    <Badge variant="success" className="text-[9px] py-0 px-1">
                                       ✓ {t('calendar.paidBadge')}
                                     </Badge>
                                   )}
                                 </div>
-                              </Td>
+                              </td>
 
                               {/* 9. Status */}
-                              <Td>
+                              <td className={tdClass}>
                                 <StatusBadge status={r.status as any} />
-                              </Td>
-                            </Tr>
+                              </td>
+                            </tr>
                           );
                         })}
-                      </Tbody>
-                    </Table>
+                      </tbody>
+                    </table>
                   </div>
 
                   {/* Summary Bar - Matching Excel Image 2 */}
@@ -969,7 +1388,7 @@ export const ReportsPage: React.FC = () => {
                         <span>{t('report.collectionSummaryTitle')} ({formatDateHuman(from, lang)})</span>
                       </span>
                       <span className="text-xs text-slate-400 font-mono">
-                        {operationalReport.rows.length} {t('today.wholeVillaBadge')} / {t('unitKind.room')}
+                        {operationalReport.inHouseCount} {t('report.filterOccupiedOnly')} / {operationalReport.totalCount} {t('report.filterAllUnits')}
                       </span>
                     </div>
 
