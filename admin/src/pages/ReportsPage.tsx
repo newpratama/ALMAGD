@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -18,7 +19,7 @@ import {
 } from 'recharts';
 import { useI18n } from '../i18n/I18nProvider';
 import { supabase } from '../lib/supabase';
-import type { BookingOverview } from '../api/bookings';
+import { useBookingSources, type BookingOverview } from '../api/bookings';
 import { useReportDaily, useReportBySource } from '../api/reports';
 import { todayISO, addDaysISO, formatDateHuman } from '../lib/dates';
 import { formatIDR, formatIDRWithCommas } from '../lib/money';
@@ -83,8 +84,36 @@ function getPeriodDates(mode: PeriodMode): { from: string; to: string } {
   return { from: addDaysISO(todayISO(), -30), to: todayISO() };
 }
 
+export interface DailyReportRow {
+  id: string;
+  unitName: string;
+  unitKind: string;
+  guestName: string;
+  guestPhone: string | null;
+  bookingCode: string;
+  bookingId: string;
+  stayType: 'checkInToday' | 'stayover' | 'outsideTodayStay';
+  isOutsideStay: boolean;
+  checkIn: string;
+  checkOut: string;
+  nights: number;
+  sourceCode: string;
+  todayCollected: number;
+  payments: Array<{
+    id: string;
+    amount: number;
+    method: string;
+    seq: number;
+    reference?: string | null;
+  }>;
+  totalAmount: number;
+  balance: number;
+  status: string;
+}
+
 export const ReportsPage: React.FC = () => {
   const { t, lang } = useI18n();
+  const navigate = useNavigate();
 
   const [periodMode, setPeriodMode] = useState<PeriodMode>('thisMonth');
   const [customFrom, setCustomFrom] = useState(addDaysISO(todayISO(), -30));
@@ -99,21 +128,193 @@ export const ReportsPage: React.FC = () => {
 
   const { data: daily = [], isLoading: loadingDaily } = useReportDaily(from, to);
   const { data: bySource = [], isLoading: loadingSource } = useReportBySource(from, to);
+  const { data: sources = [] } = useBookingSources();
+
+  const sourceColorMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const s of sources) map.set(s.code, s.color);
+    return map;
+  }, [sources]);
+
+  const sourceLabelMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const s of sources) map.set(s.code, s.label);
+    return map;
+  }, [sources]);
 
   const isSingleDay = from === to;
-  const { data: occupiedList = [] } = useQuery({
-    queryKey: ['report-occupied-units', from],
+  const { data: operationalReport, isLoading: loadingOperational } = useQuery({
+    queryKey: ['report-daily-operational', from],
     queryFn: async () => {
-      if (!supabase || !isSingleDay) return [];
-      const { data, error } = await supabase
+      if (!supabase || !isSingleDay) return null;
+
+      // 1. In-house stays on selected date (non-cancelled)
+      const { data: inHouseData, error: inHouseErr } = await supabase
         .from('booking_overview')
         .select('*')
         .lte('check_in', from)
         .gt('check_out', from)
-        .in('status', ['confirmed', 'checked_in'])
+        .neq('status', 'cancelled')
         .order('unit_name', { ascending: true });
-      if (error) throw error;
-      return (data || []) as BookingOverview[];
+      if (inHouseErr) throw inHouseErr;
+      const inHouse = (inHouseData || []) as BookingOverview[];
+
+      // 2. Payments collected on this date
+      const { data: paymentsData, error: payErr } = await supabase
+        .from('payments')
+        .select('*, bookings(id, code, unit_id, check_in, check_out, total_amount, source_code, status, guests(full_name, phone), units(name, kind, sort_order))')
+        .eq('paid_on', from)
+        .order('created_at', { ascending: true });
+      if (payErr) throw payErr;
+      const paymentsToday = paymentsData || [];
+
+      // 3. Get sequence numbers for all payments of these bookings
+      const allBookingIds = new Set<string>();
+      inHouse.forEach((b) => {
+        if (b.id) allBookingIds.add(b.id);
+      });
+      paymentsToday.forEach((p) => {
+        if (p.booking_id) allBookingIds.add(p.booking_id);
+      });
+
+      let allPaymentsData: Array<{ id: string; booking_id: string; created_at: string; paid_on: string }> = [];
+      if (allBookingIds.size > 0) {
+        const { data: allPay, error: allPayErr } = await supabase
+          .from('payments')
+          .select('id, booking_id, created_at, paid_on')
+          .in('booking_id', Array.from(allBookingIds))
+          .order('created_at', { ascending: true });
+        if (allPayErr) throw allPayErr;
+        allPaymentsData = allPay || [];
+      }
+
+      const seqMap = new Map<string, number>();
+      const countMap = new Map<string, number>();
+      for (const p of allPaymentsData) {
+        const cur = (countMap.get(p.booking_id) || 0) + 1;
+        countMap.set(p.booking_id, cur);
+        seqMap.set(p.id, cur);
+      }
+
+      // Group payments by booking
+      const paymentsByBooking = new Map<string, any[]>();
+      for (const p of paymentsToday) {
+        const arr = paymentsByBooking.get(p.booking_id) || [];
+        arr.push({
+          ...p,
+          seq: seqMap.get(p.id) || 1,
+        });
+        paymentsByBooking.set(p.booking_id, arr);
+      }
+
+      const inHouseBookingIds = new Set(inHouse.map((b) => b.id).filter(Boolean) as string[]);
+      const rows: DailyReportRow[] = [];
+
+      // A. In-house rows
+      for (const b of inHouse) {
+        if (!b.id) continue;
+        const isCheckInToday = b.check_in === from;
+        const stayType: 'checkInToday' | 'stayover' = isCheckInToday ? 'checkInToday' : 'stayover';
+        const payments = paymentsByBooking.get(b.id) || [];
+        const todayCollected = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+
+        rows.push({
+          id: b.id,
+          unitName: b.unit_name || '—',
+          unitKind: b.unit_kind || 'room',
+          guestName: b.guest_name || '—',
+          guestPhone: b.guest_phone || null,
+          bookingCode: b.code || '—',
+          bookingId: b.id,
+          stayType,
+          isOutsideStay: false,
+          checkIn: b.check_in || '—',
+          checkOut: b.check_out || '—',
+          nights: b.nights ?? 1,
+          sourceCode: b.source_code || 'walk_in',
+          todayCollected,
+          payments,
+          totalAmount: Number(b.total_amount || 0),
+          balance: Number(b.balance || 0),
+          status: b.status || 'confirmed',
+        });
+      }
+
+      // B. Payments outside today stay (Cash & Transfer only per user rule)
+      for (const p of paymentsToday) {
+        if (p.booking_id && !inHouseBookingIds.has(p.booking_id)) {
+          if (p.method === 'app') continue; // per user rule: app payments only recognized on check-in day
+          const b = p.bookings as any;
+          if (!b) continue;
+
+          const checkInDate = new Date(b.check_in);
+          const checkOutDate = new Date(b.check_out);
+          const stayNights = Math.max(1, Math.round((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24)));
+
+          rows.push({
+            id: p.id,
+            unitName: b.units?.name || '—',
+            unitKind: b.units?.kind || 'room',
+            guestName: b.guests?.full_name || '—',
+            guestPhone: b.guests?.phone || null,
+            bookingCode: b.code || '—',
+            bookingId: b.id,
+            stayType: 'outsideTodayStay',
+            isOutsideStay: true,
+            checkIn: b.check_in || '—',
+            checkOut: b.check_out || '—',
+            nights: stayNights,
+            sourceCode: b.source_code || 'walk_in',
+            todayCollected: Number(p.amount || 0),
+            payments: [
+              {
+                id: p.id,
+                amount: Number(p.amount || 0),
+                method: p.method,
+                seq: seqMap.get(p.id) || 1,
+                reference: p.reference,
+              },
+            ],
+            totalAmount: Number(b.total_amount || 0),
+            balance: 0,
+            status: b.status || 'confirmed',
+          });
+        }
+      }
+
+      // Sort rows by unit name (natural sort)
+      rows.sort((a, b) => (a.unitName || '').localeCompare(b.unitName || '', undefined, { numeric: true }));
+
+      // Financial summary
+      let totalCash = 0;
+      let totalTransfer = 0;
+      let totalApp = 0;
+      let totalOther = 0;
+      let grandTotal = 0;
+
+      for (const r of rows) {
+        for (const p of r.payments) {
+          const amt = Number(p.amount || 0);
+          grandTotal += amt;
+          if (p.method === 'cash') totalCash += amt;
+          else if (p.method === 'transfer') totalTransfer += amt;
+          else if (p.method === 'app') totalApp += amt;
+          else totalOther += amt;
+        }
+      }
+
+      return {
+        rows,
+        inHouseCount: inHouse.length,
+        outsideCount: rows.filter((r) => r.isOutsideStay).length,
+        summary: {
+          totalCash,
+          totalTransfer,
+          totalApp,
+          totalOther,
+          grandTotal,
+        },
+      };
     },
     enabled: isSingleDay,
   });
@@ -288,30 +489,44 @@ export const ReportsPage: React.FC = () => {
     const wsMonthly = XLSX.utils.json_to_sheet(monthlyRows);
     XLSX.utils.book_append_sheet(wb, wsMonthly, 'Monthly');
 
-    // Sheet 4: Unit Terisi (When single day)
-    if (isSingleDay && occupiedList.length > 0) {
-      const occRows = occupiedList.map((b) => ({
-        'Unit / الوحدة': b.unit_name || '—',
-        'Jenis / التصنيف':
-          b.unit_kind === 'villa'
-            ? 'Villa Lengkap (فيلا بالكامل)'
-            : (b.unit_name || '').includes(' - ')
-            ? 'Kamar dalam Villa (غرفة ضمن فيلا)'
-            : 'Kamar Lepas (غرفة مستقلة)',
-        'Nama Tamu / النزيل': b.guest_name || '—',
-        'Telepon / الهاتف': b.guest_phone || '—',
-        'Kode Booking / رمز الحجز': b.code,
-        'Sumber / المصدر': b.source_code,
-        'Check-in / الدخول': b.check_in,
-        'Check-out / الخروج': b.check_out,
-        'Malam / الليالي': b.nights,
-        'Total (Rp) / الإجمالي': Number(b.total_amount || 0),
-        'Dibayar (Rp) / المدفوع': Number(b.paid || 0),
-        'Sisa (Rp) / المتبقي': Number(b.balance || 0),
-        'Status / الحالة': b.status,
-      }));
+    // Sheet 4: Unit Operational Report (When single day)
+    if (isSingleDay && operationalReport && operationalReport.rows.length > 0) {
+      const occRows = operationalReport.rows.map((r) => {
+        const payDetails =
+          r.payments
+            .map((p) => `دفعة رقم ${p.seq} (${p.method}: ${Number(p.amount).toLocaleString()})`)
+            .join(' + ') || '—';
+
+        return {
+          'Unit / الوحدة': r.unitName,
+          'Jenis / نوع الوحدة':
+            r.unitKind === 'villa'
+              ? 'Villa (فيلا بالكامل)'
+              : r.unitName.includes(' - ')
+              ? 'Kamar Villa (غرفة ضمن فيلا)'
+              : 'Kamar Lepas (غرفة مستقلة)',
+          'Tipe Tamu / نوع النزيل':
+            r.stayType === 'checkInToday'
+              ? 'دخول اليوم (Check-in)'
+              : r.stayType === 'stayover'
+              ? 'نزيل مقيم / قديم (Stayover)'
+              : 'خارج إقامة اليوم (Outside Stay)',
+          'Nama Tamu / اسم الضيف': r.guestName + (r.isOutsideStay ? ' (دفعة خارج إقامة اليوم)' : ''),
+          'Telepon / الهاتف': r.guestPhone || '—',
+          'Kode Booking / رمز الحجز': r.bookingCode,
+          'Sumber / المصدر': r.sourceCode,
+          'Check-in / الدخول': r.checkIn,
+          'Check-out / الخروج': r.checkOut,
+          'Malam / عدد الليالي': r.nights,
+          'Diterima Hari Ini (Rp) / المقبوض اليوم': r.todayCollected,
+          'Detail Pembayaran / تفاصيل الدفعة': payDetails,
+          'Total Booking (Rp) / إجمالي الحجز': r.totalAmount,
+          'Sisa (Rp) / المتبقي': r.balance,
+          'Status / الحالة': r.status,
+        };
+      });
       const wsOcc = XLSX.utils.json_to_sheet(occRows);
-      XLSX.utils.book_append_sheet(wb, wsOcc, 'Unit Terisi');
+      XLSX.utils.book_append_sheet(wb, wsOcc, 'Laporan Harian');
     }
 
     XLSX.writeFile(wb, `almagd-report-${from}-to-${to}.xlsx`);
@@ -542,105 +757,252 @@ export const ReportsPage: React.FC = () => {
             </div>
           </Card>
 
-          {/* Single Day Occupied Units (الفلل والغرف الممتلئة فقط في هذا اليوم) */}
+          {/* Single Day Operational & Collection Report (تقرير إشغال وتحصيل الوحدات اليومي) */}
           {isSingleDay && (
             <Card className="border-gold/40 shadow-xs">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
                 <div>
-                  <h3 className="text-sm font-bold text-navy flex items-center gap-2">
+                  <h3 className="text-base font-bold text-navy flex items-center gap-2 flex-wrap">
                     <span>🏛️</span>
-                    <span>{t('today.occupiedUnitsTitle')}</span>
+                    <span>{t('report.dailyOperationalReportTitle')}</span>
                     <span className="text-xs bg-navy text-white px-2.5 py-0.5 rounded-full font-mono font-bold">
-                      {occupiedList.length}
+                      {operationalReport?.rows.length || 0}
                     </span>
+                    {operationalReport && (
+                      <span className="text-[11px] bg-gold/20 text-gold-text px-2 py-0.5 rounded-full font-bold">
+                        {operationalReport.inHouseCount} {t('today.wholeVillaBadge')} / {t('unitKind.room')}
+                      </span>
+                    )}
+                    {operationalReport && operationalReport.outsideCount > 0 && (
+                      <span className="text-[11px] bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-full font-bold">
+                        {operationalReport.outsideCount} {t('report.stayTypeOutsideStay')}
+                      </span>
+                    )}
                   </h3>
                   <p className="text-xs text-muted mt-0.5">
-                    {t('today.occupiedUnitsSubtitle')} ({formatDateHuman(from, lang)})
+                    {t('report.dailyOperationalReportSubtitle')} ({formatDateHuman(from, lang)})
                   </p>
                 </div>
               </div>
 
-              {occupiedList.length === 0 ? (
+              {loadingOperational ? (
+                <div className="py-12 flex justify-center">
+                  <Spinner size="md" />
+                </div>
+              ) : !operationalReport || operationalReport.rows.length === 0 ? (
                 <EmptyState title={t('today.noOccupiedUnits')} className="py-6" />
               ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <Thead>
-                      <Tr>
-                        <Th>{t('booking.unit')}</Th>
-                        <Th>{t('booking.guest')}</Th>
-                        <Th>{t('booking.code')}</Th>
-                        <Th>{t('booking.checkIn')} / {t('booking.checkOut')}</Th>
-                        <Th>{t('booking.totalAmount')}</Th>
-                        <Th>{t('booking.balanceAmount')}</Th>
-                        <Th>{t('common.status')}</Th>
-                      </Tr>
-                    </Thead>
-                    <Tbody>
-                      {occupiedList.map((b) => {
-                        const isVilla = b.unit_kind === 'villa';
-                        const isChildRoom = b.unit_kind === 'room' && (b.unit_name || '').includes(' - ');
+                <div className="space-y-4">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <Thead>
+                        <Tr>
+                          <Th>{t('booking.unit')}</Th>
+                          <Th>{t('report.stayTypeHeader')}</Th>
+                          <Th>{t('booking.guest')}</Th>
+                          <Th>{t('booking.code')}</Th>
+                          <Th>{t('booking.checkIn')} / {t('booking.checkOut')}</Th>
+                          <Th>{t('booking.source')}</Th>
+                          <Th className="bg-gold/10 font-bold text-navy">{t('report.collectedToday')}</Th>
+                          <Th>{t('report.totalBookingAmount')}</Th>
+                          <Th>{t('common.status')}</Th>
+                        </Tr>
+                      </Thead>
+                      <Tbody>
+                        {operationalReport.rows.map((r) => {
+                          const isVilla = r.unitKind === 'villa';
+                          const isChildRoom = r.unitKind === 'room' && (r.unitName || '').includes(' - ');
 
-                        return (
-                          <Tr key={b.id} className="hover:bg-mist/80">
-                            <Td className="whitespace-nowrap">
-                              <div className="flex items-center gap-1.5">
-                                <span className="font-bold text-navy text-xs">
-                                  {b.unit_name}
-                                </span>
-                                <Badge
-                                  variant={isVilla ? 'gold' : isChildRoom ? 'info' : 'navy'}
-                                  className="text-[10px]"
-                                >
-                                  {isVilla
-                                    ? t('today.wholeVillaBadge')
-                                    : isChildRoom
-                                    ? t('today.roomInVillaBadge')
-                                    : t('today.independentRoomBadge')}
-                                </Badge>
-                              </div>
-                            </Td>
-                            <Td>
-                              <div className="font-semibold text-ink text-xs">
-                                {b.guest_name || '—'}
-                              </div>
-                              {b.guest_phone && (
-                                <div className="text-[10px] text-muted font-mono">
-                                  📞 {b.guest_phone}
+                          return (
+                            <Tr
+                              key={r.id}
+                              className={`hover:bg-mist/80 transition-colors ${
+                                r.isOutsideStay ? 'bg-amber-50/50' : ''
+                              }`}
+                            >
+                              {/* 1. Unit */}
+                              <Td className="whitespace-nowrap">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-bold text-navy text-xs">
+                                    {r.unitName}
+                                  </span>
+                                  <Badge
+                                    variant={isVilla ? 'gold' : isChildRoom ? 'info' : 'navy'}
+                                    className="text-[10px]"
+                                  >
+                                    {isVilla
+                                      ? t('today.wholeVillaBadge')
+                                      : isChildRoom
+                                      ? t('today.roomInVillaBadge')
+                                      : t('today.independentRoomBadge')}
+                                  </Badge>
                                 </div>
-                              )}
-                            </Td>
-                            <Td className="font-mono text-xs font-bold text-navy">
-                              {b.code}
-                            </Td>
-                            <Td className="text-xs text-muted font-mono whitespace-nowrap">
-                              {b.check_in} ➔ {b.check_out}
-                              <span className="ms-1 text-[10px] text-ink font-sans font-semibold">
-                                ({t('booking.nightsCount', { count: b.nights ?? 1 })})
-                              </span>
-                            </Td>
-                            <Td className="text-xs font-mono font-bold text-navy whitespace-nowrap">
-                              {formatIDR(Number(b.total_amount || 0))}
-                            </Td>
-                            <Td className="whitespace-nowrap">
-                              {Number(b.balance || 0) > 0 ? (
-                                <Badge variant="danger" className="text-[10px] font-mono">
-                                  ⚠️ {formatIDR(Number(b.balance))}
-                                </Badge>
-                              ) : (
-                                <Badge variant="success" className="text-[10px]">
-                                  ✓ {t('calendar.paidBadge')}
-                                </Badge>
-                              )}
-                            </Td>
-                            <Td>
-                              <StatusBadge status={b.status} />
-                            </Td>
-                          </Tr>
-                        );
-                      })}
-                    </Tbody>
-                  </Table>
+                              </Td>
+
+                              {/* 2. Stay Type */}
+                              <Td className="whitespace-nowrap">
+                                {r.stayType === 'checkInToday' ? (
+                                  <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-success/15 text-success border border-success/30 whitespace-nowrap">
+                                    ✨ {t('report.stayTypeCheckInToday')}
+                                  </span>
+                                ) : r.stayType === 'stayover' ? (
+                                  <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-navy/10 text-navy border border-navy/20 whitespace-nowrap">
+                                    🏠 {t('report.stayTypeStayover')}
+                                  </span>
+                                ) : (
+                                  <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300 whitespace-nowrap">
+                                    📌 {t('report.stayTypeOutsideStay')}
+                                  </span>
+                                )}
+                              </Td>
+
+                              {/* 3. Guest */}
+                              <Td>
+                                <div className="font-semibold text-ink text-xs">
+                                  {r.guestName}
+                                </div>
+                                {r.isOutsideStay && (
+                                  <div className="text-[10px] text-amber-800 font-bold mt-0.5">
+                                    ({t('report.outsideStayLabel')})
+                                  </div>
+                                )}
+                                {r.guestPhone && (
+                                  <div className="text-[10px] text-muted font-mono">
+                                    📞 {r.guestPhone}
+                                  </div>
+                                )}
+                              </Td>
+
+                              {/* 4. Booking Code */}
+                              <Td className="font-mono text-xs font-bold text-navy">
+                                <span
+                                  onClick={() => navigate(`/bookings/${r.bookingId}`)}
+                                  className="cursor-pointer hover:underline"
+                                >
+                                  {r.bookingCode}
+                                </span>
+                              </Td>
+
+                              {/* 5. Stay Dates & Nights */}
+                              <Td className="text-xs text-muted font-mono whitespace-nowrap">
+                                {r.checkIn} ➔ {r.checkOut}
+                                <span className="ms-1.5 text-[11px] text-navy font-sans font-bold">
+                                  ({t('booking.nightsCount', { count: r.nights })})
+                                </span>
+                              </Td>
+
+                              {/* 6. Source */}
+                              <Td className="whitespace-nowrap">
+                                <span
+                                  className="px-2 py-0.5 rounded text-[10px] font-bold text-white shadow-2xs"
+                                  style={{ backgroundColor: sourceColorMap.get(r.sourceCode) || '#536275' }}
+                                >
+                                  {sourceLabelMap.get(r.sourceCode) || r.sourceCode}
+                                </span>
+                              </Td>
+
+                              {/* 7. Collected Today */}
+                              <Td className="whitespace-nowrap bg-gold/5">
+                                {r.todayCollected > 0 ? (
+                                  <div className="space-y-1">
+                                    <div className="font-mono text-xs font-black text-emerald-800">
+                                      {formatIDR(r.todayCollected)}
+                                    </div>
+                                    <div className="flex flex-wrap gap-1">
+                                      {r.payments.map((p) => (
+                                        <span
+                                          key={p.id}
+                                          className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${
+                                            p.method === 'cash'
+                                              ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                                              : p.method === 'transfer'
+                                              ? 'bg-blue-50 text-blue-700 border-blue-300'
+                                              : 'bg-purple-50 text-purple-700 border-purple-300'
+                                          }`}
+                                        >
+                                          {t('report.paymentNumberLabel', { num: p.seq })} ({t(`paymentMethod.${p.method}`) || p.method})
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <span className="text-muted font-mono text-xs">
+                                    —
+                                  </span>
+                                )}
+                              </Td>
+
+                              {/* 8. Total Booking & Balance */}
+                              <Td className="whitespace-nowrap">
+                                <div className="text-[11px] font-mono text-muted">
+                                  {formatIDR(r.totalAmount)}
+                                </div>
+                                <div className="mt-0.5">
+                                  {r.balance > 0 ? (
+                                    <Badge variant="danger" className="text-[9px] font-mono">
+                                      ⚠️ {formatIDR(r.balance)}
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="success" className="text-[9px]">
+                                      ✓ {t('calendar.paidBadge')}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </Td>
+
+                              {/* 9. Status */}
+                              <Td>
+                                <StatusBadge status={r.status as any} />
+                              </Td>
+                            </Tr>
+                          );
+                        })}
+                      </Tbody>
+                    </Table>
+                  </div>
+
+                  {/* Summary Bar - Matching Excel Image 2 */}
+                  <div className="p-4 rounded-xl bg-slate-900 text-white shadow-sm border border-slate-800 space-y-3">
+                    <div className="flex items-center justify-between border-b border-slate-700/60 pb-2 flex-wrap gap-2">
+                      <span className="font-bold text-xs uppercase tracking-wider text-gold-light flex items-center gap-2">
+                        <span>📊</span>
+                        <span>{t('report.collectionSummaryTitle')} ({formatDateHuman(from, lang)})</span>
+                      </span>
+                      <span className="text-xs text-slate-400 font-mono">
+                        {operationalReport.rows.length} {t('today.wholeVillaBadge')} / {t('unitKind.room')}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-start">
+                      <div className="p-2.5 rounded-lg bg-slate-800/80 border border-slate-700">
+                        <span className="text-[11px] text-slate-400 block mb-0.5">💵 {t('paymentMethod.cash')}</span>
+                        <span className="font-mono text-sm font-bold text-emerald-400">
+                          {formatIDR(operationalReport.summary.totalCash)}
+                        </span>
+                      </div>
+
+                      <div className="p-2.5 rounded-lg bg-slate-800/80 border border-slate-700">
+                        <span className="text-[11px] text-slate-400 block mb-0.5">🏦 {t('paymentMethod.transfer')}</span>
+                        <span className="font-mono text-sm font-bold text-blue-400">
+                          {formatIDR(operationalReport.summary.totalTransfer)}
+                        </span>
+                      </div>
+
+                      <div className="p-2.5 rounded-lg bg-slate-800/80 border border-slate-700">
+                        <span className="text-[11px] text-slate-400 block mb-0.5">📱 {t('paymentMethod.app')}</span>
+                        <span className="font-mono text-sm font-bold text-purple-400">
+                          {formatIDR(operationalReport.summary.totalApp)}
+                        </span>
+                      </div>
+
+                      <div className="p-2.5 rounded-lg bg-gold/15 border border-gold/40">
+                        <span className="text-[11px] text-gold-light block mb-0.5">💰 {t('report.collectedToday')}</span>
+                        <span className="font-mono text-sm font-black text-gold">
+                          {formatIDR(operationalReport.summary.grandTotal)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </Card>
