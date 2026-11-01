@@ -1,0 +1,23 @@
+{
+  "device": {
+    "ip": "192.168.1.201",
+    "port": 4370,
+    "serial_number": "616230026280266",
+    "timeout": 5,
+    "force_udp": true
+  },
+  "supabase": {
+    "url": "https://cpnvqdodmiacrvldykli.supabase.co",
+    "anon_key": "sb_publishable_y2mTbCDgd2fLoqQuWYn-2w_9sd6z22p"
+  },
+  "cloud_api": {
+    "enabled": false,
+    "token": "HENLQ0WVR7KVHXC3",
+    "cloud_id": "616230026280266"
+  },
+  "sync": {
+    "interval_seconds": 30,
+    "retry_delay_seconds": 10,
+    "offline_db": "attendance_cache.db"
+  }
+}

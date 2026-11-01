@@ -21,6 +21,7 @@ import { GuestsPage } from './pages/GuestsPage';
 import { GuestDetailPage } from './pages/GuestDetailPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { AttendancePage } from './pages/AttendancePage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -65,6 +66,14 @@ export default function App() {
                     <Route path="/bookings/:id" element={<BookingDetailPage />} />
                     <Route path="/guests" element={<GuestsPage />} />
                     <Route path="/guests/:id" element={<GuestDetailPage />} />
+                    <Route
+                      path="/attendance"
+                      element={
+                        <RequireManager>
+                          <AttendancePage />
+                        </RequireManager>
+                      }
+                    />
                     <Route
                       path="/reports"
                       element={

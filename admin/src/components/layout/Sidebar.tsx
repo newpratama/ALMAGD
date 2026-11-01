@@ -7,6 +7,7 @@ import {
   Users,
   BarChart3,
   Settings,
+  Fingerprint,
   ExternalLink,
   ShieldCheck,
   Radio,
@@ -39,6 +40,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   const managementNav = [
+    { to: '/attendance', label: t('nav.attendance'), icon: Fingerprint },
     { to: '/reports', label: t('nav.reports'), icon: BarChart3 },
     { to: '/settings', label: t('nav.settings'), icon: Settings },
   ];

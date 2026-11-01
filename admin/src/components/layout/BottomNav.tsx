@@ -7,6 +7,7 @@ import {
   Users,
   BarChart3,
   Settings,
+  Fingerprint,
 } from 'lucide-react';
 import { useAuth } from '../../auth/AuthProvider';
 import { useI18n } from '../../i18n/I18nProvider';
@@ -24,6 +25,7 @@ export const BottomNav: React.FC = () => {
     { to: '/guests', label: t('nav.guests'), icon: Users },
     ...(isManager
       ? [
+          { to: '/attendance', label: t('nav.attendance'), icon: Fingerprint },
           { to: '/reports', label: t('nav.reports'), icon: BarChart3 },
           { to: '/settings', label: t('nav.settings'), icon: Settings },
         ]
