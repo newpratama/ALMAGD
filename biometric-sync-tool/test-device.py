@@ -6,12 +6,18 @@ import json
 import os
 import sys
 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+if SCRIPT_DIR not in sys.path:
+    sys.path.insert(0, SCRIPT_DIR)
+
 try:
     from zk import ZK
 except ImportError:
-    print("Installing pyzk...")
-    os.system(f"{sys.executable} -m pip install pyzk")
-    from zk import ZK
+    try:
+        os.system(f"{sys.executable} -m pip install pyzk --quiet")
+        from zk import ZK
+    except Exception:
+        pass
 
 config_path = os.path.join(os.path.dirname(__file__), "config.json")
 with open(config_path, "r", encoding="utf-8") as f:

@@ -963,12 +963,12 @@ export const AttendancePage: React.FC = () => {
                 </span>
                 <div>
                   <div className="font-bold text-ink">
-                    {isAr ? 'التشغيل كمسؤول لمرة واحدة فقط' : 'Jalankan Sekali Sebagai Admin'}
+                    {isAr ? 'التشغيل التلقائي بنقرة واحدة' : 'Jalankan Sekali Sebagai Admin'}
                   </div>
                   <div className="text-xs text-muted mt-0.5">
                     {isAr
-                      ? 'انقر بالزر الأيمن على ملف install-windows.bat واختر "تشغيل كمسؤول" (Run as administrator).'
-                      : 'Klik kanan install-windows.bat lalu pilih "Run as administrator".'}
+                      ? 'انقر نقرتين على ملف "تثبيت_تلقائي_مع_تشغيل_الويندوز.bat" (أو بالزر الأيمن على install-windows.bat واختر تشغيل كمسؤول).'
+                      : 'Klik file "تثبيت_تلقائي_مع_تشغيل_الويندوز.bat" atau klik kanan install-windows.bat lalu pilih "Run as administrator".'}
                   </div>
                 </div>
               </div>

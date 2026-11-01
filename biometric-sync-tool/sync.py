@@ -17,15 +17,19 @@ import datetime
 import urllib.request
 import urllib.error
 
-# Ensure pyzk is available
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+if SCRIPT_DIR not in sys.path:
+    sys.path.insert(0, SCRIPT_DIR)
+
+# Ensure pyzk is available (bundled locally in ./zk or installed)
 try:
     from zk import ZK
 except ImportError:
-    print("[ERROR] pyzk library not found. Installing pyzk...")
-    os.system(f"{sys.executable} -m pip install pyzk")
-    from zk import ZK
-
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+    try:
+        os.system(f"{sys.executable} -m pip install pyzk --quiet")
+        from zk import ZK
+    except Exception:
+        pass
 CONFIG_PATH = os.path.join(SCRIPT_DIR, "config.json")
 
 def load_config():

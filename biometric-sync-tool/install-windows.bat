@@ -1,47 +1,80 @@
 @echo off
 chcp 65001 >nul
-echo =======================================================
-echo     ALMAGD Biometric Sync Bridge - تثبيت خدمة المزامنة
-echo =======================================================
+title ALMAGD Biometric Sync - تثبيت خدمة المزامنة لجهاز الاستقبال
+
+echo ====================================================================
+echo     ALMAGD Biometric Sync Bridge - نظام مزامنة البصمة
+echo ====================================================================
 echo.
-echo [1/3] جاري فحص بيئة بايثون (Python)...
+
+set SCRIPT_DIR=%~dp0
+set PYTHONW_BIN=""
+set PYTHON_BIN=""
+
+REM 1. فحص بايثون المدمج في المجلد
+if exist "%SCRIPT_DIR%python\pythonw.exe" (
+    set PYTHONW_BIN="%SCRIPT_DIR%python\pythonw.exe"
+    set PYTHON_BIN="%SCRIPT_DIR%python\python.exe"
+    echo [✓] تم العثور على محرك بايثون المدمج المحمول داخل المجلد.
+    goto SETUP_TASK
+)
+
+REM 2. فحص بايثون النظام
+where pythonw >nul 2>&1
+if %errorlevel% equ 0 (
+    set PYTHONW_BIN=pythonw
+    set PYTHON_BIN=python
+    echo [✓] تم العثور على بايثون النظام.
+    goto SETUP_TASK
+)
 
 where python >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [تنبيه] لم يتم العثور على بايثون. يرجى تثبيت Python 3 من python.org
-    echo وتأكد من تفعيل خيار "Add Python to PATH" أثناء التثبيت.
-    pause
-    exit /b 1
-)
-
-echo [2/3] جاري تثبيت مكتبة الاتصال بجهاز البصمة (pyzk)...
-python -m pip install pyzk --quiet
-
-echo [3/3] جاري تسجيل الخدمة لتعمل في الخلفية تلقائياً مع تشغيل الويندوز...
-set SCRIPT_DIR=%~dp0
-set PYTHONW_CMD=pythonw "%SCRIPT_DIR%sync.py"
-
-REM حذف المهمة القديمة إن وجدت
-schtasks /delete /tn "AlmagdBiometricSync" /f >nul 2>&1
-
-REM إنشاء مهمة مجدولة تعمل عند تشغيل الويندوز بدون أي نوافذ سوداء
-schtasks /create /tn "AlmagdBiometricSync" /tr "%PYTHONW_CMD%" /sc onstart /delay 0000:30 /ru SYSTEM /f >nul 2>&1
-
 if %errorlevel% equ 0 (
-    echo.
-    echo =======================================================
-    echo    تم التثبيت بنجاح! 
-    echo    الخدمة تعمل الآن تلقائياً في الخلفية وبشكل صامت.
-    echo =======================================================
-) else (
-    REM محاولة بديلة في حال عدم توفر صلاحيات المسؤول
-    schtasks /create /tn "AlmagdBiometricSync" /tr "%PYTHONW_CMD%" /sc onlogon /f >nul 2>&1
-    echo [نجاح] تم تسجيل الخدمة لتعمل تلقائياً عند تسجيل الدخول.
+    set PYTHONW_BIN=pythonw
+    set PYTHON_BIN=python
+    echo [✓] تم العثور على بايثون النظام.
+    goto SETUP_TASK
 )
 
-REM تشغيل الخدمة الآن فوراً
-start "" %PYTHONW_CMD%
+echo [تنبيه] لم يتم العثور على بايثون. يرجى التأكد من وجود مجلد python داخل هذه الحزمة.
+pause
+exit /b 1
+
+:SETUP_TASK
+echo.
+echo [1/3] إنشاء مشغل صامت بدون أي نوافذ (Silent Background Runner)...
+
+REM إنشاء ملف VBS للتشغيل الخفي التام
+set VBS_LAUNCHER=%SCRIPT_DIR%run-silent.vbs
+(
+echo Set WshShell = CreateObject^("WScript.Shell"^)
+echo WshShell.CurrentDirectory = "%SCRIPT_DIR%"
+echo WshShell.Run "%PYTHONW_BIN% ""%SCRIPT_DIR%sync.py""", 0, False
+) > "%VBS_LAUNCHER%"
+
+echo [2/3] تسجيل التشغيل التلقائي مع إقلاع ويندوز...
+
+REM 1. محاولة التسجيل في Task Scheduler
+schtasks /delete /tn "AlmagdBiometricSync" /f >nul 2>&1
+schtasks /create /tn "AlmagdBiometricSync" /tr "wscript.exe \"%VBS_LAUNCHER%\"" /sc onlogon /f >nul 2>&1
+
+REM 2. إضافة المشغل في مجلد بدء التشغيل التلقائي للمستخدم (Startup Folder) كضمان إضافي
+set STARTUP_DIR=%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup
+if exist "%STARTUP_DIR%" (
+    copy /y "%VBS_LAUNCHER%" "%STARTUP_DIR%\AlmagdBiometricSync.vbs" >nul 2>&1
+    echo [✓] تم إضافة الخدمة في مجلد بدء التشغيل التلقائي بنجاح.
+)
+
+echo [3/3] تشغيل خدمة المزامنة الآن فوراً في الخلفية...
+wscript.exe "%VBS_LAUNCHER%"
 
 echo.
-echo تم تشغيل المزامنة بنجاح! يمكنك إغلاق هذه النافذة الآن.
-pause
+echo ====================================================================
+echo     تهانينا! تم تثبيت أداة المزامنة بنجاح تام!
+echo     - الأداة تعمل الآن بصمت في الخلفية.
+echo     - ستبدأ تلقائياً في كل مرة يشتغل فيها جهاز كمبيوتر الاستقبال.
+echo     - تحفظ البصمات محلياً وترفعها فوراً لسحابة المجد.
+echo ====================================================================
+echo.
+echo اضغط أي زر لإغلاق هذه النافذة.
+pause >nul
