@@ -59,12 +59,23 @@ export const BookingReceipt: React.FC<BookingReceiptProps> = ({
       {/* 1. Header with Brand Identity */}
       <div className="relative flex items-start justify-between border-b-2 border-navy/90 pb-4 mb-5 gap-4">
         <div className="flex items-center gap-3.5">
-          {/* Primary Company Logo (ALMAGD) */}
-          <img
-            src={`${import.meta.env.BASE_URL}logo-almagd.png`}
-            alt="ALMAGD"
-            className="h-14 w-auto object-contain"
-          />
+          {/* Dual Brand Logos: ALMAGD & New Pratama */}
+          <div className="flex items-center gap-2.5">
+            <img
+              src={`${import.meta.env.BASE_URL}logo-almagd.png`}
+              alt="ALMAGD"
+              className="h-14 w-auto object-contain"
+            />
+            <span className="h-10 w-px bg-slate-300" aria-hidden="true" />
+            <img
+              src={`${import.meta.env.BASE_URL}logo-new-pratama.png`}
+              alt="New Pratama"
+              className="h-14 w-14 rounded-full bg-white object-contain p-0.5 border border-gold/40 shadow-xs"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src = `${import.meta.env.BASE_URL}a_clean_isolated_logo_graphic_on_a_transparent_bac.png`;
+              }}
+            />
+          </div>
 
           {/* Hotel Name & Location */}
           <div>
