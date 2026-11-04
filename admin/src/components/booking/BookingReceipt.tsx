@@ -57,57 +57,59 @@ export const BookingReceipt: React.FC<BookingReceiptProps> = ({
   return (
     <div className="relative w-full max-w-4xl mx-auto bg-white p-6 sm:p-8 text-ink text-start font-sans border border-line rounded-xl shadow-xs print:border-none print:shadow-none print:p-[10mm_12mm] print:m-0 overflow-hidden">
       {/* 1. Header with Brand Identity */}
-      <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between border-b-2 border-navy/90 pb-4 mb-5 gap-4">
-        {/* Dual Brand Logos & Address (LTR aligned for logos) */}
-        <div className="flex items-center gap-3.5 min-w-0" dir="ltr">
-          {/* Brand Logos */}
-          <div className="flex items-center gap-3 shrink-0">
-            <img
-              src={`${import.meta.env.BASE_URL}logo-almagd.png`}
-              alt="ALMAGD"
-              className="h-12 sm:h-14 w-auto object-contain shrink-0"
-            />
-            <span className="h-10 w-px bg-slate-200 shrink-0" aria-hidden="true" />
-            <img
-              src={`${import.meta.env.BASE_URL}logo-new-pratama.png`}
-              alt="New Pratama"
-              className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-white object-contain p-0.5 border border-gold/40 shadow-xs shrink-0"
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src = `${import.meta.env.BASE_URL}a_clean_isolated_logo_graphic_on_a_transparent_bac.png`;
-              }}
-            />
-          </div>
-
-          {/* Hotel Name & Location Info */}
-          <div className="text-left shrink-0">
-            <h1 className="text-lg sm:text-xl font-black text-navy tracking-tight leading-tight whitespace-nowrap">
-              NEW PRATAMA <span className="text-gold font-bold">VILLA</span>
-            </h1>
-            <p className="text-[11px] text-muted font-medium mt-0.5">
-              Manajemen Villa &amp; Kamar
-            </p>
-            <p className="text-[10.5px] text-slate-500 whitespace-nowrap">
-              Cisarua, Puncak, Bogor, Jawa Barat — Indonesia
-            </p>
-          </div>
-        </div>
-
-        {/* Voucher Title & Number */}
-        <div className="text-end flex flex-col items-end shrink-0 self-end sm:self-center">
-          <div className="inline-flex items-center gap-1.5 bg-navy text-white text-[10.5px] font-bold uppercase tracking-wider px-3 py-1 rounded-md shadow-xs">
-            <span>🏛️</span>
-            <span>{t('booking.receiptTitle')}</span>
-          </div>
-          <div className="mt-1.5 font-mono text-2xl font-black text-navy tracking-wider">
-            {booking.code}
-          </div>
-          {booking.ota_reference && (
-            <div className="mt-1 text-xs font-mono font-bold text-navy bg-gold/15 border border-gold/40 px-2.5 py-0.5 rounded-md inline-block">
-              {localizedSource || 'سند التطبيق'}: {booking.ota_reference}
+      <div className="relative border-b-2 border-navy/90 pb-4 mb-5">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          {/* Dual Brand Logos & Address (LTR aligned for logos) */}
+          <div className="flex items-center gap-3.5 flex-wrap sm:flex-nowrap" dir="ltr">
+            {/* Brand Logos */}
+            <div className="flex items-center gap-3 shrink-0">
+              <img
+                src={`${import.meta.env.BASE_URL}logo-almagd.png`}
+                alt="ALMAGD"
+                className="h-11 sm:h-13 w-auto object-contain shrink-0"
+              />
+              <span className="h-9 w-px bg-slate-200 shrink-0" aria-hidden="true" />
+              <img
+                src={`${import.meta.env.BASE_URL}logo-new-pratama.png`}
+                alt="New Villa Pratama"
+                className="h-11 w-11 sm:h-13 sm:w-13 rounded-full bg-white object-contain p-0.5 border border-gold/40 shadow-xs shrink-0"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = `${import.meta.env.BASE_URL}a_clean_isolated_logo_graphic_on_a_transparent_bac.png`;
+                }}
+              />
             </div>
-          )}
-          <div className="text-[11px] text-muted mt-1">
-            {t('booking.receiptIssueDate')}: <span className="font-semibold text-ink">{issueDate}</span>
+
+            {/* Hotel Name & Location Info */}
+            <div className="text-left">
+              <h1 className="text-base sm:text-lg font-black text-navy tracking-tight leading-tight">
+                NEW VILLA <span className="text-gold font-bold">PRATAMA</span>
+              </h1>
+              <p className="text-[11px] text-muted font-medium mt-0.5">
+                Manajemen Villa &amp; Kamar
+              </p>
+              <p className="text-[10px] text-slate-500">
+                Cisarua, Puncak, Bogor, Jawa Barat — Indonesia
+              </p>
+            </div>
+          </div>
+
+          {/* Voucher Title & Number */}
+          <div className="text-start lg:text-end flex flex-col items-start lg:items-end shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-100">
+            <div className="inline-flex items-center gap-1.5 bg-navy text-white text-[10px] sm:text-[10.5px] font-bold uppercase tracking-wider px-3 py-1 rounded-md shadow-xs">
+              <span>🏛️</span>
+              <span>{t('booking.receiptTitle')}</span>
+            </div>
+            <div className="mt-1 font-mono text-xl sm:text-2xl font-black text-navy tracking-wider">
+              {booking.code}
+            </div>
+            {booking.ota_reference && (
+              <div className="mt-1 text-xs font-mono font-bold text-navy bg-gold/15 border border-gold/40 px-2.5 py-0.5 rounded-md inline-block">
+                {localizedSource || 'سند التطبيق'}: {booking.ota_reference}
+              </div>
+            )}
+            <div className="text-[10.5px] text-muted mt-1">
+              {t('booking.receiptIssueDate')}: <span className="font-semibold text-ink">{issueDate}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -379,7 +381,7 @@ export const BookingReceipt: React.FC<BookingReceiptProps> = ({
       <div className="relative pt-4 border-t border-line text-center text-[10px] text-muted">
         <p className="font-semibold text-navy">{t('booking.receiptFooter')}</p>
         <p className="mt-0.5">
-          Sistem Resmi Manajemen New Pratama v1.0 • Dicetak secara digital • Dokumen Sah &amp; معتمد
+          {t('booking.receiptOfficialFooterLine')}
         </p>
       </div>
     </div>

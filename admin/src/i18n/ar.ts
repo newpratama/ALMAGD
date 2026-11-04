@@ -278,6 +278,7 @@ export const ar = {
     receiptTransferSubtitle: 'إشعار تحويل بنكي',
     receiptAppSubtitle: 'سند المنصة ({source})',
     receiptAppDefaultSubtitle: 'سند المنصة والتطبيق',
+    receiptOfficialFooterLine: 'النظام الرسمي لإدارة نيو فيلا براتاما v1.0 • صادر ومطبوع رقمياً • مستند ساري ومعتمد',
     previewReceipt: 'معاينة الإيصال',
     assignGuestBtn: 'تعيين ضيف للحجز',
     unassignedGuest: 'بدون اسم ضيف (حجز أرشيفي)',

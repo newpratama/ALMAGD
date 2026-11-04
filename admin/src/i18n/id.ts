@@ -278,6 +278,7 @@ export const id = {
     receiptTransferSubtitle: 'Bukti Transfer Bank',
     receiptAppSubtitle: 'Bukti Pembayaran Aplikasi ({source})',
     receiptAppDefaultSubtitle: 'Bukti Pembayaran Aplikasi / OTA',
+    receiptOfficialFooterLine: 'Sistem Resmi Manajemen New Villa Pratama v1.0 • Dicetak secara digital • Dokumen Sah & Terverifikasi',
     previewReceipt: 'Pratinjau Kuitansi',
     assignGuestBtn: 'Tetapkan Tamu',
     unassignedGuest: 'Tamu Belum Ditetapkan (Arsip)',
