@@ -10,7 +10,7 @@ import { formatIDR } from '../../lib/money';
 import { todayISO, nightsBetween, addDaysISO, formatDateHuman } from '../../lib/dates';
 import { updateBooking, createBooking, type BookingOverview, type BookingInsert } from '../../api/bookings';
 import { fetchAvailableUnits, type Unit } from '../../api/units';
-import { fetchPayments, createPayment } from '../../api/payments';
+import { fetchPayments, createPayment, updatePayment } from '../../api/payments';
 import { friendlyError } from '../../lib/errors';
 import { useToast } from '../ui/Toast';
 
@@ -185,26 +185,34 @@ export const TransferUnitModal: React.FC<TransferUnitModalProps> = ({
 
         const { booking: newBooking } = await createBooking(newBookingPayload);
 
-        // 3. Reconcile payments between the two bookings
-        if (amountToTransfer > 0) {
-          // Transfer credit to new booking
-          await createPayment({
-            booking_id: newBooking.id,
-            paid_on: transferDate,
-            amount: amountToTransfer,
-            method: 'other',
-            reference: `${booking.code}`,
-            notes: `${lang === 'ar' ? 'رصيد مرحل من الحجز السابق' : 'Saldo transfer dari booking'} ${booking.code} (${lang === 'ar' ? 'نقل وحدة' : 'pindah unit'})`,
+        // 3. Reconcile payments between the two bookings using the REAL payment date and method
+        if (amountToTransfer > 0 && payments.length > 0) {
+          const primaryPayment = payments[0];
+          const realPaidOn: string = primaryPayment.paid_on || booking.check_in || today;
+          const realMethod = primaryPayment.method || 'cash';
+
+          // A. Adjust original payment on previous booking to amountFirst
+          await updatePayment(primaryPayment.id, {
+            amount: amountFirst,
+            notes: `${primaryPayment.notes ? primaryPayment.notes + ' · ' : ''}${
+              lang === 'ar'
+                ? `سداد إقامة ${booking.unit_name} (${nightsFirst} ليلة - تم نقل باقي المبلغ إلى ${targetUnit.name})`
+                : `Pelunasan di ${booking.unit_name}`
+            }`,
           });
 
-          // Deduct transferred credit from previous booking
+          // B. Record the remaining transferred amount in the new booking with the REAL payment date!
           await createPayment({
-            booking_id: booking.id,
-            paid_on: transferDate,
-            amount: -amountToTransfer,
-            method: 'other',
-            reference: `${newBooking.code}`,
-            notes: `${lang === 'ar' ? 'ترحيل رصيد متبقي إلى حجز المتابعة' : 'Transfer sisa saldo ke booking lanjutan'} ${newBooking.code}`,
+            booking_id: newBooking.id,
+            paid_on: realPaidOn,
+            amount: amountToTransfer,
+            method: realMethod,
+            reference: `${booking.code}`,
+            notes: `${
+              lang === 'ar'
+                ? `دفعة مسددة مسبقاً في ${booking.unit_name} (${booking.code}) بتاريخ ${realPaidOn} (نقل وحدة)`
+                : `Pembayaran sebelumnya di ${booking.unit_name} (${booking.code}) pada ${realPaidOn}`
+            }`,
           });
         }
 

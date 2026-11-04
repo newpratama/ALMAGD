@@ -21,7 +21,7 @@ import { useI18n } from '../i18n/I18nProvider';
 import { supabase } from '../lib/supabase';
 import { useBookingSources, type BookingOverview } from '../api/bookings';
 import { useReportDaily, useReportBySource } from '../api/reports';
-import { todayISO, addDaysISO, formatDateHuman } from '../lib/dates';
+import { todayISO, addDaysISO, formatDateHuman, nightsBetween } from '../lib/dates';
 import { formatIDR, formatIDRWithCommas } from '../lib/money';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
@@ -106,6 +106,8 @@ export interface DailyReportRow {
   checkOut: string;
   nights: number;
   sourceCode: string;
+  transferFromUnit?: string | null;
+  transferBookingCode?: string | null;
   todayCollected: number;
   payments: Array<{
     id: string;
@@ -266,6 +268,20 @@ export const ReportsPage: React.FC = () => {
             const payments = paymentsByBooking.get(b.id) || [];
             const todayCollected = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
 
+            let transferFromUnit: string | null = null;
+            let transferBookingCode: string | null = null;
+            if (b.notes) {
+              const matchAr = b.notes.match(/متابعة نقل النزيل من ([^(]+?)(?:\s*\(الحجز السابق:\s*([^)]+)\))?(?:\s*ابتداءً)?/);
+              const matchId = b.notes.match(/Lanjutan pindah unit dari ([^(]+?)(?:\s*\(Booking sebelumnya:\s*([^)]+)\))?(?:\s*mulai)?/);
+              if (matchAr) {
+                transferFromUnit = matchAr[1].trim();
+                transferBookingCode = matchAr[2]?.trim() || null;
+              } else if (matchId) {
+                transferFromUnit = matchId[1].trim();
+                transferBookingCode = matchId[2]?.trim() || null;
+              }
+            }
+
             rows.push({
               id: b.id,
               unitId: u.id,
@@ -283,6 +299,8 @@ export const ReportsPage: React.FC = () => {
               checkOut: b.check_out || '—',
               nights: b.nights ?? 1,
               sourceCode: b.source_code || 'walk_in',
+              transferFromUnit,
+              transferBookingCode,
               todayCollected,
               payments,
               totalAmount: Number(b.total_amount || 0),
@@ -326,6 +344,20 @@ export const ReportsPage: React.FC = () => {
           const payments = paymentsByBooking.get(b.id) || [];
           const todayCollected = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
 
+          let transferFromUnit: string | null = null;
+          let transferBookingCode: string | null = null;
+          if (b.notes) {
+            const matchAr = b.notes.match(/متابعة نقل النزيل من ([^(]+?)(?:\s*\(الحجز السابق:\s*([^)]+)\))?(?:\s*ابتداءً)?/);
+            const matchId = b.notes.match(/Lanjutan pindah unit dari ([^(]+?)(?:\s*\(Booking sebelumnya:\s*([^)]+)\))?(?:\s*mulai)?/);
+            if (matchAr) {
+              transferFromUnit = matchAr[1].trim();
+              transferBookingCode = matchAr[2]?.trim() || null;
+            } else if (matchId) {
+              transferFromUnit = matchId[1].trim();
+              transferBookingCode = matchId[2]?.trim() || null;
+            }
+          }
+
           rows.push({
             id: b.id,
             unitId: b.unit_id || null,
@@ -343,6 +375,8 @@ export const ReportsPage: React.FC = () => {
             checkOut: b.check_out || '—',
             nights: b.nights ?? 1,
             sourceCode: b.source_code || 'walk_in',
+            transferFromUnit,
+            transferBookingCode,
             todayCollected,
             payments,
             totalAmount: Number(b.total_amount || 0),
@@ -350,6 +384,39 @@ export const ReportsPage: React.FC = () => {
             status: b.status || 'confirmed',
           });
         }
+      }
+
+      // Any outside payments collected on this date/period for other bookings
+      for (const p of paymentsToday) {
+        const b = (p as any).bookings;
+        if (!b || !b.id || processedInHouseIds.has(b.id)) continue;
+        processedInHouseIds.add(b.id);
+        const payments = paymentsByBooking.get(b.id) || [];
+        const todayCollected = payments.reduce((sum, pay) => sum + Number(pay.amount || 0), 0);
+
+        rows.push({
+          id: `outside-pay-${b.id}`,
+          unitId: b.unit_id || null,
+          unitName: b.units?.name || '—',
+          unitKind: b.units?.kind || 'room',
+          sortOrder: b.units?.sort_order ?? 9999,
+          guestName: b.guests?.full_name || '—',
+          guestPhone: b.guests?.phone || null,
+          bookingCode: b.code || '—',
+          bookingId: b.id,
+          stayType: 'outsideTodayStay',
+          isOutsideStay: true,
+          isVacant: false,
+          checkIn: b.check_in || '—',
+          checkOut: b.check_out || '—',
+          nights: Math.max(1, nightsBetween(b.check_in, b.check_out)),
+          sourceCode: b.source_code || 'walk_in',
+          todayCollected,
+          payments,
+          totalAmount: Number(b.total_amount || 0),
+          balance: Math.max(0, Number(b.total_amount || 0) - todayCollected),
+          status: b.status || 'confirmed',
+        });
       }
 
       // Sort rows by sortOrder, then unitName, then checkIn
@@ -1255,7 +1322,23 @@ export const ReportsPage: React.FC = () => {
 
                             {/* 2. Stay Type */}
                             <td className={tdClass}>
-                              {r.stayType === 'checkInToday' ? (
+                              {r.transferFromUnit ? (
+                                <div className="flex flex-col gap-0.5">
+                                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-900 border border-purple-300 inline-flex items-center gap-1 shadow-2xs">
+                                    <span>🔄</span>
+                                    <span>
+                                      {lang === 'ar'
+                                        ? `انتقال من ${r.transferFromUnit}`
+                                        : `Pindah dari ${r.transferFromUnit}`}
+                                    </span>
+                                  </span>
+                                  {r.transferBookingCode && (
+                                    <span className="text-[9px] text-muted font-mono ps-1">
+                                      ({r.transferBookingCode})
+                                    </span>
+                                  )}
+                                </div>
+                              ) : r.stayType === 'checkInToday' ? (
                                 <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-success/15 text-success border border-success/30">
                                   ✨ {isSingleDay ? t('report.stayTypeCheckInToday') : t('report.stayTypeCheckInPeriod')}
                                 </span>
@@ -1359,7 +1442,7 @@ export const ReportsPage: React.FC = () => {
 
                             {/* 8. Total Booking & Balance */}
                             <td className={tdClass}>
-                              <div className="flex items-center gap-1.5">
+                              <div className="flex items-center gap-1.5 flex-wrap">
                                 <span className="text-[11px] font-mono text-muted">
                                   {formatIDR(r.totalAmount)}
                                 </span>
@@ -1371,6 +1454,11 @@ export const ReportsPage: React.FC = () => {
                                   <Badge variant="success" className="text-[9px] py-0 px-1">
                                     ✓ {t('calendar.paidBadge')}
                                   </Badge>
+                                )}
+                                {r.transferFromUnit && (
+                                  <span className="text-[9px] text-purple-700 bg-purple-50 border border-purple-200 px-1 py-0.2 rounded font-sans">
+                                    {lang === 'ar' ? `(مسدد في ${r.transferFromUnit})` : `(Lunas di ${r.transferFromUnit})`}
+                                  </span>
                                 )}
                               </div>
                             </td>
