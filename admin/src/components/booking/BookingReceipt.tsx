@@ -57,42 +57,43 @@ export const BookingReceipt: React.FC<BookingReceiptProps> = ({
   return (
     <div className="relative w-full max-w-4xl mx-auto bg-white p-6 sm:p-8 text-ink text-start font-sans border border-line rounded-xl shadow-xs print:border-none print:shadow-none print:p-[10mm_12mm] print:m-0 overflow-hidden">
       {/* 1. Header with Brand Identity */}
-      <div className="relative flex items-start justify-between border-b-2 border-navy/90 pb-4 mb-5 gap-4">
-        <div className="flex items-center gap-3.5">
-          {/* Dual Brand Logos: ALMAGD & New Pratama */}
-          <div className="flex items-center gap-2.5">
+      <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between border-b-2 border-navy/90 pb-4 mb-5 gap-4">
+        {/* Dual Brand Logos & Address (LTR aligned for logos) */}
+        <div className="flex items-center gap-3.5 min-w-0" dir="ltr">
+          {/* Brand Logos */}
+          <div className="flex items-center gap-3 shrink-0">
             <img
               src={`${import.meta.env.BASE_URL}logo-almagd.png`}
               alt="ALMAGD"
-              className="h-14 w-auto object-contain"
+              className="h-12 sm:h-14 w-auto object-contain shrink-0"
             />
-            <span className="h-10 w-px bg-slate-300" aria-hidden="true" />
+            <span className="h-10 w-px bg-slate-200 shrink-0" aria-hidden="true" />
             <img
               src={`${import.meta.env.BASE_URL}logo-new-pratama.png`}
               alt="New Pratama"
-              className="h-14 w-14 rounded-full bg-white object-contain p-0.5 border border-gold/40 shadow-xs"
+              className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-white object-contain p-0.5 border border-gold/40 shadow-xs shrink-0"
               onError={(e) => {
                 (e.currentTarget as HTMLImageElement).src = `${import.meta.env.BASE_URL}a_clean_isolated_logo_graphic_on_a_transparent_bac.png`;
               }}
             />
           </div>
 
-          {/* Hotel Name & Location */}
-          <div>
-            <h1 className="text-xl sm:text-2xl font-black text-navy tracking-tight leading-tight">
-              ALMAGD <span className="text-gold font-bold">| New Pratama</span>
+          {/* Hotel Name & Location Info */}
+          <div className="text-left shrink-0">
+            <h1 className="text-lg sm:text-xl font-black text-navy tracking-tight leading-tight whitespace-nowrap">
+              NEW PRATAMA <span className="text-gold font-bold">VILLA</span>
             </h1>
-            <p className="text-xs text-muted font-medium mt-0.5">
-              {t('booking.receiptSub')}
+            <p className="text-[11px] text-muted font-medium mt-0.5">
+              Koleksi ALMAGD • Manajemen Villa & Kamar
             </p>
-            <p className="text-[11px] text-slate-500">
+            <p className="text-[10.5px] text-slate-500 whitespace-nowrap">
               Cisarua, Puncak, Bogor, Jawa Barat — Indonesia
             </p>
           </div>
         </div>
 
         {/* Voucher Title & Number */}
-        <div className="text-end flex flex-col items-end">
+        <div className="text-end flex flex-col items-end shrink-0 self-end sm:self-center">
           <div className="inline-flex items-center gap-1.5 bg-navy text-white text-[10.5px] font-bold uppercase tracking-wider px-3 py-1 rounded-md shadow-xs">
             <span>🏛️</span>
             <span>{t('booking.receiptTitle')}</span>
