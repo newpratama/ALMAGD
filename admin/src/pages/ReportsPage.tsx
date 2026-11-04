@@ -32,6 +32,7 @@ import { Badge } from '../components/ui/Badge';
 import { StatusBadge } from '../components/booking/StatusBadge';
 import { Spinner } from '../components/ui/Spinner';
 import { EmptyState } from '../components/ui/EmptyState';
+import { UnitPerformanceReport } from '../components/report/UnitPerformanceReport';
 
 type PeriodMode = 'today' | 'yesterday' | 'singleDay' | 'thisMonth' | 'lastMonth' | 'thisQuarter' | 'thisYear' | 'custom';
 
@@ -170,7 +171,7 @@ export const ReportsPage: React.FC = () => {
       // 0. Fetch all units for complete property listing
       const { data: allUnitsData, error: unitsErr } = await supabase
         .from('units')
-        .select('id, name, kind, sort_order, active')
+        .select('id, name, kind, sort_order, active, parent_id')
         .order('sort_order', { ascending: true });
       if (unitsErr) throw unitsErr;
       const allUnits = allUnitsData || [];
@@ -453,6 +454,157 @@ export const ReportsPage: React.FC = () => {
       const occupiedVillaCount = rows.filter((r) => !r.isVacant && r.unitKind === 'villa').length;
       const occupiedRoomCount = rows.filter((r) => !r.isVacant && r.unitKind === 'room').length;
 
+      // --- Compute Unit Performance (Villas & Independent Rooms) ---
+      const parentUnitMap = new Map<number, any>();
+      allUnits.forEach((u) => {
+        if (!u.parent_id) parentUnitMap.set(u.id, u);
+      });
+
+      const subToParent = new Map<number, number>();
+      allUnits.forEach((u) => {
+        if (u.parent_id) subToParent.set(u.id, u.parent_id);
+        else subToParent.set(u.id, u.id);
+      });
+
+      function getArabicUnitName(name: string): string {
+        const v = name.match(/Villa\s+(\d+)/i);
+        if (v) return `فيلا ${v[1]}`;
+        const k = name.match(/Kamar\s+Lepas\s+(\d+)/i);
+        if (k) return `غرفة مستقلة ${k[1]}`;
+        return name;
+      }
+
+      const unitMetrics = new Map<number, {
+        id: number;
+        name: string;
+        arabicName: string;
+        kind: 'villa' | 'room';
+        sortOrder: number;
+        bookingsCount: Set<string>;
+        nightsOccupied: number;
+        revenue: number;
+        paid: number;
+      }>();
+
+      for (const [id, u] of parentUnitMap.entries()) {
+        unitMetrics.set(id, {
+          id,
+          name: u.name,
+          arabicName: getArabicUnitName(u.name),
+          kind: u.kind === 'villa' ? 'villa' : 'room',
+          sortOrder: u.sort_order ?? 9999,
+          bookingsCount: new Set(),
+          nightsOccupied: 0,
+          revenue: 0,
+          paid: 0,
+        });
+      }
+
+      // Aggregate payments
+      for (const p of paymentsToday) {
+        const b = p.bookings;
+        if (!b?.unit_id) continue;
+        const parentId = subToParent.get(b.unit_id);
+        if (parentId && unitMetrics.has(parentId)) {
+          unitMetrics.get(parentId)!.paid += Number(p.amount || 0);
+        }
+      }
+
+      // Aggregate distributed revenue and occupied nights for stays overlapping [from, to]
+      for (const b of inHouse) {
+        if (!b.unit_id || b.status === 'cancelled' || !b.check_in || !b.check_out) continue;
+        const parentId = subToParent.get(b.unit_id);
+        if (!parentId || !unitMetrics.has(parentId)) continue;
+        const m = unitMetrics.get(parentId)!;
+
+        // Calculate overlap nights
+        const bCheckIn = b.check_in;
+        const bCheckOut = b.check_out;
+        const cIn = bCheckIn < from ? from : bCheckIn;
+        const toPlusOne = new Date(new Date(to).getTime() + 86400000).toISOString().slice(0, 10);
+        const cOut = bCheckOut > toPlusOne ? toPlusOne : bCheckOut;
+
+        const totalNights = Math.max(1, (new Date(bCheckOut).getTime() - new Date(bCheckIn).getTime()) / 86400000);
+        const overlapNights = Math.max(0, (new Date(cOut).getTime() - new Date(cIn).getTime()) / 86400000);
+        const nightRate = Number(b.total_amount || 0) / totalNights;
+        const rev = nightRate * overlapNights;
+
+        m.revenue += rev;
+        m.nightsOccupied += overlapNights;
+        if (b.id) m.bookingsCount.add(b.id);
+      }
+
+      // Convert to items list and compute totals
+      let totalVillasPaid = 0, totalVillasRev = 0, totalVillasNights = 0, totalVillasBookings = 0;
+      let totalRoomsPaid = 0, totalRoomsRev = 0, totalRoomsNights = 0, totalRoomsBookings = 0;
+      let grandTotalUnitPaid = 0, grandTotalUnitRev = 0, grandTotalUnitNights = 0, grandTotalUnitBookings = 0;
+
+      for (const m of unitMetrics.values()) {
+        const bCount = m.bookingsCount.size;
+        grandTotalUnitPaid += m.paid;
+        grandTotalUnitRev += m.revenue;
+        grandTotalUnitNights += m.nightsOccupied;
+        grandTotalUnitBookings += bCount;
+
+        if (m.kind === 'villa') {
+          totalVillasPaid += m.paid;
+          totalVillasRev += m.revenue;
+          totalVillasNights += m.nightsOccupied;
+          totalVillasBookings += bCount;
+        } else {
+          totalRoomsPaid += m.paid;
+          totalRoomsRev += m.revenue;
+          totalRoomsNights += m.nightsOccupied;
+          totalRoomsBookings += bCount;
+        }
+      }
+
+      const performanceItems = Array.from(unitMetrics.values())
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map((m) => {
+          const bCount = m.bookingsCount.size;
+          return {
+            id: m.id,
+            name: m.name,
+            arabicName: m.arabicName,
+            kind: m.kind,
+            sortOrder: m.sortOrder,
+            bookingsCount: bCount,
+            nightsOccupied: m.nightsOccupied,
+            revenue: Math.round(m.revenue),
+            paid: m.paid,
+            adr: m.nightsOccupied > 0 ? Math.round(m.revenue / m.nightsOccupied) : 0,
+            sharePercent: grandTotalUnitPaid > 0 ? (m.paid / grandTotalUnitPaid) * 100 : 0,
+          };
+        });
+
+      const totalVillas = {
+        bookingsCount: totalVillasBookings,
+        nightsOccupied: totalVillasNights,
+        revenue: Math.round(totalVillasRev),
+        paid: totalVillasPaid,
+        adr: totalVillasNights > 0 ? Math.round(totalVillasRev / totalVillasNights) : 0,
+        sharePercent: grandTotalUnitPaid > 0 ? (totalVillasPaid / grandTotalUnitPaid) * 100 : 0,
+      };
+
+      const totalRooms = {
+        bookingsCount: totalRoomsBookings,
+        nightsOccupied: totalRoomsNights,
+        revenue: Math.round(totalRoomsRev),
+        paid: totalRoomsPaid,
+        adr: totalRoomsNights > 0 ? Math.round(totalRoomsRev / totalRoomsNights) : 0,
+        sharePercent: grandTotalUnitPaid > 0 ? (totalRoomsPaid / grandTotalUnitPaid) * 100 : 0,
+      };
+
+      const grandTotalUnitPerf = {
+        bookingsCount: grandTotalUnitBookings,
+        nightsOccupied: grandTotalUnitNights,
+        revenue: Math.round(grandTotalUnitRev),
+        paid: grandTotalUnitPaid,
+        adr: grandTotalUnitNights > 0 ? Math.round(grandTotalUnitRev / grandTotalUnitNights) : 0,
+        sharePercent: 100,
+      };
+
       return {
         rows,
         totalCount: allUnits.length,
@@ -463,6 +615,12 @@ export const ReportsPage: React.FC = () => {
         occupiedRoomCount,
         villaCount: isSingleDay ? allUnits.filter((u) => u.kind === 'villa').length : occupiedVillaCount,
         roomCount: isSingleDay ? allUnits.filter((u) => u.kind === 'room').length : occupiedRoomCount,
+        unitPerformance: {
+          items: performanceItems,
+          totalVillas,
+          totalRooms,
+          grandTotal: grandTotalUnitPerf,
+        },
         summary: {
           totalCash,
           totalTransfer,
@@ -713,6 +871,66 @@ export const ReportsPage: React.FC = () => {
       });
       const wsOcc = XLSX.utils.json_to_sheet(occRows);
       XLSX.utils.book_append_sheet(wb, wsOcc, isSingleDay ? 'Laporan Harian' : 'Laporan Operasional');
+    }
+
+    // Sheet 5: Unit Performance (Kinerja Villa & Kamar / دخل الفلل والغرف)
+    if (operationalReport?.unitPerformance) {
+      const perf = operationalReport.unitPerformance;
+      const unitPerfRows = perf.items.map((u, i) => ({
+        '#': String(i + 1),
+        'Unit / الوحدة': u.name,
+        'Nama Arab / الاسم بالعربية': u.arabicName,
+        'Tipe / النوع': u.kind === 'villa' ? 'Villa / فيلا كاملة' : 'Kamar / غرفة مستقلة',
+        'Bookings / الحجوزات': u.bookingsCount,
+        'Malam / عدد الليالي': u.nightsOccupied,
+        'Pendapatan Bersih (Rp) / الإيرادات الموزعة': u.revenue,
+        'Penerimaan (Rp) / المقبوضات الفعلية': u.paid,
+        'ADR (Rp) / متوسط السعر': u.adr,
+        'Kontribusi (%) / النسبة من الإجمالي': `${u.sharePercent.toFixed(1)}%`,
+      }));
+
+      // Add Subtotals
+      unitPerfRows.push({
+        '#': '—',
+        'Unit / الوحدة': 'TOTAL VILLAS / إجمالي الفلل (Villa 1 - 24)',
+        'Nama Arab / الاسم بالعربية': 'إجمالي الفلل الكاملة',
+        'Tipe / النوع': 'Villa',
+        'Bookings / الحجوزات': perf.totalVillas.bookingsCount,
+        'Malam / عدد الليالي': perf.totalVillas.nightsOccupied,
+        'Pendapatan Bersih (Rp) / الإيرادات الموزعة': perf.totalVillas.revenue,
+        'Penerimaan (Rp) / المقبوضات الفعلية': perf.totalVillas.paid,
+        'ADR (Rp) / متوسط السعر': perf.totalVillas.adr,
+        'Kontribusi (%) / النسبة من الإجمالي': `${perf.totalVillas.sharePercent.toFixed(1)}%`,
+      });
+
+      unitPerfRows.push({
+        '#': '—',
+        'Unit / الوحدة': 'TOTAL KAMAR LEPAS / إجمالي الغرف المستقلة (1 - 6)',
+        'Nama Arab / الاسم بالعربية': 'إجمالي الغرف المستقلة',
+        'Tipe / النوع': 'Room',
+        'Bookings / الحجوزات': perf.totalRooms.bookingsCount,
+        'Malam / عدد الليالي': perf.totalRooms.nightsOccupied,
+        'Pendapatan Bersih (Rp) / الإيرادات الموزعة': perf.totalRooms.revenue,
+        'Penerimaan (Rp) / المقبوضات الفعلية': perf.totalRooms.paid,
+        'ADR (Rp) / متوسط السعر': perf.totalRooms.adr,
+        'Kontribusi (%) / النسبة من الإجمالي': `${perf.totalRooms.sharePercent.toFixed(1)}%`,
+      });
+
+      unitPerfRows.push({
+        '#': '★',
+        'Unit / الوحدة': 'GRAND TOTAL / الإجمالي العام',
+        'Nama Arab / الاسم بالعربية': 'الإجمالي الكلي لجميع الفلل والغرف',
+        'Tipe / النوع': 'All',
+        'Bookings / الحجوزات': perf.grandTotal.bookingsCount,
+        'Malam / عدد الليالي': perf.grandTotal.nightsOccupied,
+        'Pendapatan Bersih (Rp) / الإيرادات الموزعة': perf.grandTotal.revenue,
+        'Penerimaan (Rp) / المقبوضات الفعلية': perf.grandTotal.paid,
+        'ADR (Rp) / متوسط السعر': perf.grandTotal.adr,
+        'Kontribusi (%) / النسبة من الإجمالي': '100.0%',
+      });
+
+      const wsPerf = XLSX.utils.json_to_sheet(unitPerfRows);
+      XLSX.utils.book_append_sheet(wb, wsPerf, 'Kinerja Unit (دخل الوحدات)');
     }
 
     XLSX.writeFile(wb, `almagd-report-${from}-to-${to}.xlsx`);
@@ -1037,6 +1255,23 @@ export const ReportsPage: React.FC = () => {
               </Table>
             </div>
           </Card>
+
+          {/* Unit Performance Report (تقرير دخل كل فيلا وغرفة على حدة) */}
+          {operationalReport?.unitPerformance && (
+            <UnitPerformanceReport
+              items={operationalReport.unitPerformance.items}
+              totalVillas={operationalReport.unitPerformance.totalVillas}
+              totalRooms={operationalReport.unitPerformance.totalRooms}
+              grandTotal={operationalReport.unitPerformance.grandTotal}
+              periodLabel={
+                periodMode === 'lastMonth'
+                  ? (lang === 'ar' ? 'أكتوبر 2026' : 'Oktober 2026')
+                  : periodMode === 'thisMonth'
+                  ? (lang === 'ar' ? 'نوفمبر 2026' : 'November 2026')
+                  : `${formatDateHuman(from, lang)} ➔ ${formatDateHuman(to, lang)}`
+              }
+            />
+          )}
 
           {/* Operational & Collection Report (تقرير إشغال وتحصيل الوحدات اليومي / للفترة) */}
           <Card className="border-gold/40 shadow-xs">
