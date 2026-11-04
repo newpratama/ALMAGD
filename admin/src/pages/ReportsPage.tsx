@@ -394,6 +394,9 @@ export const ReportsPage: React.FC = () => {
         const payments = paymentsByBooking.get(b.id) || [];
         const todayCollected = payments.reduce((sum, pay) => sum + Number(pay.amount || 0), 0);
 
+        // Skip outside bookings if net collection today is 0, or if cancelled without retained fee collected today
+        if (todayCollected === 0 || (b.status === 'cancelled' && todayCollected <= 0)) continue;
+
         rows.push({
           id: `outside-pay-${b.id}`,
           unitId: b.unit_id || null,

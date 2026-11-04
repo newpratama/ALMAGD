@@ -51,6 +51,12 @@ export async function deletePayment(id: string): Promise<void> {
   if (error) throw error;
 }
 
+export async function deleteBookingPayments(bookingId: string): Promise<void> {
+  if (!supabase) throw new Error('Supabase not configured');
+  const { error } = await supabase.from('payments').delete().eq('booking_id', bookingId);
+  if (error) throw error;
+}
+
 export function usePayments(bookingId: string | undefined) {
   return useQuery({
     queryKey: ['payments', bookingId],
