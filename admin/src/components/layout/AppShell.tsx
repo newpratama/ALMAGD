@@ -34,7 +34,7 @@ export const AppShell: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-mist text-ink flex flex-col">
+    <div className="min-h-screen print:min-h-0 bg-mist print:bg-white text-ink flex flex-col">
       {/* Background Idle Prefetcher (0ms Page Navigation) */}
       <IdlePrefetcher />
 
@@ -45,7 +45,7 @@ export const AppShell: React.FC = () => {
       <div
         className={`${
           isSidebarCollapsed ? 'md:ps-20' : 'md:ps-64'
-        } flex flex-col flex-1 min-w-0 pb-16 md:pb-6 transition-all duration-300 ease-in-out`}
+        } print:ps-0 flex flex-col flex-1 min-w-0 pb-16 md:pb-6 print:pb-0 transition-all duration-300 ease-in-out`}
       >
         {/* Top Header */}
         <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-xs border-b border-line px-4 sm:px-6 py-3 flex items-center justify-between gap-3 shadow-xs">

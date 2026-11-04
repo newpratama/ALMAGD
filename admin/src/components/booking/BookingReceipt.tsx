@@ -54,49 +54,16 @@ export const BookingReceipt: React.FC<BookingReceiptProps> = ({
     booking.source_code;
 
   return (
-    <div className="relative w-full max-w-4xl mx-auto bg-white p-6 sm:p-8 text-ink text-start font-sans border border-line rounded-xl shadow-xs print:border-none print:shadow-none print:p-0 print:m-0 overflow-hidden">
-      {/* Subtle Luxury Background Watermark (Pratama Emblem) */}
-      <div
-        className="absolute inset-0 flex items-center justify-center pointer-events-none select-none opacity-[0.03] print:opacity-[0.04]"
-        aria-hidden="true"
-      >
-        <img
-          src={`${import.meta.env.BASE_URL}a_clean_isolated_logo_graphic_on_a_transparent_bac.png`}
-          alt=""
-          className="w-96 h-96 object-contain"
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).src = `${import.meta.env.BASE_URL}logo-new-pratama.png`;
-          }}
-        />
-      </div>
-
-      {/* 1. Header with Dual Logos & Brand Identity */}
-      <div className="relative flex items-start justify-between border-b-2 border-navy/90 pb-5 mb-6 gap-4">
+    <div className="relative w-full max-w-4xl mx-auto bg-white p-6 sm:p-8 text-ink text-start font-sans border border-line rounded-xl shadow-xs print:border-none print:shadow-none print:p-[10mm_12mm] print:m-0 overflow-hidden">
+      {/* 1. Header with Brand Identity */}
+      <div className="relative flex items-start justify-between border-b-2 border-navy/90 pb-4 mb-5 gap-4">
         <div className="flex items-center gap-3.5">
-          {/* 1. Primary Company Logo (ALMAGD) */}
+          {/* Primary Company Logo (ALMAGD) */}
           <img
             src={`${import.meta.env.BASE_URL}logo-almagd.png`}
             alt="ALMAGD"
-            className="h-16 w-auto object-contain drop-shadow-xs"
+            className="h-14 w-auto object-contain"
           />
-
-          {/* Elegant Divider */}
-          <div className="h-12 w-px bg-gradient-to-b from-transparent via-gold/60 to-transparent" aria-hidden="true" />
-
-          {/* 2. New Pratama Emblem Logo (Without Name/Text, as requested) */}
-          <div
-            className="h-14 w-14 rounded-full bg-white p-1 ring-2 ring-gold/70 shadow-sm flex items-center justify-center flex-shrink-0"
-            title="New Pratama"
-          >
-            <img
-              src={`${import.meta.env.BASE_URL}a_clean_isolated_logo_graphic_on_a_transparent_bac.png`}
-              alt="New Pratama"
-              className="w-full h-full object-contain"
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src = `${import.meta.env.BASE_URL}logo-new-pratama.png`;
-              }}
-            />
-          </div>
 
           {/* Hotel Name & Location */}
           <div>
@@ -364,7 +331,7 @@ export const BookingReceipt: React.FC<BookingReceiptProps> = ({
         <p>3. {t('booking.receiptTerm3')}</p>
       </div>
 
-      {/* 5. Signatures & Official Stamp Section */}
+      {/* 5. Signatures & Manual Stamp Section */}
       <div className="relative grid grid-cols-2 gap-8 text-center text-xs pt-4 mb-6">
         <div>
           <p className="font-semibold text-muted mb-16">{t('booking.receiptGuestSign')}</p>
@@ -373,32 +340,9 @@ export const BookingReceipt: React.FC<BookingReceiptProps> = ({
           </div>
         </div>
 
-        {/* Staff & Official Hotel Stamp */}
-        <div className="relative">
-          <p className="font-semibold text-muted mb-4">{t('booking.receiptStaffSign')}</p>
-
-          {/* Official Stamp graphic positioned over signature */}
-          <div className="relative inline-flex flex-col items-center justify-center my-1">
-            <div className="w-24 h-24 rounded-full border-2 border-dashed border-navy/60 p-1 flex items-center justify-center rotate-[-6deg] bg-navy/[0.02]">
-              <div className="w-full h-full rounded-full border border-gold/70 flex flex-col items-center justify-center text-center p-1">
-                <img
-                  src={`${import.meta.env.BASE_URL}a_clean_isolated_logo_graphic_on_a_transparent_bac.png`}
-                  alt=""
-                  className="w-7 h-7 object-contain opacity-80"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).src = `${import.meta.env.BASE_URL}logo-new-pratama.png`;
-                  }}
-                />
-                <span className="text-[7px] font-black text-navy uppercase tracking-tighter mt-0.5">
-                  ALMAGD PMS
-                </span>
-                <span className="text-[6.5px] font-bold text-gold uppercase tracking-tighter">
-                  OFFICIAL SEAL
-                </span>
-              </div>
-            </div>
-          </div>
-
+        {/* Staff & Manual Hotel Stamp Space */}
+        <div>
+          <p className="font-semibold text-muted mb-16">{t('booking.receiptStaffSign')}</p>
           <div className="border-t border-ink/40 w-48 mx-auto pt-1 font-bold text-navy">
             ALMAGD — New Pratama
           </div>

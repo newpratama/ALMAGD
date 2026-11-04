@@ -73,7 +73,7 @@ html[dir="ltr"] {
 @media print {
   @page {
     size: A4 portrait;
-    margin: 10mm 12mm;
+    margin: 0;
   }
 
   *,
@@ -90,6 +90,8 @@ html[dir="ltr"] {
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
   }
 
   .print-only {
@@ -106,8 +108,17 @@ html[dir="ltr"] {
     display: none !important;
   }
 
-  .md\:ps-64 {
+  .md\:ps-64,
+  .md\:ps-20 {
     padding-inline-start: 0 !important;
+  }
+
+  .min-h-screen {
+    min-height: 0 !important;
+  }
+
+  .bg-mist {
+    background-color: #ffffff !important;
   }
 
   main {
