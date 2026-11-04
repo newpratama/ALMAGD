@@ -84,7 +84,7 @@ export const BookingReceipt: React.FC<BookingReceiptProps> = ({
               NEW PRATAMA <span className="text-gold font-bold">VILLA</span>
             </h1>
             <p className="text-[11px] text-muted font-medium mt-0.5">
-              Koleksi ALMAGD • Manajemen Villa & Kamar
+              Manajemen Villa &amp; Kamar
             </p>
             <p className="text-[10.5px] text-slate-500 whitespace-nowrap">
               Cisarua, Puncak, Bogor, Jawa Barat — Indonesia
@@ -359,7 +359,7 @@ export const BookingReceipt: React.FC<BookingReceiptProps> = ({
         <div>
           <p className="font-semibold text-muted mb-16">{t('booking.receiptStaffSign')}</p>
           <div className="border-t border-ink/40 w-48 mx-auto pt-1 font-bold text-navy">
-            ALMAGD — New Pratama
+            New Pratama
           </div>
         </div>
       </div>
@@ -368,7 +368,7 @@ export const BookingReceipt: React.FC<BookingReceiptProps> = ({
       <div className="relative pt-4 border-t border-line text-center text-[10px] text-muted">
         <p className="font-semibold text-navy">{t('booking.receiptFooter')}</p>
         <p className="mt-0.5">
-          Sistem Resmi Manajemen ALMAGD New Pratama v1.0 • Dicetak secara digital • Dokumen Sah &amp; معتمد
+          Sistem Resmi Manajemen New Pratama v1.0 • Dicetak secara digital • Dokumen Sah &amp; معتمد
         </p>
       </div>
     </div>
