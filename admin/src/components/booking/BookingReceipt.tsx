@@ -141,8 +141,17 @@ export const BookingReceipt: React.FC<BookingReceiptProps> = ({
           )}
           {guest?.id_number && (
             <div className="grid grid-cols-3 gap-1">
-              <span className="text-muted">{t('guest.idNumber')}:</span>
-              <span className="col-span-2 font-mono text-ink">{guest.id_number}</span>
+              <span className="text-muted">
+                {guest?.id_type === 'passport'
+                  ? t('guest.passport')
+                  : guest?.id_type === 'ktp'
+                  ? t('guest.ktp')
+                  : guest?.id_type === 'sim'
+                  ? t('guest.sim')
+                  : t('guest.idNumber')}
+                :
+              </span>
+              <span className="col-span-2 font-mono text-ink font-semibold">{guest.id_number}</span>
             </div>
           )}
           {guest?.nationality && (
@@ -250,11 +259,13 @@ export const BookingReceipt: React.FC<BookingReceiptProps> = ({
 
               const methodSubtitle =
                 p.method === 'app'
-                  ? (localizedSource ? `سند المنصة (${localizedSource})` : 'سند التطبيق')
+                  ? (localizedSource
+                      ? t('booking.receiptAppSubtitle', { source: localizedSource })
+                      : t('booking.receiptAppDefaultSubtitle'))
                   : p.method === 'transfer'
-                  ? 'إشعار تحويل بنكي'
+                  ? t('booking.receiptTransferSubtitle')
                   : p.method === 'cash'
-                  ? 'سند قبض نقدي'
+                  ? t('booking.receiptCashSubtitle')
                   : '';
 
               return (
