@@ -373,6 +373,8 @@ export const id = {
     denseView: 'Baris Kecil (Ringkas)',
     comfortableView: 'Baris Normal',
     filterOccupiedOnly: 'Hanya Terisi',
+    filterOccupiedVillasOnly: 'Hanya Villa Terisi',
+    filterOccupiedRoomsOnly: 'Hanya Kamar Terisi',
     filterAllUnits: 'Semua Villa & Kamar',
     filterVillasOnly: 'Hanya Villa',
     filterRoomsOnly: 'Hanya Kamar',

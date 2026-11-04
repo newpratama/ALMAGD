@@ -373,6 +373,8 @@ export const ar = {
     denseView: 'أسطر صغيرة (مضغوط)',
     comfortableView: 'أسطر عادية',
     filterOccupiedOnly: 'المشغولة فقط',
+    filterOccupiedVillasOnly: 'الفلل المشغولة فقط',
+    filterOccupiedRoomsOnly: 'الغرف المشغولة فقط',
     filterAllUnits: 'جميع الفلل والغرف',
     filterVillasOnly: 'الفلل فقط',
     filterRoomsOnly: 'الغرف فقط',

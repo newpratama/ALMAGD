@@ -130,7 +130,7 @@ export const ReportsPage: React.FC = () => {
 
   // Density & View filters for operational report
   const [isDense, setIsDense] = useState<boolean>(true);
-  const [unitViewFilter, setUnitViewFilter] = useState<'all' | 'occupied' | 'villas' | 'rooms'>('all');
+  const [unitViewFilter, setUnitViewFilter] = useState<'occupied' | 'occupied_villas' | 'occupied_rooms'>('occupied');
   const [unitSearch, setUnitSearch] = useState<string>('');
 
   const { from, to } = useMemo(() => {
@@ -380,14 +380,19 @@ export const ReportsPage: React.FC = () => {
 
       const occupiedUnitIds = new Set(rows.filter((r) => !r.isVacant && r.unitId).map((r) => r.unitId));
 
+      const occupiedVillaCount = rows.filter((r) => !r.isVacant && r.unitKind === 'villa').length;
+      const occupiedRoomCount = rows.filter((r) => !r.isVacant && r.unitKind === 'room').length;
+
       return {
         rows,
         totalCount: allUnits.length,
         inHouseCount: inHouse.length,
         vacantCount: Math.max(0, allUnits.length - occupiedUnitIds.size),
         outsideCount: rows.filter((r) => r.isOutsideStay).length,
-        villaCount: isSingleDay ? allUnits.filter((u) => u.kind === 'villa').length : rows.filter((r) => !r.isVacant && r.unitKind === 'villa').length,
-        roomCount: isSingleDay ? allUnits.filter((u) => u.kind === 'room').length : rows.filter((r) => !r.isVacant && r.unitKind === 'room').length,
+        occupiedVillaCount,
+        occupiedRoomCount,
+        villaCount: isSingleDay ? allUnits.filter((u) => u.kind === 'villa').length : occupiedVillaCount,
+        roomCount: isSingleDay ? allUnits.filter((u) => u.kind === 'room').length : occupiedRoomCount,
         summary: {
           totalCash,
           totalTransfer,
@@ -406,10 +411,10 @@ export const ReportsPage: React.FC = () => {
 
     if (unitViewFilter === 'occupied') {
       list = list.filter((r) => !r.isVacant);
-    } else if (unitViewFilter === 'villas') {
-      list = list.filter((r) => r.unitKind === 'villa');
-    } else if (unitViewFilter === 'rooms') {
-      list = list.filter((r) => r.unitKind === 'room');
+    } else if (unitViewFilter === 'occupied_villas') {
+      list = list.filter((r) => !r.isVacant && r.unitKind === 'villa');
+    } else if (unitViewFilter === 'occupied_rooms') {
+      list = list.filter((r) => !r.isVacant && r.unitKind === 'room');
     }
 
     if (unitSearch.trim()) {
@@ -1044,17 +1049,6 @@ export const ReportsPage: React.FC = () => {
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <button
                     type="button"
-                    onClick={() => setUnitViewFilter('all')}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                      unitViewFilter === 'all'
-                        ? 'bg-navy text-white shadow-xs'
-                        : 'bg-white text-muted hover:text-ink border border-line'
-                    }`}
-                  >
-                    {t('report.filterAllUnits')} ({operationalReport.totalCount})
-                  </button>
-                  <button
-                    type="button"
                     onClick={() => setUnitViewFilter('occupied')}
                     className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
                       unitViewFilter === 'occupied'
@@ -1066,25 +1060,25 @@ export const ReportsPage: React.FC = () => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setUnitViewFilter('villas')}
+                    onClick={() => setUnitViewFilter('occupied_villas')}
                     className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                      unitViewFilter === 'villas'
+                      unitViewFilter === 'occupied_villas'
                         ? 'bg-navy text-white shadow-xs'
                         : 'bg-white text-muted hover:text-ink border border-line'
                     }`}
                   >
-                    {t('report.filterVillasOnly')} ({operationalReport.villaCount})
+                    {t('report.filterOccupiedVillasOnly')} ({operationalReport.occupiedVillaCount})
                   </button>
                   <button
                     type="button"
-                    onClick={() => setUnitViewFilter('rooms')}
+                    onClick={() => setUnitViewFilter('occupied_rooms')}
                     className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                      unitViewFilter === 'rooms'
+                      unitViewFilter === 'occupied_rooms'
                         ? 'bg-navy text-white shadow-xs'
                         : 'bg-white text-muted hover:text-ink border border-line'
                     }`}
                   >
-                    {t('report.filterRoomsOnly')} ({operationalReport.roomCount})
+                    {t('report.filterOccupiedRoomsOnly')} ({operationalReport.occupiedRoomCount})
                   </button>
                 </div>
 
@@ -1147,7 +1141,14 @@ export const ReportsPage: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-line bg-white">
-                      {filteredRows.map((r) => {
+                      {filteredRows.length === 0 ? (
+                        <tr>
+                          <td colSpan={9} className="py-12 text-center text-xs text-muted font-medium bg-mist/20">
+                            {t('today.noOccupiedUnits')}
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredRows.map((r) => {
                         const isVilla = r.unitKind === 'villa';
                         const isChildRoom = r.unitKind === 'room' && (r.unitName || '').includes(' - ');
                         const tdClass = isDense
@@ -1380,7 +1381,7 @@ export const ReportsPage: React.FC = () => {
                             </td>
                           </tr>
                         );
-                      })}
+                      }))}
                     </tbody>
                   </table>
                 </div>
