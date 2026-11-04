@@ -45,6 +45,7 @@ export const ar = {
     guests: 'الضيوف',
     attendance: 'الحضور والغياب',
     reports: 'التقارير',
+    unitRevenue: 'دخل الوحدات',
     settings: 'الإعدادات',
     logout: 'تسجيل الخروج',
     login: 'تسجيل الدخول',

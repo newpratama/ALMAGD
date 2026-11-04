@@ -45,6 +45,7 @@ export const id = {
     guests: 'Tamu',
     attendance: 'Presensi & Absensi',
     reports: 'Laporan',
+    unitRevenue: 'Kinerja Unit',
     settings: 'Pengaturan',
     logout: 'Keluar',
     login: 'Masuk',

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -17,6 +17,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+import { BarChart3, Building2 } from 'lucide-react';
 import { useI18n } from '../i18n/I18nProvider';
 import { supabase } from '../lib/supabase';
 import { useBookingSources, type BookingOverview } from '../api/bookings';
@@ -32,7 +33,6 @@ import { Badge } from '../components/ui/Badge';
 import { StatusBadge } from '../components/booking/StatusBadge';
 import { Spinner } from '../components/ui/Spinner';
 import { EmptyState } from '../components/ui/EmptyState';
-import { UnitPerformanceReport } from '../components/report/UnitPerformanceReport';
 
 type PeriodMode = 'today' | 'yesterday' | 'singleDay' | 'thisMonth' | 'lastMonth' | 'thisQuarter' | 'thisYear' | 'custom';
 
@@ -395,8 +395,8 @@ export const ReportsPage: React.FC = () => {
         const payments = paymentsByBooking.get(b.id) || [];
         const todayCollected = payments.reduce((sum, pay) => sum + Number(pay.amount || 0), 0);
 
-        // Skip outside bookings if net collection today is 0, or if cancelled without retained fee collected today
-        if (todayCollected === 0 || (b.status === 'cancelled' && todayCollected <= 0)) continue;
+        // Skip outside bookings if net collection today is 0, or if cancelled
+        if (todayCollected === 0 || b.status === 'cancelled') continue;
 
         rows.push({
           id: `outside-pay-${b.id}`,
@@ -638,11 +638,11 @@ export const ReportsPage: React.FC = () => {
     let list = operationalReport.rows;
 
     if (unitViewFilter === 'occupied') {
-      list = list.filter((r) => !r.isVacant);
+      list = list.filter((r) => !r.isVacant && r.status !== 'cancelled');
     } else if (unitViewFilter === 'occupied_villas') {
-      list = list.filter((r) => !r.isVacant && r.unitKind === 'villa');
+      list = list.filter((r) => !r.isVacant && r.unitKind === 'villa' && r.status !== 'cancelled');
     } else if (unitViewFilter === 'occupied_rooms') {
-      list = list.filter((r) => !r.isVacant && r.unitKind === 'room');
+      list = list.filter((r) => !r.isVacant && r.unitKind === 'room' && r.status !== 'cancelled');
     }
 
     if (unitSearch.trim()) {
@@ -963,6 +963,24 @@ export const ReportsPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Navigation Tabs between General Reports & Unit Revenue */}
+      <div className="flex items-center gap-2 border-b border-line pb-3">
+        <Link
+          to="/reports"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-navy text-white shadow-xs"
+        >
+          <BarChart3 className="w-4 h-4 text-gold" />
+          <span>{lang === 'ar' ? 'التقارير المالية والتشغيلية' : 'Laporan Operasional & Keuangan'}</span>
+        </Link>
+        <Link
+          to="/reports/units"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-white text-muted hover:text-ink hover:bg-stone/40 border border-line transition-colors"
+        >
+          <Building2 className="w-4 h-4 text-gold" />
+          <span>{lang === 'ar' ? 'دخل وأداء الوحدات (الفلل والغرف)' : 'Kinerja Unit (Villa & Kamar)'}</span>
+        </Link>
+      </div>
+
       {/* Period Picker */}
       <div className="bg-white p-4 rounded-xl border border-line shadow-sm space-y-3">
         <div className="flex items-center gap-2 flex-wrap">
@@ -987,41 +1005,6 @@ export const ReportsPage: React.FC = () => {
               </button>
             )
           )}
-
-          {/* Quick Presets for October Reports (1-21 Oct & 1-31 Oct) */}
-          <button
-            type="button"
-            onClick={() => {
-              setPeriodMode('custom');
-              setCustomFrom('2026-10-01');
-              setCustomTo('2026-10-21');
-              setUnitViewFilter('occupied');
-            }}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border ${
-              periodMode === 'custom' && customFrom === '2026-10-01' && customTo === '2026-10-21'
-                ? 'bg-gold text-white border-gold shadow-sm'
-                : 'bg-gold/10 text-navy border-gold/40 hover:bg-gold/20'
-            }`}
-          >
-            {t('report.oct1To21Preset')}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setPeriodMode('custom');
-              setCustomFrom('2026-10-01');
-              setCustomTo('2026-10-31');
-              setUnitViewFilter('occupied');
-            }}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border ${
-              periodMode === 'custom' && customFrom === '2026-10-01' && customTo === '2026-10-31'
-                ? 'bg-gold text-white border-gold shadow-sm'
-                : 'bg-gold/10 text-navy border-gold/40 hover:bg-gold/20'
-            }`}
-          >
-            {t('report.octFullPreset')}
-          </button>
         </div>
 
         {/* Dedicated Single Day Selector */}
@@ -1255,23 +1238,6 @@ export const ReportsPage: React.FC = () => {
               </Table>
             </div>
           </Card>
-
-          {/* Unit Performance Report (تقرير دخل كل فيلا وغرفة على حدة) */}
-          {operationalReport?.unitPerformance && (
-            <UnitPerformanceReport
-              items={operationalReport.unitPerformance.items}
-              totalVillas={operationalReport.unitPerformance.totalVillas}
-              totalRooms={operationalReport.unitPerformance.totalRooms}
-              grandTotal={operationalReport.unitPerformance.grandTotal}
-              periodLabel={
-                periodMode === 'lastMonth'
-                  ? (lang === 'ar' ? 'أكتوبر 2026' : 'Oktober 2026')
-                  : periodMode === 'thisMonth'
-                  ? (lang === 'ar' ? 'نوفمبر 2026' : 'November 2026')
-                  : `${formatDateHuman(from, lang)} ➔ ${formatDateHuman(to, lang)}`
-              }
-            />
-          )}
 
           {/* Operational & Collection Report (تقرير إشغال وتحصيل الوحدات اليومي / للفترة) */}
           <Card className="border-gold/40 shadow-xs">

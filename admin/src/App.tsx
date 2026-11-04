@@ -20,6 +20,7 @@ import { BookingDetailPage } from './pages/BookingDetailPage';
 import { GuestsPage } from './pages/GuestsPage';
 import { GuestDetailPage } from './pages/GuestDetailPage';
 import { ReportsPage } from './pages/ReportsPage';
+import { UnitRevenuePage } from './pages/UnitRevenuePage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AttendancePage } from './pages/AttendancePage';
 
@@ -81,6 +82,18 @@ export default function App() {
                           <ReportsPage />
                         </RequireManager>
                       }
+                    />
+                    <Route
+                      path="/reports/units"
+                      element={
+                        <RequireManager>
+                          <UnitRevenuePage />
+                        </RequireManager>
+                      }
+                    />
+                    <Route
+                      path="/unit-revenue"
+                      element={<Navigate to="/reports/units" replace />}
                     />
                     <Route
                       path="/settings"
