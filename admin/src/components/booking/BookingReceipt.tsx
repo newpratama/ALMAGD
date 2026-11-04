@@ -5,6 +5,7 @@ import type { Guest } from '../../api/guests';
 import { useI18n } from '../../i18n/I18nProvider';
 import { formatDateHuman } from '../../lib/dates';
 import { formatIDR } from '../../lib/money';
+import { formatNationalityDisplay } from '../../lib/nationalities';
 
 export interface BookingReceiptProps {
   booking: BookingOverview;
@@ -135,7 +136,9 @@ export const BookingReceipt: React.FC<BookingReceiptProps> = ({
           {guest?.nationality && (
             <div className="grid grid-cols-3 gap-1">
               <span className="text-muted">{t('guest.nationality')}:</span>
-              <span className="col-span-2 text-ink">{guest.nationality}</span>
+              <span className="col-span-2 text-ink font-medium">
+                {formatNationalityDisplay(guest.nationality, lang)}
+              </span>
             </div>
           )}
         </div>

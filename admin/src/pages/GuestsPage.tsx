@@ -4,6 +4,7 @@ import { useI18n } from '../i18n/I18nProvider';
 import { useGuests, useCreateGuest } from '../api/guests';
 import type { GuestListItem, GuestInsert, GuestUpdate } from '../api/guests';
 import { formatDateHuman } from '../lib/dates';
+import { formatNationalityDisplay } from '../lib/nationalities';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Table, Thead, Tbody, Tr, Th, Td } from '../components/ui/Table';
@@ -132,7 +133,7 @@ export const GuestsPage: React.FC = () => {
                     {guest.phone || '—'}
                   </Td>
                   <Td className="text-muted text-xs">
-                    {guest.nationality || '—'}
+                    {formatNationalityDisplay(guest.nationality, lang)}
                   </Td>
                   <Td className="text-xs">
                     <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full bg-stone text-ink font-medium">

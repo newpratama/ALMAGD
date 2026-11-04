@@ -3,6 +3,7 @@ import { useI18n } from '../../i18n/I18nProvider';
 import { useGuests, useCreateGuest, useGuest } from '../../api/guests';
 import type { Guest, GuestInsert, GuestUpdate, GuestListItem } from '../../api/guests';
 import { formatDateHuman } from '../../lib/dates';
+import { formatNationalityDisplay } from '../../lib/nationalities';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -109,7 +110,9 @@ export const GuestPicker: React.FC<GuestPickerProps> = ({
           <div className="text-xs text-muted flex items-center gap-4 flex-wrap">
             {selectedGuest.phone && <span>📞 {selectedGuest.phone}</span>}
             {selectedGuest.id_number && <span>🪪 {selectedGuest.id_number}</span>}
-            {selectedGuest.nationality && <span>🌍 {selectedGuest.nationality}</span>}
+            {selectedGuest.nationality && (
+              <span>{formatNationalityDisplay(selectedGuest.nationality, lang)}</span>
+            )}
           </div>
 
           {isBlacklist && (

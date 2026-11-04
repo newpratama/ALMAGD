@@ -5,6 +5,8 @@ import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Textarea } from '../ui/Textarea';
 import { Button } from '../ui/Button';
+import { NationalitySelect } from './NationalitySelect';
+import { findNationalityOption } from '../../lib/nationalities';
 import type { Guest, GuestInsert, GuestUpdate } from '../../api/guests';
 
 export interface GuestFormProps {
@@ -25,7 +27,10 @@ export const GuestForm: React.FC<GuestFormProps> = ({
   const [fullName, setFullName] = useState(initialData?.full_name || '');
   const [phone, setPhone] = useState(initialData?.phone || '');
   const [email, setEmail] = useState(initialData?.email || '');
-  const [nationality, setNationality] = useState(initialData?.nationality || '');
+  const [nationality, setNationality] = useState(() => {
+    const matched = findNationalityOption(initialData?.nationality);
+    return matched ? matched.value : initialData?.nationality || '';
+  });
   const [idType, setIdType] = useState<string>(initialData?.id_type || 'ktp');
   const [idNumber, setIdNumber] = useState(initialData?.id_number || '');
   const [notes, setNotes] = useState(initialData?.notes || '');
@@ -101,10 +106,14 @@ export const GuestForm: React.FC<GuestFormProps> = ({
         </Field>
 
         <Field label={t('guest.nationality')}>
-          <Input
+          <NationalitySelect
             value={nationality}
-            onChange={(e) => setNationality(e.target.value)}
-            placeholder="Indonesia / Saudi Arabia"
+            onChange={(val, option) => {
+              setNationality(val);
+              if (option && !idNumber.trim()) {
+                setIdType(option.code === 'ID' ? 'ktp' : 'passport');
+              }
+            }}
           />
         </Field>
 
