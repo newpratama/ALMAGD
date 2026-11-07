@@ -9,7 +9,7 @@ import { Spinner } from '../ui/Spinner';
 import { formatIDR } from '../../lib/money';
 import { todayISO, nightsBetween, addDaysISO, formatDateHuman } from '../../lib/dates';
 import { updateBooking, createBooking, type BookingOverview, type BookingInsert } from '../../api/bookings';
-import { fetchAvailableUnits, type Unit } from '../../api/units';
+import { fetchAvailableUnits, useUnits, type Unit } from '../../api/units';
 import { fetchPayments, createPayment, updatePayment, deletePayment } from '../../api/payments';
 import { friendlyError } from '../../lib/errors';
 import { useToast } from '../ui/Toast';
@@ -52,6 +52,44 @@ export const TransferUnitModal: React.FC<TransferUnitModalProps> = ({
   const [executionMode, setExecutionMode] = useState<'split' | 'modify_checkin'>('split');
   const [reason, setReason] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { data: allUnits = [] } = useUnits();
+
+  // All parent villas
+  const allVillas = useMemo(() => {
+    return allUnits
+      .filter((u) => u.kind === 'villa')
+      .sort((a, b) => a.sort_order - b.sort_order);
+  }, [allUnits]);
+
+  // Available whole villas map
+  const availableWholeVillasMap = useMemo(() => {
+    const map = new Map<number, Unit>();
+    availableUnits.forEach((u) => {
+      if (u.kind === 'villa') map.set(u.id, u);
+    });
+    return map;
+  }, [availableUnits]);
+
+  // Available child rooms grouped by villa parent_id
+  const roomsByVilla = useMemo(() => {
+    const map = new Map<number, Unit[]>();
+    availableUnits.forEach((u) => {
+      if (u.kind === 'room' && u.parent_id) {
+        const list = map.get(u.parent_id) || [];
+        list.push(u);
+        map.set(u.parent_id, list);
+      }
+    });
+    return map;
+  }, [availableUnits]);
+
+  // Independent rooms (Kamar Lepas without villa parent)
+  const independentRooms = useMemo(() => {
+    return availableUnits
+      .filter((u) => u.kind === 'room' && !u.parent_id)
+      .sort((a, b) => a.sort_order - b.sort_order);
+  }, [availableUnits]);
 
   // Sync transfer date when modal opens with new booking
   useEffect(() => {
@@ -450,12 +488,53 @@ export const TransferUnitModal: React.FC<TransferUnitModalProps> = ({
               value={selectedUnitId || ''}
               onChange={(e) => setSelectedUnitId(Number(e.target.value))}
             >
-              {availableUnits.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.name} ({u.kind === 'villa' ? t('unitKind.villa') : t('unitKind.room')})
-                  {u.default_rate ? ` · ${formatIDR(Number(u.default_rate))}/${t('booking.nights')}` : ''}
-                </option>
-              ))}
+              {allVillas.map((villa) => {
+                const wholeVilla = availableWholeVillasMap.get(villa.id);
+                const childRooms = roomsByVilla.get(villa.id) || [];
+
+                // If neither the whole villa nor any child room is available, skip
+                if (!wholeVilla && childRooms.length === 0) return null;
+
+                const villaRate = wholeVilla?.default_rate
+                  ? ` · ${formatIDR(Number(wholeVilla.default_rate))}/${t('booking.nights')}`
+                  : '';
+
+                return (
+                  <optgroup key={villa.id} label={villa.name}>
+                    {wholeVilla && (
+                      <option value={wholeVilla.id}>
+                        ★ {wholeVilla.name} ({t('calendar.wholeVilla')}){villaRate}
+                      </option>
+                    )}
+                    {childRooms.map((room) => {
+                      const roomRate = room.default_rate
+                        ? ` · ${formatIDR(Number(room.default_rate))}/${t('booking.nights')}`
+                        : '';
+                      return (
+                        <option key={room.id} value={room.id}>
+                          &nbsp;&nbsp;↳ {room.name} ({t('unitKind.room')}){roomRate}
+                        </option>
+                      );
+                    })}
+                  </optgroup>
+                );
+              })}
+
+              {/* Independent rooms without villa parent (Kamar Lepas) */}
+              {independentRooms.length > 0 && (
+                <optgroup label="Kamar Lepas">
+                  {independentRooms.map((room) => {
+                    const roomRate = room.default_rate
+                      ? ` · ${formatIDR(Number(room.default_rate))}/${t('booking.nights')}`
+                      : '';
+                    return (
+                      <option key={room.id} value={room.id}>
+                        {room.name} ({t('unitKind.room')}){roomRate}
+                      </option>
+                    );
+                  })}
+                </optgroup>
+              )}
             </Select>
           )}
         </div>
