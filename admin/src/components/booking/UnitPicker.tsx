@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useI18n } from '../../i18n/I18nProvider';
-import { useAvailableUnits } from '../../api/units';
+import { useAvailableUnits, useUnits } from '../../api/units';
 import type { Unit } from '../../api/units';
 import { Select } from '../ui/Select';
 import { Spinner } from '../ui/Spinner';
@@ -39,6 +39,8 @@ export const UnitPicker: React.FC<UnitPickerProps> = ({
     excludeBookingId
   );
 
+  const { data: allUnits = [] } = useUnits();
+
   // Check if preselected unit from URL is unavailable
   const isPreselectedTaken =
     Boolean(preselectedUnitId) &&
@@ -46,22 +48,41 @@ export const UnitPicker: React.FC<UnitPickerProps> = ({
     !isLoading &&
     !availableUnits.some((u) => u.id === preselectedUnitId);
 
-  // Group units by Villa and Kamar Lepas
-  const villas = availableUnits.filter((u) => u.kind === 'villa');
-  const rooms = availableUnits.filter((u) => u.kind === 'room');
+  // All parent villas
+  const allVillas = useMemo(() => {
+    return allUnits
+      .filter((u) => u.kind === 'villa')
+      .sort((a, b) => a.sort_order - b.sort_order);
+  }, [allUnits]);
 
-  const roomsByVilla = new Map<number, Unit[]>();
-  const independentRooms: Unit[] = [];
+  // Available whole villas map
+  const availableWholeVillasMap = useMemo(() => {
+    const map = new Map<number, Unit>();
+    availableUnits.forEach((u) => {
+      if (u.kind === 'villa') map.set(u.id, u);
+    });
+    return map;
+  }, [availableUnits]);
 
-  for (const r of rooms) {
-    if (r.parent_id) {
-      const list = roomsByVilla.get(r.parent_id) || [];
-      list.push(r);
-      roomsByVilla.set(r.parent_id, list);
-    } else {
-      independentRooms.push(r);
-    }
-  }
+  // Available child rooms grouped by villa parent_id
+  const roomsByVilla = useMemo(() => {
+    const map = new Map<number, Unit[]>();
+    availableUnits.forEach((u) => {
+      if (u.kind === 'room' && u.parent_id) {
+        const list = map.get(u.parent_id) || [];
+        list.push(u);
+        map.set(u.parent_id, list);
+      }
+    });
+    return map;
+  }, [availableUnits]);
+
+  // Independent rooms (Kamar Lepas without villa parent)
+  const independentRooms = useMemo(() => {
+    return availableUnits
+      .filter((u) => u.kind === 'room' && !u.parent_id)
+      .sort((a, b) => a.sort_order - b.sort_order);
+  }, [availableUnits]);
 
   // Refetch when dates change
   useEffect(() => {
@@ -113,16 +134,28 @@ export const UnitPicker: React.FC<UnitPickerProps> = ({
           <option value="">-- {t('booking.unitRequired')} --</option>
 
           {/* Villas & Child Rooms */}
-          {villas.map((villa) => {
+          {allVillas.map((villa) => {
+            const wholeVilla = availableWholeVillasMap.get(villa.id);
             const childRooms = roomsByVilla.get(villa.id) || [];
-            const villaRate = villa.default_rate ? ` — ${formatIDRWithCommas(Number(villa.default_rate))}` : '';
+
+            // If neither the whole villa nor any child room is available, skip
+            if (!wholeVilla && childRooms.length === 0) return null;
+
+            const villaRate = wholeVilla?.default_rate
+              ? ` — ${formatIDRWithCommas(Number(wholeVilla.default_rate))}`
+              : '';
+
             return (
               <optgroup key={villa.id} label={villa.name}>
-                <option value={String(villa.id)}>
-                  ★ {villa.name} ({t('calendar.wholeVilla')}){villaRate}
-                </option>
+                {wholeVilla && (
+                  <option value={String(wholeVilla.id)}>
+                    ★ {wholeVilla.name} ({t('calendar.wholeVilla')}){villaRate}
+                  </option>
+                )}
                 {childRooms.map((room) => {
-                  const roomRate = room.default_rate ? ` — ${formatIDRWithCommas(Number(room.default_rate))}` : '';
+                  const roomRate = room.default_rate
+                    ? ` — ${formatIDRWithCommas(Number(room.default_rate))}`
+                    : '';
                   return (
                     <option key={room.id} value={String(room.id)}>
                       &nbsp;&nbsp;↳ {room.name}{roomRate}
