@@ -611,7 +611,7 @@ export const id = {
     savingSettings: 'Menyimpan...',
     settingsSaved: 'Pengaturan presensi berhasil disimpan',
     receptionToolTitle: 'Aplikasi Resepsionis Otomatis (Background)',
-    receptionToolDesc: 'Aplikasi pintar yang berjalan di background komputer resepsionis secara otomatis saat menyala, menarik data scan setiap 20 detik tanpa perlu interaksi manual.',
+    receptionToolDesc: 'Aplikasi pintar yang berjalan di background komputer resepsionis secara otomatis saat menyala, menarik data scan setiap 60 detik secara default tanpa perlu interaksi manual.',
     downloadZip: 'Unduh Berkas Aplikasi (ZIP)',
     howItWorks: 'Cara Memasang di Komputer Resepsionis:',
     step1: '1. Salin folder biometric-sync-tool ke komputer resepsionis (contoh: C:\\almagd-sync).',

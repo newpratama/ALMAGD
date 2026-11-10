@@ -9,6 +9,7 @@ export const DataSyncProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const queryClient = useQueryClient();
   const { staff } = useAuth();
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const attendanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Initialize encrypted session cache when staff user is active
   useEffect(() => {
@@ -94,11 +95,21 @@ export const DataSyncProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       .on('postgres_changes', { event: '*', schema: 'public', table: 'units' }, () => {
         triggerInvalidation('units');
       })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_logs' }, () => {
+        // Biometric sync uploads in batches: coalesce bursts into one refetch
+        if (attendanceTimerRef.current) clearTimeout(attendanceTimerRef.current);
+        attendanceTimerRef.current = setTimeout(() => {
+          void queryClient.invalidateQueries({ queryKey: ['attendance-logs'] });
+        }, 500);
+      })
       .subscribe();
 
     return () => {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
+      }
+      if (attendanceTimerRef.current) {
+        clearTimeout(attendanceTimerRef.current);
       }
       if (supabase) {
         void supabase.removeChannel(realtimeChannel);

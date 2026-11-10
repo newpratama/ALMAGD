@@ -136,9 +136,9 @@ export const BookingDetailPage: React.FC = () => {
       }
       showToast('success', t('common.success'));
       refetchBooking();
-      queryClient.invalidateQueries({ queryKey: ['today-arrivals'] });
-      queryClient.invalidateQueries({ queryKey: ['today-departures'] });
-      queryClient.invalidateQueries({ queryKey: ['today-in-house'] });
+      queryClient.invalidateQueries({ queryKey: ['today', 'arrivals'] });
+      queryClient.invalidateQueries({ queryKey: ['today', 'departures'] });
+      queryClient.invalidateQueries({ queryKey: ['today', 'in-house'] });
       queryClient.invalidateQueries({ queryKey: ['calendar'] });
     } catch (err) {
       showToast('error', t(friendlyError(err)));
@@ -737,9 +737,9 @@ export const BookingDetailPage: React.FC = () => {
         onSuccess={() => {
           refetchBooking();
           refetchPayments();
-          queryClient.invalidateQueries({ queryKey: ['today-arrivals'] });
-          queryClient.invalidateQueries({ queryKey: ['today-departures'] });
-          queryClient.invalidateQueries({ queryKey: ['today-in-house'] });
+          queryClient.invalidateQueries({ queryKey: ['today', 'arrivals'] });
+          queryClient.invalidateQueries({ queryKey: ['today', 'departures'] });
+          queryClient.invalidateQueries({ queryKey: ['today', 'in-house'] });
         }}
       />
 
@@ -749,8 +749,8 @@ export const BookingDetailPage: React.FC = () => {
         booking={booking}
         onSuccess={() => {
           refetchBooking();
-          queryClient.invalidateQueries({ queryKey: ['today-in-house'] });
-          queryClient.invalidateQueries({ queryKey: ['today-departures'] });
+          queryClient.invalidateQueries({ queryKey: ['today', 'in-house'] });
+          queryClient.invalidateQueries({ queryKey: ['today', 'departures'] });
           queryClient.invalidateQueries({ queryKey: ['calendar'] });
         }}
       />
@@ -762,8 +762,8 @@ export const BookingDetailPage: React.FC = () => {
         onSuccess={() => {
           refetchBooking();
           refetchPayments();
-          queryClient.invalidateQueries({ queryKey: ['today-in-house'] });
-          queryClient.invalidateQueries({ queryKey: ['today-departures'] });
+          queryClient.invalidateQueries({ queryKey: ['today', 'in-house'] });
+          queryClient.invalidateQueries({ queryKey: ['today', 'departures'] });
           queryClient.invalidateQueries({ queryKey: ['calendar'] });
         }}
       />
@@ -774,8 +774,8 @@ export const BookingDetailPage: React.FC = () => {
         booking={booking}
         onSuccess={() => {
           refetchBooking();
-          queryClient.invalidateQueries({ queryKey: ['today-in-house'] });
-          queryClient.invalidateQueries({ queryKey: ['today-arrivals'] });
+          queryClient.invalidateQueries({ queryKey: ['today', 'in-house'] });
+          queryClient.invalidateQueries({ queryKey: ['today', 'arrivals'] });
           queryClient.invalidateQueries({ queryKey: ['calendar'] });
         }}
       />

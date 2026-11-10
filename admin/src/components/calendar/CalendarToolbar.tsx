@@ -20,6 +20,7 @@ export interface CalendarToolbarProps {
   onUnitSearchChange: (search: string) => void;
   collapsedVillas: boolean;
   onToggleCollapseVillas: () => void;
+  onFullscreen?: () => void;
 }
 
 export const CalendarToolbar: React.FC<CalendarToolbarProps> = ({
@@ -36,6 +37,7 @@ export const CalendarToolbar: React.FC<CalendarToolbarProps> = ({
   onUnitSearchChange,
   collapsedVillas,
   onToggleCollapseVillas,
+  onFullscreen,
 }) => {
   const { t } = useI18n();
   const { data: sources = [] } = useBookingSources();
@@ -101,7 +103,7 @@ export const CalendarToolbar: React.FC<CalendarToolbarProps> = ({
           </div>
         </div>
 
-        {/* Right side: Villa Collapse/Expand Toggle */}
+        {/* Right side: Villa Collapse/Expand Toggle & Fullscreen Button */}
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -111,6 +113,18 @@ export const CalendarToolbar: React.FC<CalendarToolbarProps> = ({
             <span>🏛️</span>
             <span>{collapsedVillas ? t('calendar.expandVillas') : t('calendar.collapseVillas')}</span>
           </button>
+
+          {onFullscreen && (
+            <button
+              type="button"
+              onClick={onFullscreen}
+              className="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-navy text-white hover:bg-navy-light transition flex items-center gap-1.5 shadow-xs"
+              title="تكبير صفحة التقويم على كامل الشاشة (30 يوماً مع اليوم)"
+            >
+              <span className="text-sm">⛶</span>
+              <span>تكبير الشاشة (30 يوماً)</span>
+            </button>
+          )}
         </div>
       </div>
 

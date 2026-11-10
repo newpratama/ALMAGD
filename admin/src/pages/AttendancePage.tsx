@@ -55,7 +55,7 @@ export const AttendancePage: React.FC = () => {
   // Date selection state (default today)
   const [selectedDate, setSelectedDate] = useState<string>(todayISO());
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'present_on_time' | 'late' | 'early_leave' | 'absent'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'present_on_time' | 'late' | 'early_leave' | 'absent' | 'incomplete'>('all');
 
   // Modals state
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -66,7 +66,7 @@ export const AttendancePage: React.FC = () => {
   // Queries
   const { data: staffList = [], isLoading: isStaffLoading } = useStaffList();
   const { data: settings, isLoading: isSettingsLoading } = useAttendanceSettings();
-  const { data: logs = [], isLoading: isLogsLoading, refetch: refetchLogs } = useAttendanceLogs(selectedDate);
+  const { data: logs = [], isLoading: isLogsLoading, isError: hasLogsError, refetch: refetchLogs } = useAttendanceLogs(selectedDate, settings);
 
   // Mutations
   const saveSettingsMutation = useSaveAttendanceSettings();
@@ -87,9 +87,9 @@ export const AttendancePage: React.FC = () => {
 
   // Daily calculated attendance
   const dailyAttendance = useMemo(() => {
-    if (!settings) return [];
+    if (!settings || hasLogsError) return [];
     return calculateDailyAttendance(selectedDate, staffList, logs, settings);
-  }, [selectedDate, staffList, logs, settings]);
+  }, [selectedDate, staffList, logs, settings, hasLogsError]);
 
   // Filtered rows
   const filteredAttendance = useMemo(() => {
@@ -122,7 +122,7 @@ export const AttendancePage: React.FC = () => {
       if (row.status === 'present_on_time') presentOnTime++;
       else if (row.status === 'late') late++;
       else if (row.status === 'early_leave') earlyLeave++;
-      else absent++;
+      else if (row.status === 'absent') absent++;
 
       totalWorkHours += row.totalHours;
     }
@@ -204,8 +204,8 @@ export const AttendancePage: React.FC = () => {
       showToast('success', isAr ? 'تم حفظ إعدادات البصمة وقائمة الموظفين بنجاح' : 'Pengaturan presensi & karyawan berhasil disimpan');
       setIsSettingsOpen(false);
       refetchLogs();
-    } catch {
-      showToast('error', isAr ? 'فشل حفظ الإعدادات' : 'Gagal menyimpan pengaturan');
+    } catch (error) {
+      showToast('error', error instanceof Error ? error.message : (isAr ? 'فشل حفظ الإعدادات' : 'Gagal menyimpan pengaturan'));
     }
   };
 
@@ -219,11 +219,16 @@ export const AttendancePage: React.FC = () => {
         cloudId: settings.cloudId || settings.deviceSn,
       });
 
+      if (!res.savedRemotely) {
+        showToast('warning', res.message);
+        refetchLogs();
+        return;
+      }
       if ((res.newPunchesCount || 0) > 0) {
         showToast(
           'success',
           isAr
-            ? `تمت مزامنة ${res.newPunchesCount} بصمة جديدة بنجاح!`
+            ? res.message
             : `Berhasil sinkron ${res.newPunchesCount} scan baru!`
         );
       } else {
@@ -299,6 +304,7 @@ export const AttendancePage: React.FC = () => {
           ? isAr ? `متأخر (${row.lateMinutes} د)` : `Terlambat (${row.lateMinutes}m)`
           : row.status === 'early_leave'
           ? isAr ? 'انصراف مبكر' : 'Pulang Awal'
+          : row.status === 'incomplete' ? (isAr ? 'سجل غير مكتمل' : 'Scan belum lengkap')
           : isAr ? 'غائب' : 'Tidak Hadir',
       [isAr ? 'عدد البصمات' : 'Jml Scan']: row.punches.length,
     }));
@@ -336,7 +342,7 @@ export const AttendancePage: React.FC = () => {
             </div>
             <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
               {isAr
-                ? 'مزامنة فورية ودائمة مع جهاز البصمة Revo W-230N — يعمل بدون توقف عبر شبكة كمبيوتر الاستقبال المحلية وسحابة المجد.'
+                ? 'متابعة حركات البصمة Revo W-230N عبر أداة الاستقبال بعد إعداد الاتصال والتحقق منه.'
                 : 'Sinkronisasi instan & otomatis dengan mesin absensi Revo W-230N via jaringan resepsionis & cloud.'}
             </p>
           </div>
@@ -535,7 +541,9 @@ export const AttendancePage: React.FC = () => {
 
       {/* 4. Attendance Table */}
       <Card className="overflow-hidden shadow-sm border border-line">
-        {isLoading ? (
+        {hasLogsError ? (
+          <div role="alert" className="p-6 text-sm text-amber-800">{isAr ? 'تعذر تحميل سجل الحضور من النظام. لا يمكن تأكيد الحضور أو الغياب حتى عودة الاتصال.' : 'Catatan presensi gagal dimuat. Kehadiran tidak dapat dipastikan sampai koneksi pulih.'}</div>
+        ) : isLoading ? (
           <div className="py-20 flex flex-col items-center justify-center">
             <Spinner size="lg" />
             <p className="mt-3 text-xs text-muted">
@@ -563,8 +571,8 @@ export const AttendancePage: React.FC = () => {
                 <Tr className="bg-stone/40 border-b border-line text-xs font-semibold text-muted">
                   <Th>{isAr ? 'الموظف' : 'Karyawan'}</Th>
                   <Th className="text-center">{isAr ? 'رقم البصمة' : 'PIN Mesin'}</Th>
-                  <Th className="text-center">{isAr ? 'وقت الحضور' : 'Jam Masuk'}</Th>
-                  <Th className="text-center">{isAr ? 'وقت الانصراف' : 'Jam Pulang'}</Th>
+                  <Th className="text-center">{(settings?.calculationMode ?? 'first_last') === 'first_last' ? (isAr ? 'أول بصمة' : 'Scan Pertama') : (isAr ? 'وقت الحضور' : 'Jam Masuk')}</Th>
+                  <Th className="text-center">{(settings?.calculationMode ?? 'first_last') === 'first_last' ? (isAr ? 'آخر بصمة' : 'Scan Terakhir') : (isAr ? 'وقت الانصراف' : 'Jam Pulang')}</Th>
                   <Th className="text-center">{isAr ? 'ساعات العمل' : 'Durasi Jam'}</Th>
                   <Th className="text-center">{isAr ? 'الحالة اليومية' : 'Status'}</Th>
                   <Th className="text-center">{isAr ? 'حركات البصمة' : 'Jml Scan'}</Th>
@@ -575,7 +583,7 @@ export const AttendancePage: React.FC = () => {
                 {filteredAttendance.map((row) => {
                   return (
                     <Tr
-                      key={row.staffId}
+                      key={`${row.staffId}:${row.pin}`}
                       className="hover:bg-gold/5 transition-colors border-b border-line/60 text-xs sm:text-sm"
                     >
                       {/* Staff Name & Role */}
@@ -651,6 +659,9 @@ export const AttendancePage: React.FC = () => {
                             {isAr ? 'انصراف مبكر' : 'Pulang Awal'}
                           </Badge>
                         )}
+                        {row.status === 'incomplete' && (
+                          <Badge variant="gold">{isAr ? 'سجل غير مكتمل' : 'Scan belum lengkap'}</Badge>
+                        )}
                         {row.status === 'absent' && (
                           <Badge variant="default" className="gap-1 text-slate-500 bg-slate-100 border-slate-200">
                             <X className="w-3 h-3" />
@@ -692,6 +703,10 @@ export const AttendancePage: React.FC = () => {
         )}
       </Card>
 
+      {(settings?.calculationMode ?? 'first_last') === 'first_last' && (
+        <p className="text-xs text-muted">{isAr ? 'الحضور والانصراف مستنتجان من أول وآخر بصمة؛ المدة تشمل الاستراحات. السجل غير المكتمل يحتاج مراجعة.' : 'Masuk dan pulang disimpulkan dari scan pertama dan terakhir; durasi termasuk istirahat. Scan belum lengkap perlu diperiksa.'}</p>
+      )}
+
       {/* 5. Punch Timeline Modal */}
       {selectedStaffPunches && (
         <Modal
@@ -730,7 +745,8 @@ export const AttendancePage: React.FC = () => {
             ) : (
               <div className="relative border-s-2 border-line/80 ms-4 space-y-4 py-2">
                 {selectedStaffPunches.punches.map((punch, idx) => {
-                  const isCheckIn = idx === 0 || punch.punchType === 'check_in';
+                  const isCheckIn = ['check_in', 'break_in', 'overtime_in'].includes(punch.punchType);
+                  const labels = { check_in: isAr ? 'دخول' : 'Masuk', check_out: isAr ? 'خروج' : 'Pulang', break_out: isAr ? 'بداية استراحة' : 'Mulai istirahat', break_in: isAr ? 'نهاية استراحة' : 'Selesai istirahat', overtime_in: isAr ? 'دخول إضافي' : 'Mulai lembur', overtime_out: isAr ? 'خروج إضافي' : 'Selesai lembur' };
                   return (
                     <div key={punch.id || idx} className="relative ps-6">
                       {/* Timeline Dot */}
@@ -749,9 +765,8 @@ export const AttendancePage: React.FC = () => {
                                   : 'bg-blue-100 text-blue-800'
                               }`}
                             >
-                              {isCheckIn
-                                ? isAr ? 'تسجيل دخول (حضور)' : 'Check In'
-                                : isAr ? 'تسجيل خروج (انصراف)' : 'Check Out'}
+                              {(settings?.calculationMode ?? 'first_last') === 'first_last'
+                                ? (isAr ? 'حركة بصمة' : 'Scan mesin') : labels[punch.punchType]}
                             </span>
                             <span className="font-mono font-bold text-ink text-sm">
                               {punch.scanTime.split(' ')[1] || punch.scanTime}
@@ -896,11 +911,24 @@ export const AttendancePage: React.FC = () => {
                     type="number"
                     value={settingsDraft.lateTolerance}
                     onChange={(e) =>
-                      setSettingsDraft({ ...settingsDraft, lateTolerance: Number(e.target.value) || 15 })
+                      setSettingsDraft({ ...settingsDraft, lateTolerance: Number(e.target.value) })
                     }
                   />
                 </div>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-xs font-medium text-muted">{isAr ? 'طريقة احتساب الحضور' : 'Perhitungan presensi'}</label>
+              <select className="w-full rounded-lg border border-line p-2 text-sm" value={settingsDraft.calculationMode ?? 'first_last'}
+                onChange={(e) => setSettingsDraft({ ...settingsDraft, calculationMode: e.target.value as 'first_last' | 'explicit' })}>
+                <option value="first_last">{isAr ? 'بصمة فقط: أول وآخر حركة' : 'Scan saja: scan pertama dan terakhir'}</option>
+                <option value="explicit">{isAr ? 'الجهاز يحدد الدخول والخروج والاستراحة' : 'Mesin menentukan masuk, pulang dan istirahat'}</option>
+              </select>
+              <label className="block text-xs font-medium text-muted">{isAr ? 'الحد الأدنى بين الحضور والانصراف (دقائق)' : 'Jarak minimum masuk–pulang (menit)'}</label>
+              <Input type="number" min={0} max={60} value={settingsDraft.duplicateWindowMinutes ?? 5}
+                onChange={(e) => setSettingsDraft({ ...settingsDraft, duplicateWindowMinutes: Number(e.target.value) })} />
+              <p className="text-xs text-muted">{isAr ? 'في وضع البصمة فقط، الدخول والخروج مستنتجان من أول وآخر حركة. المدة بينهما لا تستبعد الاستراحات. للوردية الليلية اختر نهاية الدوام قبل بدايته.' : 'Mode scan saja memakai scan pertama dan terakhir; durasi termasuk istirahat. Untuk shift malam, jam pulang lebih awal dari jam masuk.'}</p>
             </div>
 
             {/* Staff to PIN Mapping & Biometric Employees */}
@@ -1088,7 +1116,7 @@ export const AttendancePage: React.FC = () => {
               </div>
               <p className="text-emerald-900/80 text-xs">
                 {isAr
-                  ? 'هذه الأداة مصممة لتعمل في خلفية جهاز كمبيوتر الاستقبال بدون أي نوافذ سوداء أو إزعاج، تبدأ تلقائياً عند فتح الجهاز وتسحب البصمات كل 20 ثانية، وتحفظها محلياً في حال انقطاع الإنترنت ثم ترفعها للسحابة فوراً عند عودته.'
+                  ? 'هذه الأداة مصممة لتعمل في خلفية جهاز كمبيوتر الاستقبال بدون أي نوافذ سوداء أو إزعاج، تبدأ تلقائياً عند تسجيل الدخول إلى ويندوز بعد تثبيتها وتسحب البصمات كل 60 ثانية افتراضيًا، وتحفظها محلياً في حال انقطاع الإنترنت ثم ترفعها للسحابة فوراً عند عودته.'
                   : 'Aplikasi berjalan otomatis di latar belakang (background) komputer resepsionis tanpa jendela command prompt, menyimpan data di SQLite lokal saat internet putus, dan mengunggah ke cloud saat normal.'}
               </p>
             </div>
@@ -1124,8 +1152,8 @@ export const AttendancePage: React.FC = () => {
                   </div>
                   <div className="text-xs text-muted mt-0.5">
                     {isAr
-                      ? 'انقر نقرتين على ملف "تثبيت_تلقائي_مع_تشغيل_الويندوز.bat" (أو بالزر الأيمن على install-windows.bat واختر تشغيل كمسؤول).'
-                      : 'Klik file "تثبيت_تلقائي_مع_تشغيل_الويندوز.bat" atau klik kanan install-windows.bat lalu pilih "Run as administrator".'}
+                      ? 'اضبط عنوان الجهاز ومفتاح الرفع في config.json، ثم اختبر الاتصال بواسطة test-connection.bat وشغّل install-windows.bat من حساب الاستقبال.'
+                      : 'Atur IP dan kunci perangkat di config.json, uji test-connection.bat, lalu jalankan install-windows.bat dari akun resepsionis.'}
                   </div>
                 </div>
               </div>
@@ -1136,12 +1164,12 @@ export const AttendancePage: React.FC = () => {
                 </span>
                 <div>
                   <div className="font-bold text-ink">
-                    {isAr ? 'جاهز! تعمل في الخلفية للأبد' : 'Selesai! Berjalan di Background'}
+                    {isAr ? 'تشغيل تلقائي بعد تسجيل الدخول' : 'Selesai! Berjalan di Background'}
                   </div>
                   <div className="text-xs text-muted mt-0.5">
                     {isAr
-                      ? 'سيتم تسجيل الأداة في Windows Task Scheduler لتعمل بصمت تام عند كل إقلاع دون الحاجة لأي برنامج إضافي أو تشغيل يدوي.'
-                      : 'Tergabung otomatis di Task Scheduler Windows tanpa perlu dibuka manual.'}
+                      ? 'تُضاف الأداة إلى مجلد بدء التشغيل لحساب ويندوز الحالي. يلزم بقاء الكمبيوتر مستيقظًا والأداة قيد التشغيل، والتحقق من وصول حركة فعلية إلى النظام.'
+                      : 'Aplikasi terdaftar di folder Startup akun Windows ini. Komputer harus tetap aktif; pastikan scan benar-benar masuk ke sistem.'}
                   </div>
                 </div>
               </div>
@@ -1186,7 +1214,7 @@ export const AttendancePage: React.FC = () => {
                 className="w-full px-3 py-2 rounded-lg border border-line bg-white text-ink text-xs sm:text-sm focus:outline-none focus:ring-1.5 focus:ring-gold"
               >
                 {dailyAttendance.map((row) => (
-                  <option key={row.staffId} value={row.staffId}>
+                  <option key={`${row.staffId}:${row.pin}`} value={row.staffId}>
                     {row.staffName} ({row.role}) - PIN #{row.pin}
                   </option>
                 ))}

@@ -42,7 +42,7 @@ export const IdlePrefetcher: React.FC = () => {
       // 3. Today's in-house bookings
       () =>
         queryClient.prefetchQuery({
-          queryKey: ['today-in-house', todayStr],
+          queryKey: ['today', 'in-house', todayStr],
           queryFn: async () => {
             if (!supabase) return [];
             const { data, error } = await supabase
@@ -61,7 +61,7 @@ export const IdlePrefetcher: React.FC = () => {
       // 4. Today's arrivals
       () =>
         queryClient.prefetchQuery({
-          queryKey: ['today-arrivals', todayStr],
+          queryKey: ['today', 'arrivals', todayStr],
           queryFn: async () => {
             if (!supabase) return [];
             const { data, error } = await supabase
@@ -79,7 +79,7 @@ export const IdlePrefetcher: React.FC = () => {
       // 5. Today's departures
       () =>
         queryClient.prefetchQuery({
-          queryKey: ['today-departures', todayStr],
+          queryKey: ['today', 'departures', todayStr],
           queryFn: async () => {
             if (!supabase) return [];
             const { data, error } = await supabase

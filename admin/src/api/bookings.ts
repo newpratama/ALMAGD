@@ -233,7 +233,7 @@ export async function fetchBookingAuditLog(bookingId: string): Promise<AuditLogE
 
 export function useBookingSources() {
   return useQuery({
-    queryKey: ['sources'],
+    queryKey: ['booking-sources'],
     queryFn: fetchBookingSources,
   });
 }

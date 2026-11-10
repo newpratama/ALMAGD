@@ -7,14 +7,10 @@ import {
   Line,
   BarChart,
   Bar,
-  PieChart,
-  Pie,
-  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from 'recharts';
 import { BarChart3, Building2 } from 'lucide-react';
@@ -33,6 +29,7 @@ import { Badge } from '../components/ui/Badge';
 import { StatusBadge } from '../components/booking/StatusBadge';
 import { Spinner } from '../components/ui/Spinner';
 import { EmptyState } from '../components/ui/EmptyState';
+import { AppChannelsRevenueReport, type AppChannelItem } from '../components/report/AppChannelsRevenueReport';
 
 type PeriodMode = 'today' | 'yesterday' | 'singleDay' | 'thisMonth' | 'lastMonth' | 'thisQuarter' | 'thisYear' | 'custom';
 
@@ -764,15 +761,53 @@ export const ReportsPage: React.FC = () => {
     }));
   }, [daily, monthlyData]);
 
-  const sourcePieData = useMemo(() => {
-    return bySource
-      .filter((s) => Number(s.revenue) > 0)
-      .map((s) => ({
-        name: s.label,
-        value: Number(s.revenue),
+  // Channel collections breakdown for unified AppChannelsRevenueReport (المقبوضات المحصلة الفعلية فقط)
+  const channelReportItems = useMemo<AppChannelItem[]>(() => {
+    const paymentsBySource = new Map<string, number>();
+    if (operationalReport?.rows) {
+      for (const r of operationalReport.rows) {
+        if (!r.isVacant && r.sourceCode) {
+          const current = paymentsBySource.get(r.sourceCode) || 0;
+          paymentsBySource.set(r.sourceCode, current + (r.todayCollected || 0));
+        }
+      }
+    }
+
+    let sumCollected = 0;
+    for (const amt of paymentsBySource.values()) {
+      sumCollected += amt;
+    }
+
+    return bySource.map((s) => {
+      const bCount = Number(s.bookings || 0);
+      const nTotal = Number(s.nights || 0);
+      const paid = paymentsBySource.get(s.source_code) || 0;
+      const share = sumCollected > 0 ? (paid / sumCollected) * 100 : 0;
+
+      return {
+        code: s.source_code,
+        label: s.label,
         color: s.color || '#536275',
-      }));
-  }, [bySource]);
+        bookings: bCount,
+        nights: nTotal,
+        collected: paid,
+        sharePercent: share,
+      };
+    });
+  }, [bySource, operationalReport]);
+
+  const channelTotalCollected = useMemo(
+    () => channelReportItems.reduce((acc, c) => acc + c.collected, 0),
+    [channelReportItems]
+  );
+  const channelTotalBookings = useMemo(
+    () => channelReportItems.reduce((acc, c) => acc + c.bookings, 0),
+    [channelReportItems]
+  );
+  const channelTotalNights = useMemo(
+    () => channelReportItems.reduce((acc, c) => acc + c.nights, 0),
+    [channelReportItems]
+  );
 
   // Export Excel with 3 sheets
   const handleExportExcel = () => {
@@ -1124,6 +1159,20 @@ export const ReportsPage: React.FC = () => {
             />
           </div>
 
+          {/* Executive Section: Unified Statement of Collections by Channel & App (بيان المقبوضات الفعلي الموحد) */}
+          <AppChannelsRevenueReport
+            items={channelReportItems}
+            totalCollected={channelTotalCollected > 0 ? channelTotalCollected : kpis.totalReceived}
+            totalBookings={channelTotalBookings}
+            totalNights={channelTotalNights}
+            periodLabel={
+              isSingleDay
+                ? formatDateHuman(from, lang)
+                : `${formatDateHuman(from, lang)} ➔ ${formatDateHuman(to, lang)}`
+            }
+            periodMode={periodMode}
+          />
+
           {/* Charts Row */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Occupancy Line Chart */}
@@ -1175,69 +1224,6 @@ export const ReportsPage: React.FC = () => {
               </div>
             </Card>
           </div>
-
-          {/* Source Share Pie Chart */}
-          <Card>
-            <h3 className="text-sm font-bold text-navy mb-4">
-              🥧 {t('report.sourceShareChart')}
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-6">
-              <div className="h-64 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={sourcePieData}
-                      dataKey="value"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={80}
-                      innerRadius={45}
-                      paddingAngle={3}
-                    >
-                      {sourcePieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(val: number) => [formatIDR(val), t('report.kpiRevenue')]}
-                    />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* Source Breakdown Table */}
-              <Table>
-                <Thead>
-                  <Tr>
-                    <Th>{t('booking.source')}</Th>
-                    <Th>{t('nav.bookings')}</Th>
-                    <Th>{t('report.roomNights')}</Th>
-                    <Th>{t('report.kpiRevenue')}</Th>
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {bySource.map((s) => (
-                    <Tr key={s.source_code}>
-                      <Td className="flex items-center gap-2">
-                        <span
-                          className="w-2.5 h-2.5 rounded-full inline-block"
-                          style={{ backgroundColor: s.color }}
-                        />
-                        <span className="font-semibold text-xs">{s.label}</span>
-                      </Td>
-                      <Td className="text-xs">{s.bookings}</Td>
-                      <Td className="text-xs">{s.nights}</Td>
-                      <Td className="text-xs font-bold text-navy">
-                        {formatIDR(Number(s.revenue))}
-                      </Td>
-                    </Tr>
-                  ))}
-                </Tbody>
-              </Table>
-            </div>
-          </Card>
 
           {/* Operational & Collection Report (تقرير إشغال وتحصيل الوحدات اليومي / للفترة) */}
           <Card className="border-gold/40 shadow-xs">

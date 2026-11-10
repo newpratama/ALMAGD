@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useI18n } from '../i18n/I18nProvider';
@@ -20,6 +20,7 @@ export const CalendarPage: React.FC = () => {
   const [unitSearch, setUnitSearch] = useState<string>('');
   const [collapsedVillas, setCollapsedVillas] = useState<boolean>(false);
   const [showRibbon, setShowRibbon] = useState<boolean>(true);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
   const today = todayISO();
   const tomorrow = addDaysISO(today, 1);
@@ -107,6 +108,45 @@ export const CalendarPage: React.FC = () => {
     setStartDate(addDaysISO(todayISO(), -2));
   };
 
+  const handleEnterFullscreen = () => {
+    setIsFullscreen(true);
+    setDaysCount(30);
+    setStartDate(todayISO()); // Directly starts with today so today + 29 days ahead are in view!
+    try {
+      if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+    } catch {}
+  };
+
+  const handleExitFullscreen = () => {
+    setIsFullscreen(false);
+    try {
+      if (document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+    } catch {}
+  };
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFullscreen) {
+        handleExitFullscreen();
+      }
+    };
+    const onFsChange = () => {
+      if (!document.fullscreenElement && isFullscreen) {
+        setIsFullscreen(false);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    document.addEventListener('fullscreenchange', onFsChange);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('fullscreenchange', onFsChange);
+    };
+  }, [isFullscreen]);
+
   return (
     <div className="space-y-4 w-full text-start">
       {/* Page Header with New Booking Action */}
@@ -124,15 +164,27 @@ export const CalendarPage: React.FC = () => {
             <span>{showRibbon ? t('calendar.hideRibbon') : t('calendar.showRibbon')}</span>
           </Button>
         </div>
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={() => navigate('/bookings/new')}
-          className="shadow-sm font-semibold flex items-center gap-1.5"
-        >
-          <span>➕</span>
-          <span>{t('calendar.newBookingBtn')}</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleEnterFullscreen}
+            className="shadow-xs font-bold flex items-center gap-1.5 border-navy/30 bg-navy/5 text-navy hover:bg-navy hover:text-white transition-all"
+            title="تكبير صفحة التقويم على كامل الشاشة (30 يوماً مع اليوم)"
+          >
+            <span className="text-sm">⛶</span>
+            <span>تكبير صفحة التقويم (30 يوماً)</span>
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => navigate('/bookings/new')}
+            className="shadow-sm font-semibold flex items-center gap-1.5"
+          >
+            <span>➕</span>
+            <span>{t('calendar.newBookingBtn')}</span>
+          </Button>
+        </div>
       </div>
 
       {/* Reception Live Status Ribbon (5 KPIs) */}
@@ -211,6 +263,7 @@ export const CalendarPage: React.FC = () => {
         onUnitSearchChange={setUnitSearch}
         collapsedVillas={collapsedVillas}
         onToggleCollapseVillas={() => setCollapsedVillas((v) => !v)}
+        onFullscreen={handleEnterFullscreen}
       />
 
       {/* Grid */}
@@ -222,6 +275,146 @@ export const CalendarPage: React.FC = () => {
         collapsedVillas={collapsedVillas}
         maxHeightClass={showRibbon ? 'max-h-[calc(100vh-310px)]' : 'max-h-[calc(100vh-210px)]'}
       />
+
+      {/* Fullscreen Dedicated View (Focus Mode: Calendar only, 30 days starting with Today, full screen height and width) */}
+      {isFullscreen && (
+        <div className="fixed inset-0 z-50 bg-[#F4F6F8] flex flex-col w-screen h-screen overflow-hidden text-start animate-in fade-in duration-200">
+          {/* Fullscreen Header & Compact Navigation Bar */}
+          <div className="bg-navy text-white px-4 py-2.5 flex items-center justify-between gap-3 shadow-md shrink-0">
+            <div className="flex items-center gap-3">
+              <span className="text-xl">📅</span>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-sm sm:text-base font-black text-white">
+                    تقويم الغرف والفلل — عرض ملء الشاشة (30 يوماً)
+                  </h2>
+                  <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-gold text-navy font-mono shadow-xs">
+                    اليوم: {today}
+                  </span>
+                </div>
+                <div className="text-[11px] text-slate-300 hidden sm:flex items-center gap-2 mt-0.5">
+                  <span>متاح اليوم: <b className="text-emerald-400 font-mono">{availableUnits.length}</b></span>
+                  <span>•</span>
+                  <span>مقيم: <b className="text-gold-light font-mono">{inHouseBookings.length}</b></span>
+                  <span>•</span>
+                  <span>دخول: <b className="text-white font-mono">{arrivalsCount}</b></span>
+                  <span>•</span>
+                  <span>مغادرة: <b className="text-slate-300 font-mono">{departuresCount}</b></span>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Navigation Controls in Fullscreen */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={handlePrev}
+                className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
+              >
+                ◀ السابق
+              </button>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => e.target.value && setStartDate(e.target.value)}
+                className="w-32 text-xs py-1 px-2 rounded-lg bg-slate-800 text-white border border-slate-700 font-mono"
+              />
+              <button
+                type="button"
+                onClick={() => setStartDate(todayISO())}
+                className="px-2.5 py-1 text-xs font-bold rounded-lg bg-gold text-navy hover:bg-gold-light"
+              >
+                اليوم
+              </button>
+              <button
+                type="button"
+                onClick={handleNext}
+                className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
+              >
+                التالي ▶
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCollapsedVillas((v) => !v)}
+                className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
+              >
+                <span>🏛️</span>
+                <span>{collapsedVillas ? 'توسيع كل الفلل' : 'طي غرف الفلل'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleExitFullscreen}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-navy hover:bg-stone transition-all shadow-xs ms-2"
+                title="الخروج من ملء الشاشة (Esc)"
+              >
+                <span className="text-sm">⤓</span>
+                <span>تصغير الشاشة (Esc)</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Fullscreen Sub-bar: Filters & Search */}
+          <div className="bg-white px-4 py-2 border-b border-line flex items-center justify-between gap-3 shrink-0 flex-wrap">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <div className="flex items-center gap-1 bg-stone/40 p-0.5 rounded-lg border border-line text-xs font-semibold">
+                <button
+                  type="button"
+                  onClick={() => setUnitFilter('all')}
+                  className={`px-2.5 py-1 rounded-md transition-colors ${unitFilter === 'all' ? 'bg-navy text-white shadow-xs' : 'text-muted hover:text-ink'}`}
+                >
+                  الكل (96)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUnitFilter('villas')}
+                  className={`px-2.5 py-1 rounded-md transition-colors ${unitFilter === 'villas' ? 'bg-navy text-white shadow-xs' : 'text-muted hover:text-ink'}`}
+                >
+                  الفلل فقط (24)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUnitFilter('independent')}
+                  className={`px-2.5 py-1 rounded-md transition-colors ${unitFilter === 'independent' ? 'bg-navy text-white shadow-xs' : 'text-muted hover:text-ink'}`}
+                >
+                  الغرف المستقلة (6)
+                </button>
+              </div>
+
+              <input
+                type="search"
+                value={unitSearch}
+                onChange={(e) => setUnitSearch(e.target.value)}
+                placeholder="بحث برقم الفيلا أو الغرفة أو اسم النزيل..."
+                className="h-8 text-xs px-3 rounded-lg border border-line bg-stone/20 focus:bg-white w-52 sm:w-72"
+              />
+            </div>
+
+            {/* Sources mini legend */}
+            <div className="hidden lg:flex items-center gap-3 text-xs text-muted">
+              <span className="font-bold text-[11px]">المصادر:</span>
+              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-[#2E7D4F]" />Walk-in</span>
+              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-[#0064D2]" />Tiket.com</span>
+              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-[#003580]" />Booking.com</span>
+              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-[#B0287A]" />Agoda</span>
+              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-muted/40" />صيانة</span>
+            </div>
+          </div>
+
+          {/* Fullscreen Calendar Grid Container */}
+          <div className="flex-1 overflow-hidden p-2 sm:p-3 bg-white">
+            <RoomCalendar
+              startDate={startDate}
+              daysCount={30}
+              unitFilter={unitFilter}
+              unitSearch={unitSearch}
+              collapsedVillas={collapsedVillas}
+              maxHeightClass="h-[calc(100vh-125px)] max-h-[calc(100vh-125px)]"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

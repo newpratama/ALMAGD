@@ -94,7 +94,7 @@ export const TodayPage: React.FC = () => {
 
   // 1. Arrivals today
   const { data: arrivals = [], isLoading: loadingArrivals } = useQuery({
-    queryKey: ['today-arrivals', selectedDate],
+    queryKey: ['today', 'arrivals', selectedDate],
     queryFn: async () => {
       if (!supabase) return [];
       const { data, error } = await supabase
@@ -110,7 +110,7 @@ export const TodayPage: React.FC = () => {
 
   // 2. Departures today
   const { data: departures = [], isLoading: loadingDepartures } = useQuery({
-    queryKey: ['today-departures', selectedDate],
+    queryKey: ['today', 'departures', selectedDate],
     queryFn: async () => {
       if (!supabase) return [];
       const { data, error } = await supabase
@@ -126,7 +126,7 @@ export const TodayPage: React.FC = () => {
 
   // 3. In-house bookings (All units occupied today)
   const { data: inHouse = [], isLoading: loadingInHouse } = useQuery({
-    queryKey: ['today-in-house', selectedDate],
+    queryKey: ['today', 'in-house', selectedDate],
     queryFn: async () => {
       if (!supabase) return [];
       const { data, error } = await supabase
@@ -155,7 +155,7 @@ export const TodayPage: React.FC = () => {
   // Occupied rooms count from room_occupancy for active operational rooms only
   const nextDate = addDaysISO(selectedDate, 1);
   const { data: occupiedRoomsCount = 0 } = useQuery({
-    queryKey: ['today-occupancy', selectedDate, Array.from(activeRoomIds).join(',')],
+    queryKey: ['today', 'occupancy', selectedDate, Array.from(activeRoomIds).join(',')],
     queryFn: async () => {
       if (!supabase) return 0;
       const { data, error } = await supabase
@@ -175,7 +175,7 @@ export const TodayPage: React.FC = () => {
 
   // 5. Manager: Payments received today
   const { data: todayPayments = [] } = useQuery<TodayPaymentItem[]>({
-    queryKey: ['today-payments', selectedDate],
+    queryKey: ['today', 'payments', selectedDate],
     queryFn: async () => {
       if (!supabase || !isManager) return [];
       const { data, error } = await supabase
@@ -201,7 +201,7 @@ export const TodayPage: React.FC = () => {
 
   // 6. Outstanding balance (active bookings with balance > 0)
   const { data: unpaidBookings = [] } = useQuery({
-    queryKey: ['today-unpaid'],
+    queryKey: ['today', 'unpaid'],
     queryFn: async () => {
       if (!supabase) return [];
       const { data, error } = await supabase
@@ -218,7 +218,7 @@ export const TodayPage: React.FC = () => {
 
   // 7. Overdue bookings requiring action
   const { data: overdueBookings = [] } = useQuery({
-    queryKey: ['today-overdue', selectedDate],
+    queryKey: ['today', 'overdue', selectedDate],
     queryFn: async () => {
       if (!supabase) return [];
       const { data, error } = await supabase
@@ -242,12 +242,12 @@ export const TodayPage: React.FC = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['today-arrivals'] });
-      queryClient.invalidateQueries({ queryKey: ['today-departures'] });
-      queryClient.invalidateQueries({ queryKey: ['today-in-house'] });
-      queryClient.invalidateQueries({ queryKey: ['today-overdue'] });
-      queryClient.invalidateQueries({ queryKey: ['today-occupancy'] });
-      queryClient.invalidateQueries({ queryKey: ['today-unpaid'] });
+      queryClient.invalidateQueries({ queryKey: ['today', 'arrivals'] });
+      queryClient.invalidateQueries({ queryKey: ['today', 'departures'] });
+      queryClient.invalidateQueries({ queryKey: ['today', 'in-house'] });
+      queryClient.invalidateQueries({ queryKey: ['today', 'overdue'] });
+      queryClient.invalidateQueries({ queryKey: ['today', 'occupancy'] });
+      queryClient.invalidateQueries({ queryKey: ['today', 'unpaid'] });
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
       showToast('success', t('common.success'));
     },

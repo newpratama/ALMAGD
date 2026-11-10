@@ -11,4 +11,17 @@ admin/.env.local*
 admin/node_modules/
 admin/dist/
 admin/supabase/.temp/
+__pycache__/
+*.pyc
+*.db
+screenshots/
+scratch/
+*.xlsx
+*.pdf
+*.pptx
+*.png
+*.jsonl
+check_b00182.js
+excel_bookings*.json
+pdf_*.txt
 

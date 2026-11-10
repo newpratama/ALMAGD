@@ -1,9 +1,8 @@
 @echo off
-title Stop ALMAGD Biometric Sync
+setlocal
 cd /d "%~dp0"
-echo Stopping ALMAGD Biometric Sync service...
-taskkill /f /im pythonw.exe >nul 2>&1
-echo =======================================================
-echo [OK] Sync service stopped successfully.
-echo =======================================================
+title Stop ALMAGD Biometric Sync
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0stop-sync.ps1"
+set "SYNC_STOP_RESULT=%ERRORLEVEL%"
 pause
+exit /b %SYNC_STOP_RESULT%

@@ -1,16 +1,17 @@
 @echo off
-title Test Connection - ALMAGD Biometric Device
+setlocal
 cd /d "%~dp0"
-set "SCRIPT_DIR=%~dp0"
-
-if exist "%SCRIPT_DIR%python\python.exe" (
-    "%SCRIPT_DIR%python\python.exe" "%SCRIPT_DIR%test-device.py"
-) else (
-    python "%SCRIPT_DIR%test-device.py"
+title Test Connection - ALMAGD Biometric Device
+chcp 65001 >nul
+set "PYTHONUTF8=1"
+if not exist "%~dp0python\python.exe" (
+    echo [ERROR] Bundled Python is missing. Extract the complete ZIP first.
+    pause
+    exit /b 1
 )
-
+"%~dp0python\python.exe" "%~dp0test-device.py"
+set "SYNC_TEST_RESULT=%ERRORLEVEL%"
 echo.
-echo =======================================================
 echo Press any key to close.
-echo =======================================================
 pause >nul
+exit /b %SYNC_TEST_RESULT%

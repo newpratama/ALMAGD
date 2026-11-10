@@ -75,3 +75,37 @@ export function parseIDR(s: string): number {
   return isNegative ? -val : val;
 }
 
+/**
+ * Calculates OTA net payout using the standard 17.871% safe deduction tier
+ * (15% commission + 2.35% payment processing fee + 11% VAT on fees).
+ * Returns the exact net payout reaching the bank account.
+ */
+export function calcOtaNetPayout(commissionableAmount: number): {
+  gross: number;
+  commission: number;
+  paymentFee: number;
+  vat: number;
+  totalDeductions: number;
+  deductionRatePct: number;
+  netPayout: number;
+} {
+  const x = Math.max(0, Math.round(commissionableAmount));
+  const gross = Math.round((x * 12) / 11);
+  const commission = Math.round(x * 0.15);
+  const paymentFee = Math.round(gross * 0.0235);
+  const vat = Math.round(commission * 0.11) + Math.round(paymentFee * 0.11);
+  const totalDeductions = commission + paymentFee + vat;
+  const netPayout = gross - totalDeductions;
+  const deductionRatePct = gross > 0 ? Number(((totalDeductions / gross) * 100).toFixed(3)) : 17.871;
+
+  return {
+    gross,
+    commission,
+    paymentFee,
+    vat,
+    totalDeductions,
+    deductionRatePct,
+    netPayout,
+  };
+}
+

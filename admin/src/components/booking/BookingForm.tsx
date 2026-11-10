@@ -6,7 +6,7 @@ import type { Booking, BookingInsert, BookingUpdate } from '../../api/bookings';
 import type { Unit } from '../../api/units';
 import { todayISO, addDaysISO, nightsBetween, formatDateHuman } from '../../lib/dates';
 import { isOtaSource } from '../../lib/bookingHelpers';
-import { formatIDRWithCommas } from '../../lib/money';
+import { formatIDRWithCommas, calcOtaNetPayout } from '../../lib/money';
 import { MoneyInput } from '../ui/MoneyInput';
 import { friendlyError } from '../../lib/errors';
 import { Field } from '../ui/Field';
@@ -66,11 +66,18 @@ export const BookingForm: React.FC<BookingFormProps> = ({
   // Price mode: 'per_night' or 'total'
   const [priceMode, setPriceMode] = useState<'per_night' | 'total'>('total');
   const [pricePerNight, setPricePerNight] = useState<number>(1000000);
+  const [sourceCode, setSourceCode] = useState<string>(initialBooking?.source_code || 'walk_in');
+  const isOtaCommissionable = sourceCode === 'booking' || sourceCode === 'agoda';
+  const [otaEntryMode, setOtaEntryMode] = useState<'commissionable' | 'net'>(
+    isOtaCommissionable ? 'commissionable' : 'net'
+  );
+  const [commissionableInput, setCommissionableInput] = useState<number>(
+    initialBooking ? Number(initialBooking.total_amount) : 1000000
+  );
   const [totalAmount, setTotalAmount] = useState<number>(
     initialBooking ? Number(initialBooking.total_amount) : 1000000
   );
 
-  const [sourceCode, setSourceCode] = useState<string>(initialBooking?.source_code || 'walk_in');
   const [otaReference, setOtaReference] = useState<string>(initialBooking?.ota_reference || '');
   const [dueDate, setDueDate] = useState<string>(initialBooking?.due_date || '');
   const [notes, setNotes] = useState<string>(initialBooking?.notes || '');
@@ -176,6 +183,16 @@ export const BookingForm: React.FC<BookingFormProps> = ({
 
     setIsSubmitting(true);
     try {
+      const otaAuditNote =
+        isOtaCommissionable && otaEntryMode === 'commissionable'
+          ? `[سند ${sourceCode === 'booking' ? 'Booking.com' : 'Agoda'}: المبلغ الاسمي ${formatIDRWithCommas(commissionableInput)} | الصافي للبنك ${formatIDRWithCommas(totalAmount)}]`
+          : null;
+      const finalNotes = notes.trim()
+        ? otaAuditNote
+          ? `${notes.trim()}\n${otaAuditNote}`
+          : notes.trim()
+        : otaAuditNote || null;
+
       if (isEdit && initialBooking) {
         const updatePayload: BookingUpdate = {
           guest_id: guestId,
@@ -188,7 +205,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
           ota_reference: sourceCode !== 'walk_in' ? otaReference.trim() || null : null,
           total_amount: totalAmount,
           due_date: dueDate || null,
-          notes: notes.trim() || null,
+          notes: finalNotes,
         };
         const updated = await updateBookingMutation.mutateAsync({
           id: initialBooking.id,
@@ -208,7 +225,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
           ota_reference: sourceCode !== 'walk_in' ? otaReference.trim() || null : null,
           total_amount: totalAmount,
           due_date: dueDate || null,
-          notes: notes.trim() || null,
+          notes: finalNotes,
           status: 'confirmed',
         };
 
@@ -362,33 +379,24 @@ export const BookingForm: React.FC<BookingFormProps> = ({
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {priceMode === 'per_night' ? (
-              <Field label={t('booking.pricePerNight')} required>
-                <MoneyInput
-                  value={pricePerNight}
-                  onChange={(val) => setPricePerNight(val)}
-                />
-              </Field>
-            ) : (
-              <Field label={t('booking.totalPrice')} required error={errors.totalAmount}>
-                <MoneyInput
-                  value={totalAmount}
-                  error={Boolean(errors.totalAmount)}
-                  onChange={(val) => {
-                    setTotalAmount(val);
-                    if (!isEdit && hasFirstPayment) setPaymentAmount(val);
-                  }}
-                />
-              </Field>
-            )}
-
+          {/* 1. Source and Reference Selection FIRST */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pb-3 border-b border-line">
             <Field label={t('booking.source')} required>
               <Select
                 value={sourceCode}
                 onChange={(e) => {
                   const val = e.target.value;
                   setSourceCode(val);
+                  if (val === 'booking' || val === 'agoda') {
+                    setOtaEntryMode('commissionable');
+                    const calc = calcOtaNetPayout(commissionableInput);
+                    setTotalAmount(calc.netPayout);
+                    if (!isEdit && hasFirstPayment) setPaymentAmount(calc.netPayout);
+                  } else {
+                    setOtaEntryMode('net');
+                    setTotalAmount(commissionableInput);
+                    if (!isEdit && hasFirstPayment) setPaymentAmount(commissionableInput);
+                  }
                   if (!isEdit) {
                     if (isOtaSource(val)) {
                       setPaymentMethod('app');
@@ -411,11 +419,11 @@ export const BookingForm: React.FC<BookingFormProps> = ({
               </Select>
             </Field>
 
-            {sourceCode !== 'walk_in' && (
+            {sourceCode !== 'walk_in' ? (
               <Field label={t('booking.otaReference')}>
                 <Input
                   type="text"
-                  placeholder="e.g. AG-123456"
+                  placeholder="e.g. AG-123456 / 5727100486"
                   value={otaReference}
                   onChange={(e) => {
                     const val = e.target.value;
@@ -426,30 +434,209 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                   }}
                 />
               </Field>
+            ) : (
+              <Field label={t('booking.dueDate')}>
+                <Input
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                />
+              </Field>
             )}
 
-            <Field label={t('booking.dueDate')}>
-              <Input
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-              />
-            </Field>
+            {sourceCode !== 'walk_in' && (
+              <Field label={t('booking.dueDate')}>
+                <Input
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                />
+              </Field>
+            )}
           </div>
 
+          {/* 2. OTA Commission Mode Toggle (Booking.com & Agoda) */}
+          {(sourceCode === 'booking' || sourceCode === 'agoda') && (
+            <div className="bg-white border border-line rounded-xl p-4 shadow-2xs space-y-3.5 text-start">
+              <div className="flex items-center justify-between flex-wrap gap-2 pb-2.5 border-b border-line/60">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">🏛️</span>
+                  <span className="text-xs sm:text-sm font-bold text-navy">
+                    احتساب صافي حجز {sourceCode === 'booking' ? 'Booking.com' : 'Agoda'}
+                  </span>
+                </div>
+                <span className="text-[11px] font-semibold bg-stone/50 text-muted border border-line px-2.5 py-0.5 rounded-full font-mono">
+                  نسبة الاستقطاع: 17.871% (عمولة 15% + رسوم دفع 2.35% + ضريبة 11%)
+                </span>
+              </div>
+
+              {/* Segmented Mode Selector */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOtaEntryMode('commissionable');
+                    const calc = calcOtaNetPayout(commissionableInput);
+                    setTotalAmount(calc.netPayout);
+                    if (!isEdit && hasFirstPayment) setPaymentAmount(calc.netPayout);
+                  }}
+                  className={`p-3 rounded-lg border text-start transition-all flex items-start gap-2.5 ${
+                    otaEntryMode === 'commissionable'
+                      ? 'border-navy bg-navy/5 text-navy font-bold ring-1 ring-navy/20 shadow-2xs'
+                      : 'border-line bg-white text-muted hover:text-ink hover:bg-stone/30'
+                  }`}
+                >
+                  <span className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
+                    otaEntryMode === 'commissionable' ? 'border-navy bg-navy text-white' : 'border-slate-300'
+                  }`}>
+                    {otaEntryMode === 'commissionable' && <span className="w-1.5 h-1.5 bg-white rounded-full" />}
+                  </span>
+                  <div>
+                    <span className="block font-bold text-xs sm:text-sm text-ink">
+                      المبلغ الخاضع للعمولة من السند (تلقائي) ✔
+                    </span>
+                    <span className="block text-[11px] text-muted mt-0.5 font-normal">
+                      يكتب الموظف المبلغ من السند ويحسب النظام فوراً الصافي للبنك
+                    </span>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOtaEntryMode('net');
+                    setTotalAmount(commissionableInput);
+                    if (!isEdit && hasFirstPayment) setPaymentAmount(commissionableInput);
+                  }}
+                  className={`p-3 rounded-lg border text-start transition-all flex items-start gap-2.5 ${
+                    otaEntryMode === 'net'
+                      ? 'border-navy bg-navy/5 text-navy font-bold ring-1 ring-navy/20 shadow-2xs'
+                      : 'border-line bg-white text-muted hover:text-ink hover:bg-stone/30'
+                  }`}
+                >
+                  <span className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
+                    otaEntryMode === 'net' ? 'border-navy bg-navy text-white' : 'border-slate-300'
+                  }`}>
+                    {otaEntryMode === 'net' && <span className="w-1.5 h-1.5 bg-white rounded-full" />}
+                  </span>
+                  <div>
+                    <span className="block font-bold text-xs sm:text-sm text-ink">
+                      المبلغ الصافي الذي وصل للبنك مباشرة
+                    </span>
+                    <span className="block text-[11px] text-muted mt-0.5 font-normal">
+                      يُعتمد المبلغ المدخل كصافي بنكي 100% دون أي اقتطاع
+                    </span>
+                  </div>
+                </button>
+              </div>
+
+              {/* Financial Calculation Details */}
+              {otaEntryMode === 'commissionable' && (
+                <div className="bg-stone/25 border border-line/70 rounded-xl p-3.5 text-xs space-y-2">
+                  <div className="flex items-center justify-between text-muted">
+                    <span>المبلغ المسجل من السند (السعر من الفاتورة):</span>
+                    <span className="font-mono font-bold text-ink">
+                      {formatIDRWithCommas(commissionableInput)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-muted">
+                    <span>السعر الإجمالي للضيف قبل الخصم (Gross):</span>
+                    <span className="font-mono text-muted">
+                      {formatIDRWithCommas(calcOtaNetPayout(commissionableInput).gross)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-rose-600 font-medium">
+                    <span>إجمالي اقتطاع المنصة (عمولة 15% + رسوم دفع 2.35% + ضريبة 11%):</span>
+                    <span className="font-mono font-bold">
+                      -{formatIDRWithCommas(calcOtaNetPayout(commissionableInput).totalDeductions)}
+                    </span>
+                  </div>
+
+                  <div className="pt-2 border-t border-line/70 flex items-center justify-between flex-wrap gap-2">
+                    <span className="font-bold text-navy flex items-center gap-1.5">
+                      <span>🟢</span>
+                      <span>صافي المبلغ الذي سوف يدخل إلى الحساب البنكي:</span>
+                    </span>
+                    <span className="font-mono text-sm sm:text-base font-black text-emerald-800 bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-200 shadow-2xs">
+                      {formatIDRWithCommas(calcOtaNetPayout(commissionableInput).netPayout)}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 3. Amount Inputs */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {priceMode === 'per_night' ? (
+              <Field label={t('booking.pricePerNight')} required>
+                <MoneyInput
+                  value={pricePerNight}
+                  onChange={(val) => setPricePerNight(val)}
+                />
+              </Field>
+            ) : (
+              <Field
+                label={
+                  isOtaCommissionable && otaEntryMode === 'commissionable'
+                    ? 'المبلغ المسجل في سند الحجز (المبلغ الخاضع للعمولة)'
+                    : t('booking.totalPrice')
+                }
+                required
+                error={errors.totalAmount}
+              >
+                <MoneyInput
+                  value={
+                    isOtaCommissionable && otaEntryMode === 'commissionable'
+                      ? commissionableInput
+                      : totalAmount
+                  }
+                  error={Boolean(errors.totalAmount)}
+                  onChange={(val) => {
+                    setCommissionableInput(val);
+                    if (isOtaCommissionable && otaEntryMode === 'commissionable') {
+                      const calc = calcOtaNetPayout(val);
+                      setTotalAmount(calc.netPayout);
+                      if (!isEdit && hasFirstPayment) setPaymentAmount(calc.netPayout);
+                    } else {
+                      setTotalAmount(val);
+                      if (!isEdit && hasFirstPayment) setPaymentAmount(val);
+                    }
+                  }}
+                />
+              </Field>
+            )}
+          </div>
+
+          {/* 4. Price & Bank Payout Summary Bar */}
           <div className="p-3.5 bg-stone/40 border border-line/60 rounded-xl flex flex-wrap items-center justify-between gap-3">
             <div className="space-y-0.5">
-              <span className="text-xs text-muted block">{t('booking.totalPrice')}</span>
-              {priceMode === 'per_night' && nights > 0 && (
+              <span className="text-xs text-muted block">
+                {isOtaCommissionable && otaEntryMode === 'commissionable'
+                  ? 'المبلغ الصافي المسجل في النظام لحساب البنك:'
+                  : t('booking.totalPrice')}
+              </span>
+              {isOtaCommissionable && otaEntryMode === 'commissionable' ? (
+                <span className="text-[11px] text-muted block">
+                  (من أصل {formatIDRWithCommas(commissionableInput)} بالسند بعد خصم -{formatIDRWithCommas(calcOtaNetPayout(commissionableInput).totalDeductions)} عمولة وضرائب)
+                </span>
+              ) : priceMode === 'per_night' && nights > 0 ? (
                 <span className="text-[11px] text-muted">
                   {nights} {t('booking.nightsCount', { count: nights })} × {formatIDRWithCommas(pricePerNight)}
                 </span>
-              )}
+              ) : null}
             </div>
             <div className="text-end">
-              <span className="font-bold text-navy text-lg tracking-tight block">
+              <span className="font-mono font-black text-emerald-800 text-lg sm:text-xl tracking-tight block">
                 {formatIDRWithCommas(totalAmount)}
               </span>
+              {isOtaCommissionable && otaEntryMode === 'commissionable' && (
+                <span className="text-[10px] text-emerald-700 font-bold block">
+                  🟢 الصافي الفعلي المقيد في البنك
+                </span>
+              )}
             </div>
           </div>
 
@@ -510,7 +697,16 @@ export const BookingForm: React.FC<BookingFormProps> = ({
           {hasFirstPayment ? (
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Field label={isOta ? 'المبلغ المعتمد من المنصة' : t('booking.amount')} required>
+                <Field
+                  label={
+                    isOtaCommissionable && otaEntryMode === 'commissionable'
+                      ? 'المبلغ الصافي الذي سيدخل الحساب البنكي'
+                      : isOta
+                      ? 'المبلغ المعتمد من المنصة'
+                      : t('booking.amount')
+                  }
+                  required
+                >
                   <MoneyInput
                     value={paymentAmount}
                     onChange={(val) => setPaymentAmount(val)}
@@ -523,6 +719,22 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                         : undefined
                     }
                   />
+                  {isOtaCommissionable && otaEntryMode === 'commissionable' && (
+                    <div className="mt-2 p-2.5 bg-emerald-50 border border-emerald-300 rounded-lg text-xs text-emerald-950 space-y-1">
+                      <div className="flex items-center justify-between font-bold">
+                        <span className="flex items-center gap-1.5">
+                          <span>🟢</span>
+                          <span>صافي المبلغ المحول للبنك:</span>
+                        </span>
+                        <span className="font-mono text-sm text-emerald-800">
+                          {formatIDRWithCommas(paymentAmount)}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-emerald-700 font-medium">
+                        (من أصل {formatIDRWithCommas(commissionableInput)} بالسند بعد استقطاع عمولة المنصة والضرائب)
+                      </div>
+                    </div>
+                  )}
                 </Field>
 
                 <Field label={t('booking.method')} required>
