@@ -36,24 +36,97 @@ export function parseDateRange(r: string): { start: ISODate; end: ISODate } {
 }
 
 /**
- * Format an ISO date string into consistent numeric YYYY-MM-DD digits without
- * localized weekday or month letters.
+ * Validate that (year, month, day) form a real calendar date and return ISO YYYY-MM-DD.
+ */
+function buildValidatedISO(year: number, month: number, day: number): ISODate | null {
+  if (year < 1900 || year > 2100 || month < 1 || month > 12 || day < 1 || day > 31) {
+    return null;
+  }
+  const dt = new Date(Date.UTC(year, month - 1, day));
+  if (
+    dt.getUTCFullYear() !== year ||
+    dt.getUTCMonth() !== month - 1 ||
+    dt.getUTCDate() !== day
+  ) {
+    return null;
+  }
+  return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+/**
+ * Format an ISO date string into consistent numeric DD/MM/YYYY digits
+ * (day on left, month in middle, year at end) without localized letters.
  */
 export function formatDateHuman(d: ISODate, _locale?: 'id' | 'ar'): string {
   if (!d) return '—';
   const parsed = parseISO(d);
   if (Number.isNaN(parsed.getTime())) return d;
-  return format(parsed, 'yyyy-MM-dd');
+  return format(parsed, 'dd/MM/yyyy');
 }
 
 /**
- * Format an ISO timestamp into consistent numeric YYYY-MM-DD HH:mm digits.
+ * Format an ISO date string into compact DD/MM numeric digits for charts and stay badges.
+ */
+export function formatShortDateNumeric(d: ISODate): string {
+  if (!d) return '—';
+  const parsed = parseISO(d);
+  if (Number.isNaN(parsed.getTime())) return d;
+  return format(parsed, 'dd/MM');
+}
+
+/**
+ * Format an ISO timestamp into consistent numeric DD/MM/YYYY HH:mm digits.
  */
 export function formatDateTimeNumeric(iso: string): string {
   if (!iso) return '—';
   const parsed = new Date(iso);
   if (Number.isNaN(parsed.getTime())) return iso;
-  return format(parsed, 'yyyy-MM-dd HH:mm');
+  return format(parsed, 'dd/MM/yyyy HH:mm');
+}
+
+/**
+ * Convert an ISO date ('YYYY-MM-DD') to display format ('DD/MM/YYYY') for date inputs.
+ */
+export function formatDateInputValue(d: ISODate): string {
+  if (!d) return '';
+  const match = d.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (match) {
+    const valid = buildValidatedISO(Number(match[1]), Number(match[2]), Number(match[3]));
+    if (valid) return `${match[3]}/${match[2]}/${match[1]}`;
+  }
+  const parsed = parseISO(d);
+  if (Number.isNaN(parsed.getTime())) return '';
+  return format(parsed, 'dd/MM/yyyy');
+}
+
+/**
+ * Parse a user-typed date string ('DD/MM/YYYY', 'DD-MM-YYYY', 'DD.MM.YYYY',
+ * 8-digit 'DDMMYYYY', or ISO 'YYYY-MM-DD') into canonical ISO 'YYYY-MM-DD'.
+ */
+export function parseDateInputToISO(raw: string): ISODate | null {
+  const trimmed = raw.trim().replace(/\s+/g, '');
+  if (!trimmed) return null;
+
+  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) {
+    return buildValidatedISO(Number(isoMatch[1]), Number(isoMatch[2]), Number(isoMatch[3]));
+  }
+
+  const dmyMatch = trimmed.match(/^(\d{1,2})[/.\-](\d{1,2})[/.\-](\d{4})$/);
+  if (dmyMatch) {
+    return buildValidatedISO(Number(dmyMatch[3]), Number(dmyMatch[2]), Number(dmyMatch[1]));
+  }
+
+  const compactMatch = trimmed.match(/^(\d{2})(\d{2})(\d{4})$/);
+  if (compactMatch) {
+    return buildValidatedISO(
+      Number(compactMatch[3]),
+      Number(compactMatch[2]),
+      Number(compactMatch[1])
+    );
+  }
+
+  return null;
 }
 
 export function excelSerialToISO(serial: number): ISODate {

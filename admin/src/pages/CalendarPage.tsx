@@ -8,6 +8,7 @@ import { useAvailableUnits } from '../api/units';
 import { CalendarToolbar, type CalendarUnitFilter } from '../components/calendar/CalendarToolbar';
 import { RoomCalendar } from '../components/calendar/RoomCalendar';
 import { Button } from '../components/ui/Button';
+import { DateInput } from '../components/ui/DateInput';
 
 export const CalendarPage: React.FC = () => {
   const { t } = useI18n();
@@ -313,11 +314,11 @@ export const CalendarPage: React.FC = () => {
               >
                 ◀ السابق
               </button>
-              <input
-                type="date"
+              <DateInput
                 value={startDate}
                 onChange={(e) => e.target.value && setStartDate(e.target.value)}
-                className="w-32 text-xs py-1 px-2 rounded-lg bg-slate-800 text-white border border-slate-700 font-mono"
+                iconClassName="text-slate-300 hover:text-white"
+                className="w-36 text-xs py-1 px-2 rounded-lg bg-slate-800 text-white border border-slate-700 font-mono"
               />
               <button
                 type="button"

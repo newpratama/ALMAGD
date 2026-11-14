@@ -66,6 +66,14 @@ html[dir="ltr"] {
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
 }
 
+html[dir="rtl"] .date-input-ltr {
+  text-align: right;
+}
+
+html[dir="ltr"] .date-input-ltr {
+  text-align: left;
+}
+
 .print-only {
   display: none !important;
 }

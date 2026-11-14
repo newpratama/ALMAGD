@@ -12,6 +12,7 @@ import { friendlyError } from '../lib/errors';
 import { isOtaSource, formatLeadTime } from '../lib/bookingHelpers';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { DateInput } from '../components/ui/DateInput';
 import { Card } from '../components/ui/Card';
 import { StatCard } from '../components/ui/StatCard';
 import { Table, Thead, Tbody, Tr, Th, Td } from '../components/ui/Table';
@@ -1380,11 +1381,11 @@ export const TodayPage: React.FC = () => {
                     >
                       ◀
                     </button>
-                    <input
-                      type="date"
+                    <DateInput
+                      unstyled
                       value={selectedDate}
                       onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
-                      className="text-xs font-mono font-semibold text-navy bg-transparent border-0 focus:ring-0 p-0.5 cursor-pointer"
+                      className="w-[7.75rem] text-xs font-mono font-semibold text-navy p-0.5"
                       title={t('payment.selectDay')}
                     />
                     <button

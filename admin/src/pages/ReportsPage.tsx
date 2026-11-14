@@ -18,7 +18,7 @@ import { useI18n } from '../i18n/I18nProvider';
 import { supabase } from '../lib/supabase';
 import { useBookingSources, type BookingOverview } from '../api/bookings';
 import { useReportDaily, useReportBySource, useReportChannelCollections } from '../api/reports';
-import { todayISO, addDaysISO, formatDateHuman, nightsBetween } from '../lib/dates';
+import { todayISO, addDaysISO, formatDateHuman, formatShortDateNumeric, nightsBetween } from '../lib/dates';
 import { formatIDR, formatIDRWithCommas } from '../lib/money';
 import {
   chunkIds,
@@ -828,7 +828,7 @@ export const ReportsPage: React.FC = () => {
       const cap = Math.max(0, d.rooms_total - d.rooms_blocked);
       const pct = cap > 0 ? Math.round((d.rooms_occupied / cap) * 100) : 0;
       return {
-        date: d.day.slice(5),
+        date: formatShortDateNumeric(d.day),
         occupancy: pct,
         occupied: d.rooms_occupied,
       };
@@ -843,7 +843,7 @@ export const ReportsPage: React.FC = () => {
       }));
     }
     return daily.map((d) => ({
-      label: d.day.slice(5),
+      label: formatShortDateNumeric(d.day),
       revenue: Number(d.revenue || 0),
     }));
   }, [daily, monthlyData]);
@@ -1692,7 +1692,9 @@ export const ReportsPage: React.FC = () => {
                             <td className={`${tdClass} text-muted font-mono`}>
                               {r.checkIn ? (
                                 <span>
-                                  {r.checkIn.slice(5)} ➔ {r.checkOut.slice(5)}
+                                  <span dir="ltr" className="inline-block whitespace-nowrap">
+                                    {formatShortDateNumeric(r.checkIn)} ➔ {formatShortDateNumeric(r.checkOut)}
+                                  </span>
                                   <span className="ms-1 text-navy font-sans font-bold text-[11px]">
                                     ({t('booking.nightsCount', { count: r.nights })})
                                   </span>

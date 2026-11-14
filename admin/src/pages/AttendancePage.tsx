@@ -4,7 +4,6 @@ import {
   Fingerprint,
   RefreshCw,
   Settings as SettingsIcon,
-  Calendar as CalendarIcon,
   Search,
   Download,
   PlusCircle,
@@ -42,6 +41,7 @@ import { Card } from '../components/ui/Card';
 import { StatCard } from '../components/ui/StatCard';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { DateInput } from '../components/ui/DateInput';
 import { Badge } from '../components/ui/Badge';
 import { Table, Thead, Tbody, Tr, Th, Td } from '../components/ui/Table';
 import { Modal } from '../components/ui/Modal';
@@ -464,12 +464,12 @@ export const AttendancePage: React.FC = () => {
             </button>
 
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-line bg-white shadow-inner">
-              <CalendarIcon className="w-4 h-4 text-gold" />
-              <input
-                type="date"
+              <DateInput
+                unstyled
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="text-xs sm:text-sm font-semibold text-ink bg-transparent focus:outline-none cursor-pointer"
+                iconClassName="text-gold hover:text-navy"
+                className="w-32 text-xs sm:text-sm font-semibold text-ink"
               />
             </div>
 

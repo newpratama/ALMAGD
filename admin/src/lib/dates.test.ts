@@ -4,8 +4,11 @@ import {
   eachNight,
   excelSerialToISO,
   formatDateHuman,
+  formatDateInputValue,
   formatDateTimeNumeric,
+  formatShortDateNumeric,
   nightsBetween,
+  parseDateInputToISO,
   parseDateRange,
   todayISO,
 } from './dates';
@@ -45,20 +48,42 @@ describe('dates utils', () => {
     });
   });
 
-  it('formatDateHuman formats dates consistently as numeric YYYY-MM-DD without letters', () => {
+  it('formatDateHuman formats dates consistently as numeric DD/MM/YYYY without letters', () => {
     const idFormatted = formatDateHuman('2026-10-24', 'id');
-    expect(idFormatted).toBe('2026-10-24');
+    expect(idFormatted).toBe('24/10/2026');
 
     const arFormatted = formatDateHuman('2026-10-24', 'ar');
-    expect(arFormatted).toBe('2026-10-24');
+    expect(arFormatted).toBe('24/10/2026');
     expect(arFormatted).not.toMatch(/[أ-يa-zA-Z]/);
     expect(formatDateHuman('', 'ar')).toBe('—');
   });
 
-  it('formatDateTimeNumeric formats timestamps consistently in numeric YYYY-MM-DD HH:mm', () => {
+  it('formatShortDateNumeric formats compact dates as DD/MM', () => {
+    expect(formatShortDateNumeric('2026-11-14')).toBe('14/11');
+    expect(formatShortDateNumeric('')).toBe('—');
+  });
+
+  it('formatDateTimeNumeric formats timestamps consistently in numeric DD/MM/YYYY HH:mm', () => {
     const formatted = formatDateTimeNumeric('2026-10-24T09:15:00Z');
-    expect(formatted).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/);
+    expect(formatted).toMatch(/^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/);
     expect(formatDateTimeNumeric('')).toBe('—');
+  });
+
+  it('formatDateInputValue and parseDateInputToISO convert between ISO and DD/MM/YYYY', () => {
+    expect(formatDateInputValue('2026-11-14')).toBe('14/11/2026');
+    expect(formatDateInputValue('')).toBe('');
+
+    expect(parseDateInputToISO('14/11/2026')).toBe('2026-11-14');
+    expect(parseDateInputToISO('14 / 11 / 2026')).toBe('2026-11-14');
+    expect(parseDateInputToISO('14-11-2026')).toBe('2026-11-14');
+    expect(parseDateInputToISO('5/4/2026')).toBe('2026-04-05');
+    expect(parseDateInputToISO('14112026')).toBe('2026-11-14');
+    expect(parseDateInputToISO('2026-11-14')).toBe('2026-11-14');
+
+    // Invalid calendar dates must be rejected
+    expect(parseDateInputToISO('31/02/2026')).toBeNull();
+    expect(parseDateInputToISO('14/13/2026')).toBeNull();
+    expect(parseDateInputToISO('14/11')).toBeNull();
   });
 
   it('excelSerialToISO converts Excel serial number to ISO date', () => {

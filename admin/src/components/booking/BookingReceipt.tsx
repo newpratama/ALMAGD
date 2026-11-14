@@ -43,7 +43,7 @@ export const BookingReceipt: React.FC<BookingReceiptProps> = ({
   const isPaidInFull = balance <= 0 && paidAmount > 0;
   const isRefundDue = balance < 0 || (booking.status === 'cancelled' && paidAmount > 0);
 
-  const issueDate = todayISO();
+  const issueDate = formatDateHuman(todayISO(), lang);
 
   const localizedSource =
     (booking.source_code && t(`source.${booking.source_code}`)) ||

@@ -581,7 +581,7 @@ export const BookingDetailPage: React.FC = () => {
                         </span>
                         <span className="text-muted">{log.table_name}</span>
                       </div>
-                      <span className="font-mono text-muted text-[11px]">
+                      <span dir="ltr" className="font-mono text-muted text-[11px] inline-block">
                         {formatDateTimeNumeric(log.at)}
                       </span>
                     </div>
