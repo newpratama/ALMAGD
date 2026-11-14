@@ -164,7 +164,10 @@ export const NationalitySelect: React.FC<NationalitySelectProps> = ({
 
         {/* Searchable Dropdown Menu */}
         {isOpen && (
-          <div className="absolute z-30 mt-1 w-full rounded-xl border border-line bg-white shadow-xl overflow-hidden">
+          <div
+            data-nationality-dropdown="true"
+            className="absolute z-30 mt-1 w-full rounded-xl border border-line bg-white shadow-xl overflow-hidden"
+          >
             {/* Search Input */}
             <div className="p-2 border-b border-line bg-mist/50">
               <input

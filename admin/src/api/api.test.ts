@@ -2,7 +2,7 @@ import { describe, expect, it, beforeAll, afterAll } from 'vitest';
 import { supabase } from '../lib/supabase';
 import { fetchUnits, fetchAvailableUnits } from './units';
 import { fetchBookingSources } from './bookings';
-import { searchGuests } from './guests';
+import { createGuest, deleteGuest, searchGuests } from './guests';
 
 describe('API functions integration with Supabase local', () => {
   beforeAll(async () => {
@@ -48,5 +48,25 @@ describe('API functions integration with Supabase local', () => {
   it('searchGuests returns array without error', async () => {
     const results = await searchGuests('');
     expect(Array.isArray(results)).toBe(true);
+  });
+
+  it('createGuest inserts a new guest cleanly and deleteGuest cleans up', async () => {
+    const created = await createGuest({
+      full_name: '__vitest_temp_guest__',
+      phone: null,
+      email: null,
+      nationality: 'Saudi Arabia',
+      id_type: 'passport',
+      id_number: null,
+      tags: [],
+      notes: null,
+    });
+    try {
+      expect(created.id).toBeTruthy();
+      expect(created.full_name).toBe('__vitest_temp_guest__');
+      expect(created.nationality).toBe('Saudi Arabia');
+    } finally {
+      await deleteGuest(created.id);
+    }
   });
 });

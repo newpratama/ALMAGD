@@ -16,6 +16,8 @@ export interface GuestFormProps {
   onSubmit: (data: GuestInsert | GuestUpdate) => Promise<void>;
   loading?: boolean;
   onCancel?: () => void;
+  /** Set true when rendered inside another <form> (e.g. BookingForm) to avoid nested <form> elements. */
+  embedded?: boolean;
 }
 
 export const GuestForm: React.FC<GuestFormProps> = ({
@@ -23,10 +25,12 @@ export const GuestForm: React.FC<GuestFormProps> = ({
   onSubmit,
   loading = false,
   onCancel,
+  embedded = false,
 }) => {
   const { t } = useI18n();
   const { showToast } = useToast();
-  const formRef = useRef<HTMLFormElement>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const formRef = useRef<HTMLFormElement | null>(null);
 
   const [fullName, setFullName] = useState(initialData?.full_name || '');
   const [phone, setPhone] = useState(initialData?.phone || '');
@@ -42,13 +46,17 @@ export const GuestForm: React.FC<GuestFormProps> = ({
   const [isBlacklist, setIsBlacklist] = useState(initialData?.tags?.includes('blacklist') || false);
 
   const [nameError, setNameError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const isBusy = loading || isSubmitting;
+
+  const submitGuest = async () => {
+    if (isBusy) return;
     if (!fullName.trim()) {
       setNameError(t('validation.fieldRequired', { field: t('guest.fullName') }));
       showToast('error', formatMissingFieldsMessage([t('guest.fullName')], t));
-      requestAnimationFrame(() => focusFirstInvalidField(formRef.current));
+      const rootEl = embedded ? containerRef.current : formRef.current;
+      requestAnimationFrame(() => focusFirstInvalidField(rootEl));
       return;
     }
     setNameError(null);
@@ -68,11 +76,40 @@ export const GuestForm: React.FC<GuestFormProps> = ({
       notes: notes.trim() || null,
     };
 
-    await onSubmit(payload);
+    setIsSubmitting(true);
+    try {
+      await onSubmit(payload);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  return (
-    <form ref={formRef} onSubmit={handleSubmit} className="space-y-5 text-start" noValidate>
+  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    await submitGuest();
+  };
+
+  const handleEmbeddedKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'Enter') return;
+    const target = e.target as HTMLElement | null;
+    if (!target) return;
+    if (
+      target.tagName === 'TEXTAREA' ||
+      target.tagName === 'BUTTON' ||
+      target.closest('[data-nationality-dropdown="true"]')
+    ) {
+      return;
+    }
+    if (target.tagName === 'INPUT') {
+      e.preventDefault();
+      e.stopPropagation();
+      void submitGuest();
+    }
+  };
+
+  const fieldsContent = (
+    <>
       {isBlacklist && (
         <div className="p-3 bg-danger/10 border border-danger/30 rounded-lg text-danger text-sm font-semibold flex items-center gap-2">
           <span>⚠️</span>
@@ -180,14 +217,37 @@ export const GuestForm: React.FC<GuestFormProps> = ({
 
       <div className="flex justify-end gap-3 pt-2">
         {onCancel && (
-          <Button variant="secondary" onClick={onCancel} disabled={loading}>
+          <Button type="button" variant="secondary" onClick={onCancel} disabled={isBusy}>
             {t('common.cancel')}
           </Button>
         )}
-        <Button type="submit" variant="primary" loading={loading}>
+        <Button
+          type={embedded ? 'button' : 'submit'}
+          variant="primary"
+          loading={isBusy}
+          onClick={embedded ? () => void submitGuest() : undefined}
+        >
           {t('common.save')}
         </Button>
       </div>
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <div
+        ref={containerRef}
+        onKeyDown={handleEmbeddedKeyDown}
+        className="space-y-5 text-start"
+      >
+        {fieldsContent}
+      </div>
+    );
+  }
+
+  return (
+    <form ref={formRef} onSubmit={handleFormSubmit} className="space-y-5 text-start" noValidate>
+      {fieldsContent}
     </form>
   );
 };

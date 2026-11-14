@@ -30,6 +30,7 @@ export const GuestPicker: React.FC<GuestPickerProps> = ({
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [recentGuest, setRecentGuest] = useState<Guest | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -39,7 +40,10 @@ export const GuestPicker: React.FC<GuestPickerProps> = ({
   }, [searchInput]);
 
   // Fetch selected guest details if we only have an ID
-  const { data: selectedGuest } = useGuest(selectedGuestId || undefined);
+  const { data: fetchedGuest } = useGuest(selectedGuestId || undefined);
+  const selectedGuest =
+    fetchedGuest ||
+    (recentGuest && recentGuest.id === selectedGuestId ? recentGuest : undefined);
 
   // Search results
   const { data: searchResults = [], isLoading: isSearching } = useGuests(debouncedSearch);
@@ -53,6 +57,7 @@ export const GuestPicker: React.FC<GuestPickerProps> = ({
         ...data,
         full_name: data.full_name || '',
       });
+      setRecentGuest(created);
       showToast('success', t('guest.guestSaved'));
       onSelectGuest(created);
       setIsCreatingNew(false);
@@ -101,7 +106,10 @@ export const GuestPicker: React.FC<GuestPickerProps> = ({
               type="button"
               variant="secondary"
               size="sm"
-              onClick={() => onSelectGuest(null)}
+              onClick={() => {
+                setRecentGuest(null);
+                onSelectGuest(null);
+              }}
             >
               {t('common.change')}
             </Button>
@@ -129,6 +137,7 @@ export const GuestPicker: React.FC<GuestPickerProps> = ({
             {t('guest.newGuest')}
           </h4>
           <GuestForm
+            embedded
             onSubmit={handleCreateSubmit}
             loading={createGuestMutation.isPending}
             onCancel={() => setIsCreatingNew(false)}
@@ -186,6 +195,7 @@ export const GuestPicker: React.FC<GuestPickerProps> = ({
                       key={guest.id}
                       type="button"
                       onClick={() => {
+                        setRecentGuest(guest);
                         onSelectGuest(guest);
                         setIsDropdownOpen(false);
                         setSearchInput('');

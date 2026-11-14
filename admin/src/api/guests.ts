@@ -166,7 +166,8 @@ export function useCreateGuest() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createGuest,
-    onSuccess: () => {
+    onSuccess: (created) => {
+      queryClient.setQueryData(['guest', created.id], created);
       queryClient.invalidateQueries({ queryKey: ['guests'] });
       broadcastDataChange('guests');
     },
