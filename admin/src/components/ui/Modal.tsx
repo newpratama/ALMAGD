@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useOptionalI18n } from '../../i18n/I18nProvider';
 
 export interface ModalProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ export const Modal: React.FC<ModalProps> = ({
   footer,
   maxWidth = 'md',
 }) => {
+  const i18n = useOptionalI18n();
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -61,7 +63,7 @@ export const Modal: React.FC<ModalProps> = ({
                 type="button"
                 onClick={onClose}
                 className="text-muted hover:text-ink text-lg leading-none p-1 rounded-md"
-                aria-label="Close"
+                aria-label={i18n?.t('common.close') || 'Close'}
               >
                 ✕
               </button>

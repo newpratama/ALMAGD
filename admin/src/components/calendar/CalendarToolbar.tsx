@@ -119,10 +119,10 @@ export const CalendarToolbar: React.FC<CalendarToolbarProps> = ({
               type="button"
               onClick={onFullscreen}
               className="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-navy text-white hover:bg-navy-light transition flex items-center gap-1.5 shadow-xs"
-              title="تكبير صفحة التقويم على كامل الشاشة (30 يوماً مع اليوم)"
+              title={t('calendar.fullscreenTooltip')}
             >
               <span className="text-sm">⛶</span>
-              <span>تكبير الشاشة (30 يوماً)</span>
+              <span>{t('calendar.fullscreenBtn')}</span>
             </button>
           )}
         </div>

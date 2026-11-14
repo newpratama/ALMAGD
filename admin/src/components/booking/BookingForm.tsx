@@ -479,7 +479,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
               <Field label={t('booking.otaReference')}>
                 <Input
                   type="text"
-                  placeholder="e.g. AG-123456 / 5727100486"
+                  placeholder={t('booking.otaReferencePlaceholder')}
                   value={otaReference}
                   onChange={(e) => {
                     const val = e.target.value;
@@ -518,11 +518,13 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                 <div className="flex items-center gap-2">
                   <span className="text-base">🏛️</span>
                   <span className="text-xs sm:text-sm font-bold text-navy">
-                    احتساب صافي حجز {sourceCode === 'booking' ? 'Booking.com' : 'Agoda'}
+                    {t('booking.otaNetCalcTitle', {
+                      source: sourceCode === 'booking' ? 'Booking.com' : 'Agoda',
+                    })}
                   </span>
                 </div>
                 <span className="text-[11px] font-semibold bg-stone/50 text-muted border border-line px-2.5 py-0.5 rounded-full font-mono">
-                  نسبة الاستقطاع: 17.871% (عمولة 15% + رسوم دفع 2.35% + ضريبة 11%)
+                  {t('booking.otaDeductionRateBadge')}
                 </span>
               </div>
 
@@ -549,10 +551,10 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                   </span>
                   <div>
                     <span className="block font-bold text-xs sm:text-sm text-ink">
-                      المبلغ الخاضع للعمولة من السند (تلقائي) ✔
+                      {t('booking.otaCommissionableModeTitle')}
                     </span>
                     <span className="block text-[11px] text-muted mt-0.5 font-normal">
-                      يكتب الموظف المبلغ من السند ويحسب النظام فوراً الصافي للبنك
+                      {t('booking.otaCommissionableModeDesc')}
                     </span>
                   </div>
                 </button>
@@ -577,10 +579,10 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                   </span>
                   <div>
                     <span className="block font-bold text-xs sm:text-sm text-ink">
-                      المبلغ الصافي الذي وصل للبنك مباشرة
+                      {t('booking.otaNetModeTitle')}
                     </span>
                     <span className="block text-[11px] text-muted mt-0.5 font-normal">
-                      يُعتمد المبلغ المدخل كصافي بنكي 100% دون أي اقتطاع
+                      {t('booking.otaNetModeDesc')}
                     </span>
                   </div>
                 </button>
@@ -590,21 +592,21 @@ export const BookingForm: React.FC<BookingFormProps> = ({
               {otaEntryMode === 'commissionable' && (
                 <div className="bg-stone/25 border border-line/70 rounded-xl p-3.5 text-xs space-y-2">
                   <div className="flex items-center justify-between text-muted">
-                    <span>المبلغ المسجل من السند (السعر من الفاتورة):</span>
+                    <span>{t('booking.otaVoucherAmountLabel')}</span>
                     <span className="font-mono font-bold text-ink">
                       {formatIDRWithCommas(commissionableInput)}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between text-muted">
-                    <span>السعر الإجمالي للضيف قبل الخصم (Gross):</span>
+                    <span>{t('booking.otaGrossGuestPriceLabel')}</span>
                     <span className="font-mono text-muted">
                       {formatIDRWithCommas(calcOtaNetPayout(commissionableInput).gross)}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between text-rose-600 font-medium">
-                    <span>إجمالي اقتطاع المنصة (عمولة 15% + رسوم دفع 2.35% + ضريبة 11%):</span>
+                    <span>{t('booking.otaTotalDeductionsLabel')}</span>
                     <span className="font-mono font-bold">
                       -{formatIDRWithCommas(calcOtaNetPayout(commissionableInput).totalDeductions)}
                     </span>
@@ -613,7 +615,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                   <div className="pt-2 border-t border-line/70 flex items-center justify-between flex-wrap gap-2">
                     <span className="font-bold text-navy flex items-center gap-1.5">
                       <span>🟢</span>
-                      <span>صافي المبلغ الذي سوف يدخل إلى الحساب البنكي:</span>
+                      <span>{t('booking.otaNetBankReceivableLabel')}</span>
                     </span>
                     <span className="font-mono text-sm sm:text-base font-black text-emerald-800 bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-200 shadow-2xs">
                       {formatIDRWithCommas(calcOtaNetPayout(commissionableInput).netPayout)}
@@ -641,7 +643,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
               <Field
                 label={
                   isOtaCommissionable && otaEntryMode === 'commissionable'
-                    ? 'المبلغ المسجل في سند الحجز (المبلغ الخاضع للعمولة)'
+                    ? t('booking.otaVoucherFieldLabel')
                     : t('booking.totalPrice')
                 }
                 required
@@ -676,12 +678,15 @@ export const BookingForm: React.FC<BookingFormProps> = ({
             <div className="space-y-0.5">
               <span className="text-xs text-muted block">
                 {isOtaCommissionable && otaEntryMode === 'commissionable'
-                  ? 'المبلغ الصافي المسجل في النظام لحساب البنك:'
+                  ? t('booking.otaNetSummaryLabel')
                   : t('booking.totalPrice')}
               </span>
               {isOtaCommissionable && otaEntryMode === 'commissionable' ? (
                 <span className="text-[11px] text-muted block">
-                  (من أصل {formatIDRWithCommas(commissionableInput)} بالسند بعد خصم -{formatIDRWithCommas(calcOtaNetPayout(commissionableInput).totalDeductions)} عمولة وضرائب)
+                  {t('booking.otaDeductionSummaryNote', {
+                    voucher: formatIDRWithCommas(commissionableInput),
+                    deduction: formatIDRWithCommas(calcOtaNetPayout(commissionableInput).totalDeductions),
+                  })}
                 </span>
               ) : priceMode === 'per_night' && nights > 0 ? (
                 <span className="text-[11px] text-muted">
@@ -695,7 +700,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
               </span>
               {isOtaCommissionable && otaEntryMode === 'commissionable' && (
                 <span className="text-[10px] text-emerald-700 font-bold block">
-                  🟢 الصافي الفعلي المقيد في البنك
+                  {t('booking.otaActualBankNetBadge')}
                 </span>
               )}
             </div>
@@ -761,9 +766,9 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                 <Field
                   label={
                     isOtaCommissionable && otaEntryMode === 'commissionable'
-                      ? 'المبلغ الصافي الذي سيدخل الحساب البنكي'
+                      ? t('booking.otaFirstPayBankNetLabel')
                       : isOta
-                      ? 'المبلغ المعتمد من المنصة'
+                      ? t('booking.otaFirstPayApprovedLabel')
                       : t('booking.amount')
                   }
                   required
@@ -785,14 +790,16 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                       <div className="flex items-center justify-between font-bold">
                         <span className="flex items-center gap-1.5">
                           <span>🟢</span>
-                          <span>صافي المبلغ المحول للبنك:</span>
+                          <span>{t('booking.otaNetBankTransferredLabel')}</span>
                         </span>
                         <span className="font-mono text-sm text-emerald-800">
                           {formatIDRWithCommas(paymentAmount)}
                         </span>
                       </div>
                       <div className="text-[11px] text-emerald-700 font-medium">
-                        (من أصل {formatIDRWithCommas(commissionableInput)} بالسند بعد استقطاع عمولة المنصة والضرائب)
+                        {t('booking.otaDeductionGenericNote', {
+                          voucher: formatIDRWithCommas(commissionableInput),
+                        })}
                       </div>
                     </div>
                   )}
@@ -821,11 +828,11 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                 <Field
                   label={
                     paymentMethod === 'app'
-                      ? `${t('booking.reference')} (سند دفع التطبيق / OTA Ref)`
+                      ? `${t('booking.reference')} (${t('booking.refAppHint')})`
                       : paymentMethod === 'transfer'
-                      ? `${t('booking.reference')} (رقم إشعار الحوالة البنكية)`
+                      ? `${t('booking.reference')} (${t('booking.refTransferHint')})`
                       : paymentMethod === 'cash'
-                      ? `${t('booking.reference')} (رقم سند القبض النقدي)`
+                      ? `${t('booking.reference')} (${t('booking.refCashHint')})`
                       : t('booking.reference')
                   }
                 >
@@ -833,12 +840,12 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                     type="text"
                     placeholder={
                       paymentMethod === 'cash'
-                        ? 'رقم سند القبض (مثال: CSH-01)'
+                        ? t('booking.refCashPlaceholder')
                         : paymentMethod === 'app'
-                        ? (otaReference || 'رقم سند الدفع من التطبيق OTA Ref')
+                        ? otaReference || t('booking.refAppPlaceholder')
                         : paymentMethod === 'transfer'
-                        ? 'رقم العملية من إشعار التحويل البنكي (مثل: TRF-BCA-849201)'
-                        : 'Receipt # / Ref'
+                        ? t('booking.refTransferPlaceholder')
+                        : t('booking.refDefaultPlaceholder')
                     }
                     value={paymentRef}
                     onChange={(e) => setPaymentRef(e.target.value)}
@@ -849,7 +856,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
               {/* Live remaining balance calculation badge */}
               <div className="p-3 rounded-lg border text-xs flex items-center justify-between gap-2 bg-stone/30 border-line/60">
                 <span className="font-medium text-ink">
-                  {isOta ? 'المتبقي للتحصيل من النزيل عند الاستقبال:' : `${t('booking.remainingBalance')}:`}
+                  {isOta ? t('booking.otaRemainingAtReception') : `${t('booking.remainingBalance')}:`}
                 </span>
                 <span
                   className={`font-bold px-2 py-0.5 rounded text-xs ${
@@ -859,7 +866,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                   }`}
                 >
                   {totalAmount - paymentAmount <= 0
-                    ? isOta ? 'Rp 0 (مسدد عبر التطبيق بالكامل)' : t('booking.fullyPaidBadge')
+                    ? isOta ? t('booking.otaFullyPaidViaApp') : t('booking.fullyPaidBadge')
                     : `${formatIDRWithCommas(Math.max(0, totalAmount - paymentAmount))}`}
                 </span>
               </div>

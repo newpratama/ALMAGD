@@ -202,11 +202,11 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         <Field
           label={
             method === 'app'
-              ? `${t('booking.reference')} (سند دفع التطبيق / OTA Ref)`
+              ? `${t('booking.reference')} (${t('booking.refAppHint')})`
               : method === 'transfer'
-              ? `${t('booking.reference')} (رقم إشعار الحوالة البنكية)`
+              ? `${t('booking.reference')} (${t('booking.refTransferHint')})`
               : method === 'cash'
-              ? `${t('booking.reference')} (رقم سند القبض النقدي)`
+              ? `${t('booking.reference')} (${t('booking.refCashHint')})`
               : t('booking.reference')
           }
         >
@@ -214,12 +214,12 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             type="text"
             placeholder={
               method === 'cash'
-                ? (bookingCode ? `مثال: CSH-${bookingCode} أو رقم السند الورقي` : 'رقم سند الكاش CSH-01')
+                ? (bookingCode ? t('booking.refCashPlaceholderWithCode', { prefix: `CSH-${bookingCode}` }) : t('booking.refCashPlaceholder'))
                 : method === 'app'
-                ? (defaultOtaRef || 'رقم سند الدفع من التطبيق OTA Ref')
+                ? (defaultOtaRef || t('booking.refAppPlaceholder'))
                 : method === 'transfer'
-                ? 'رقم العملية من إشعار التحويل البنكي (مثل: TRF-BCA-849201)'
-                : 'رقم الإيصال أو المرجع المالي'
+                ? t('booking.refTransferPlaceholder')
+                : t('booking.refDefaultPlaceholder')
             }
             value={reference}
             onChange={(e) => setReference(e.target.value)}

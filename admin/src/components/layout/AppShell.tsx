@@ -85,7 +85,9 @@ export const AppShell: React.FC = () => {
                 alt="New Pratama"
                 className="h-7 w-7 rounded-full bg-white object-contain ring-1 ring-gold/50 p-0.5"
               />
-              <span className="font-bold text-navy text-xs hidden sm:inline">نيو براتاما</span>
+              <span className="font-bold text-navy text-xs hidden sm:inline">
+                {isAr ? 'نيو براتاما' : 'New Pratama'}
+              </span>
             </div>
           </div>
 

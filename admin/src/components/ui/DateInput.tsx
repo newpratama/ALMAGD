@@ -1,6 +1,7 @@
 import React, { useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { Calendar } from 'lucide-react';
 import { formatDateInputValue, parseDateInputToISO } from '../../lib/dates';
+import { useOptionalI18n } from '../../i18n/I18nProvider';
 
 export interface DateInputProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {
@@ -41,6 +42,7 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
     },
     forwardedRef
   ) => {
+    const i18n = useOptionalI18n();
     const textInputRef = useRef<HTMLInputElement>(null);
     const pickerInputRef = useRef<HTMLInputElement>(null);
     const isFocusedRef = useRef(false);
@@ -236,7 +238,7 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
               type="button"
               tabIndex={-1}
               disabled={disabled}
-              aria-label={title || 'Open calendar'}
+              aria-label={title || i18n?.t('common.openCalendar') || 'Open calendar'}
               title={title}
               onClick={openCalendarPicker}
               className={`flex items-center justify-center p-0.5 text-muted hover:text-navy focus:outline-none disabled:opacity-40 cursor-pointer ${iconClassName}`}

@@ -168,7 +168,7 @@ export const UnitPicker: React.FC<UnitPickerProps> = ({
 
           {/* Independent rooms without villa parent */}
           {independentRooms.length > 0 && (
-            <optgroup label="Kamar Lepas">
+            <optgroup label={t('today.independentRoomBadge')}>
               {independentRooms.map((room) => {
                 const roomRate = room.default_rate ? ` — ${formatIDRWithCommas(Number(room.default_rate))}` : '';
                 return (

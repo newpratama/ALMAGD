@@ -143,12 +143,14 @@ export const SettingsPage: React.FC = () => {
     const extraDetails: string[] = [];
 
     if (!sourceLabelInput.trim()) {
-      missingFields.push('Label');
-      nextErrors.label = t('validation.fieldRequired', { field: 'Label' });
+      const labelField = t('settings.sourceLabelField');
+      missingFields.push(labelField);
+      nextErrors.label = t('validation.fieldRequired', { field: labelField });
     }
     if (!sourceColorInput.trim()) {
-      missingFields.push('Color (Hex)');
-      nextErrors.color = t('validation.fieldRequired', { field: 'Color (Hex)' });
+      const colorField = t('settings.sourceColorField');
+      missingFields.push(colorField);
+      nextErrors.color = t('validation.fieldRequired', { field: colorField });
     } else if (!isValidHexColor(sourceColorInput)) {
       extraDetails.push(t('validation.invalidColorHex'));
       nextErrors.color = t('validation.invalidColorHex');
@@ -374,7 +376,7 @@ export const SettingsPage: React.FC = () => {
                 <Tr>
                   <Th>No</Th>
                   <Th>{t('booking.unit')}</Th>
-                  <Th>Jenis</Th>
+                  <Th>{t('settings.unitKindCol')}</Th>
                   <Th>{t('settings.defaultRate')}</Th>
                   <Th>{t('settings.active')}</Th>
                   <Th>{t('common.actions')}</Th>
@@ -445,9 +447,9 @@ export const SettingsPage: React.FC = () => {
             <Table>
               <Thead>
                 <Tr>
-                  <Th>Kode</Th>
-                  <Th>Nama Sumber</Th>
-                  <Th>Warna</Th>
+                  <Th>{t('settings.sourceCodeCol')}</Th>
+                  <Th>{t('settings.sourceNameCol')}</Th>
+                  <Th>{t('settings.sourceColorCol')}</Th>
                   <Th>{t('settings.active')}</Th>
                   <Th>{t('common.actions')}</Th>
                 </Tr>
@@ -685,7 +687,7 @@ export const SettingsPage: React.FC = () => {
         title={`${t('common.edit')} ${editingSource?.code || ''}`}
       >
         <div className="space-y-4">
-          <Field label="Label" required error={sourceErrors.label}>
+          <Field label={t('settings.sourceLabelField')} required error={sourceErrors.label}>
             <Input
               type="text"
               error={Boolean(sourceErrors.label)}
@@ -696,7 +698,7 @@ export const SettingsPage: React.FC = () => {
               }}
             />
           </Field>
-          <Field label="Color (Hex)" required error={sourceErrors.color}>
+          <Field label={t('settings.sourceColorField')} required error={sourceErrors.color}>
             <div className="flex items-center gap-3">
               <input
                 type="color"
@@ -784,7 +786,7 @@ export const SettingsPage: React.FC = () => {
             <Input
               type="text"
               error={Boolean(blockErrors.reason)}
-              placeholder="e.g. Renovasi AC / Cat Ulang"
+              placeholder={t('settings.blockReasonPlaceholder')}
               value={blockReason}
               onChange={(e) => {
                 setBlockReason(e.target.value);
@@ -824,7 +826,7 @@ export const SettingsPage: React.FC = () => {
             <Input
               type="text"
               error={Boolean(staffErrors.uuid)}
-              placeholder="auth.users UUID (e.g. 11111111-1111-...)"
+              placeholder={t('settings.staffUuidPlaceholder')}
               value={staffUuid}
               onChange={(e) => {
                 setStaffUuid(e.target.value);
@@ -837,7 +839,7 @@ export const SettingsPage: React.FC = () => {
             <Input
               type="text"
               error={Boolean(staffErrors.name)}
-              placeholder="Nama Lengkap Staf"
+              placeholder={t('settings.staffNamePlaceholder')}
               value={staffName}
               onChange={(e) => {
                 setStaffName(e.target.value);

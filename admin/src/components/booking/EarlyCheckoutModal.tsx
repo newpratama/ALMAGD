@@ -284,7 +284,7 @@ export const EarlyCheckoutModal: React.FC<EarlyCheckoutModalProps> = ({
                       setCustomTotal(Number(e.target.value));
                       setCustomTotalError(null);
                     }}
-                    placeholder="e.g. 500000"
+                    placeholder={t('scenarios.amountExamplePlaceholder')}
                   />
                   {customTotalError && <p className="text-xs text-danger font-medium">{customTotalError}</p>}
                 </div>

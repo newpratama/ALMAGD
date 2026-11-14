@@ -171,10 +171,10 @@ export const CalendarPage: React.FC = () => {
             size="sm"
             onClick={handleEnterFullscreen}
             className="shadow-xs font-bold flex items-center gap-1.5 border-navy/30 bg-navy/5 text-navy hover:bg-navy hover:text-white transition-all"
-            title="تكبير صفحة التقويم على كامل الشاشة (30 يوماً مع اليوم)"
+            title={t('calendar.fullscreenTooltip')}
           >
             <span className="text-sm">⛶</span>
-            <span>تكبير صفحة التقويم (30 يوماً)</span>
+            <span>{t('calendar.fullscreenPageBtn')}</span>
           </Button>
           <Button
             variant="primary"
@@ -287,20 +287,20 @@ export const CalendarPage: React.FC = () => {
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <h2 className="text-sm sm:text-base font-black text-white">
-                    تقويم الغرف والفلل — عرض ملء الشاشة (30 يوماً)
+                    {t('calendar.fullscreenTitle')}
                   </h2>
                   <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-gold text-navy font-mono shadow-xs">
-                    اليوم: {today}
+                    {t('calendar.todayBtn')}: {today}
                   </span>
                 </div>
                 <div className="text-[11px] text-slate-300 hidden sm:flex items-center gap-2 mt-0.5">
-                  <span>متاح اليوم: <b className="text-emerald-400 font-mono">{availableUnits.length}</b></span>
+                  <span>{t('calendar.fsAvailableToday')} <b className="text-emerald-400 font-mono">{availableUnits.length}</b></span>
                   <span>•</span>
-                  <span>مقيم: <b className="text-gold-light font-mono">{inHouseBookings.length}</b></span>
+                  <span>{t('calendar.fsInHouse')} <b className="text-gold-light font-mono">{inHouseBookings.length}</b></span>
                   <span>•</span>
-                  <span>دخول: <b className="text-white font-mono">{arrivalsCount}</b></span>
+                  <span>{t('calendar.fsArrivals')} <b className="text-white font-mono">{arrivalsCount}</b></span>
                   <span>•</span>
-                  <span>مغادرة: <b className="text-slate-300 font-mono">{departuresCount}</b></span>
+                  <span>{t('calendar.fsDepartures')} <b className="text-slate-300 font-mono">{departuresCount}</b></span>
                 </div>
               </div>
             </div>
@@ -312,7 +312,7 @@ export const CalendarPage: React.FC = () => {
                 onClick={handlePrev}
                 className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
               >
-                ◀ السابق
+                ◀ {t('calendar.prev')}
               </button>
               <DateInput
                 value={startDate}
@@ -325,14 +325,14 @@ export const CalendarPage: React.FC = () => {
                 onClick={() => setStartDate(todayISO())}
                 className="px-2.5 py-1 text-xs font-bold rounded-lg bg-gold text-navy hover:bg-gold-light"
               >
-                اليوم
+                {t('calendar.todayBtn')}
               </button>
               <button
                 type="button"
                 onClick={handleNext}
                 className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
               >
-                التالي ▶
+                {t('calendar.next')} ▶
               </button>
 
               <button
@@ -341,17 +341,17 @@ export const CalendarPage: React.FC = () => {
                 className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
               >
                 <span>🏛️</span>
-                <span>{collapsedVillas ? 'توسيع كل الفلل' : 'طي غرف الفلل'}</span>
+                <span>{collapsedVillas ? t('calendar.expandVillas') : t('calendar.collapseVillas')}</span>
               </button>
 
               <button
                 type="button"
                 onClick={handleExitFullscreen}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-navy hover:bg-stone transition-all shadow-xs ms-2"
-                title="الخروج من ملء الشاشة (Esc)"
+                title={t('calendar.exitFullscreenTooltip')}
               >
                 <span className="text-sm">⤓</span>
-                <span>تصغير الشاشة (Esc)</span>
+                <span>{t('calendar.exitFullscreen')}</span>
               </button>
             </div>
           </div>
@@ -365,21 +365,21 @@ export const CalendarPage: React.FC = () => {
                   onClick={() => setUnitFilter('all')}
                   className={`px-2.5 py-1 rounded-md transition-colors ${unitFilter === 'all' ? 'bg-navy text-white shadow-xs' : 'text-muted hover:text-ink'}`}
                 >
-                  الكل (96)
+                  {t('calendar.filterAll')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setUnitFilter('villas')}
                   className={`px-2.5 py-1 rounded-md transition-colors ${unitFilter === 'villas' ? 'bg-navy text-white shadow-xs' : 'text-muted hover:text-ink'}`}
                 >
-                  الفلل فقط (24)
+                  {t('calendar.filterVillas')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setUnitFilter('independent')}
                   className={`px-2.5 py-1 rounded-md transition-colors ${unitFilter === 'independent' ? 'bg-navy text-white shadow-xs' : 'text-muted hover:text-ink'}`}
                 >
-                  الغرف المستقلة (6)
+                  {t('calendar.filterIndependent')}
                 </button>
               </div>
 
@@ -387,19 +387,19 @@ export const CalendarPage: React.FC = () => {
                 type="search"
                 value={unitSearch}
                 onChange={(e) => setUnitSearch(e.target.value)}
-                placeholder="بحث برقم الفيلا أو الغرفة أو اسم النزيل..."
+                placeholder={t('calendar.searchUnit')}
                 className="h-8 text-xs px-3 rounded-lg border border-line bg-stone/20 focus:bg-white w-52 sm:w-72"
               />
             </div>
 
             {/* Sources mini legend */}
             <div className="hidden lg:flex items-center gap-3 text-xs text-muted">
-              <span className="font-bold text-[11px]">المصادر:</span>
+              <span className="font-bold text-[11px]">{t('calendar.sourcesLabel')}</span>
               <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-[#2E7D4F]" />Walk-in</span>
               <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-[#0064D2]" />Tiket.com</span>
               <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-[#003580]" />Booking.com</span>
               <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-[#B0287A]" />Agoda</span>
-              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-muted/40" />صيانة</span>
+              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-muted/40" />{t('calendar.maintenanceLabel')}</span>
             </div>
           </div>
 

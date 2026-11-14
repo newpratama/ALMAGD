@@ -100,7 +100,7 @@ export const BookingReceipt: React.FC<BookingReceiptProps> = ({
             </div>
             {booking.ota_reference && (
               <div className="mt-1 text-xs font-mono font-bold text-navy bg-gold/15 border border-gold/40 px-2.5 py-0.5 rounded-md inline-block">
-                {localizedSource || 'سند التطبيق'}: {booking.ota_reference}
+                {localizedSource || t('booking.receiptAppDefaultSubtitle')}: {booking.ota_reference}
               </div>
             )}
             <div className="text-[10.5px] text-muted mt-1">

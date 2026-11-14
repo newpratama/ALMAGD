@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import { useOptionalI18n } from '../../i18n/I18nProvider';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -16,6 +17,7 @@ interface ToastContextValue {
 const ToastContext = createContext<ToastContextValue | null>(null);
 
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const i18n = useOptionalI18n();
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
   const removeToast = useCallback((id: string) => {
@@ -55,7 +57,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 type="button"
                 onClick={() => removeToast(toast.id)}
                 className="ms-3 text-white/80 hover:text-white p-1"
-                aria-label="Dismiss"
+                aria-label={i18n?.t('common.dismiss') || 'Dismiss'}
               >
                 ✕
               </button>

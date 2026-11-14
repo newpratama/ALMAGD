@@ -571,7 +571,7 @@ export const TransferUnitModal: React.FC<TransferUnitModalProps> = ({
 
               {/* Independent rooms without villa parent (Kamar Lepas) */}
               {independentRooms.length > 0 && (
-                <optgroup label="Kamar Lepas">
+                <optgroup label={t('today.independentRoomBadge')}>
                   {independentRooms.map((room) => {
                     const roomRate = room.default_rate
                       ? ` · ${formatIDR(Number(room.default_rate))}/${t('booking.nights')}`
@@ -681,7 +681,7 @@ export const TransferUnitModal: React.FC<TransferUnitModalProps> = ({
                     min={0}
                     value={customPrice || ''}
                     onChange={(e) => setCustomPrice(Number(e.target.value))}
-                    placeholder="Total price"
+                    placeholder={t('scenarios.totalPricePlaceholder')}
                   />
                   {priceDiff !== 0 && (
                     <div

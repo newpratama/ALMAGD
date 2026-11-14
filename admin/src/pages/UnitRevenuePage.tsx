@@ -386,7 +386,10 @@ export const UnitRevenuePage: React.FC = () => {
     const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
     XLSX.utils.book_append_sheet(wb, ws, 'Unit Revenue');
 
-    const fileName = `تقرير_دخل_الوحدات_${from}_إلى_${to}.xlsx`;
+    const fileName =
+      lang === 'ar'
+        ? `تقرير_دخل_الوحدات_${from}_إلى_${to}.xlsx`
+        : `Laporan_Pendapatan_Unit_${from}_sd_${to}.xlsx`;
     XLSX.writeFile(wb, fileName);
   };
 

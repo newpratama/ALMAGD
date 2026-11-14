@@ -230,6 +230,7 @@ export const AttendancePage: React.FC = () => {
         date: selectedDate,
         token: settings.apiToken,
         cloudId: settings.cloudId || settings.deviceSn,
+        lang,
       });
 
       if (!res.savedRemotely) {
@@ -612,8 +613,22 @@ export const AttendancePage: React.FC = () => {
                             {row.staffName.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <div className="font-bold text-ink leading-tight">{row.staffName}</div>
-                            <span className="text-[11px] text-muted font-medium">{row.role}</span>
+                            <div className="font-bold text-ink leading-tight">
+                              {!isAr && row.staffName === `موظف #${row.pin}`
+                                ? `Karyawan #${row.pin}`
+                                : row.staffName}
+                            </div>
+                            <span className="text-[11px] text-muted font-medium">
+                              {row.role === 'موظف بصمة'
+                                ? isAr
+                                  ? 'موظف بصمة'
+                                  : 'Karyawan Mesin'
+                                : row.role === 'موظف'
+                                ? isAr
+                                  ? 'موظف'
+                                  : 'Karyawan'
+                                : row.role}
+                            </span>
                           </div>
                         </div>
                       </Td>
@@ -985,7 +1000,9 @@ export const AttendancePage: React.FC = () => {
                           )}
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted font-medium">PIN #</span>
+                          <span className="text-xs text-muted font-medium">
+                            {isAr ? 'رقم البصمة #' : 'PIN #'}
+                          </span>
                           <input
                             type="text"
                             value={currentPin}
@@ -1079,7 +1096,7 @@ export const AttendancePage: React.FC = () => {
                         type="text"
                         value={newEmpPin}
                         onChange={(e) => setNewEmpPin(e.target.value)}
-                        placeholder="PIN #"
+                        placeholder={t('attendance.pinPlaceholder')}
                         className="w-full px-2 py-1.5 text-center font-mono font-bold rounded border border-line bg-white text-xs focus:outline-none focus:ring-1.5 focus:ring-gold"
                       />
                     </div>

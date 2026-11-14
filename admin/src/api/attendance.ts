@@ -359,8 +359,10 @@ export function useAttendanceLogs(date: string, settings?: AttendanceSettings) {
 export async function syncFingerspotCloud(
   date: string,
   token?: string,
-  cloudId?: string
+  cloudId?: string,
+  lang: 'id' | 'ar' = 'ar'
 ): Promise<{ added: number; total: number; message: string; newPunchesCount: number; savedRemotely: boolean }> {
+  const isAr = lang === 'ar';
   const settings = await fetchAttendanceSettings();
   const apiToken = token || settings.apiToken || 'HENLQ0WVR7KVHXC3';
   const cId = cloudId || settings.cloudId || '616230026280266';
@@ -399,7 +401,13 @@ export async function syncFingerspotCloud(
   }> = resJson.data || [];
 
   if (rawData.length === 0) {
-    return { added: 0, total: 0, newPunchesCount: 0, savedRemotely: true, message: 'لا توجد حركات بصمة مسجلة في هذا اليوم' };
+    return {
+      added: 0,
+      total: 0,
+      newPunchesCount: 0,
+      savedRemotely: true,
+      message: isAr ? 'لا توجد حركات بصمة مسجلة في هذا اليوم' : 'Tidak ada data scan pada tanggal ini',
+    };
   }
 
   // Convert to AttendanceRecords (normalised so de-duplication keys always match)
@@ -446,7 +454,9 @@ export async function syncFingerspotCloud(
       added: addedLocal,
       total: rawData.length,
       newPunchesCount: addedLocal,
-      message: `تم استلام ${rawData.length} حركة لكن تعذّر الحفظ في النظام${remoteError ? ` (${remoteError})` : ''} — حُفظت مؤقتاً على هذا الجهاز فقط`,
+      message: isAr
+        ? `تم استلام ${rawData.length} حركة لكن تعذّر الحفظ في النظام${remoteError ? ` (${remoteError})` : ''} — حُفظت مؤقتاً على هذا الجهاز فقط`
+        : `Menerima ${rawData.length} scan, namun gagal disimpan ke server${remoteError ? ` (${remoteError})` : ''} — disimpan sementara di perangkat ini saja`,
     };
   }
   return {
@@ -454,15 +464,17 @@ export async function syncFingerspotCloud(
     added: insertedCount,
     total: rawData.length,
     newPunchesCount: insertedCount,
-    message: `تم سحب ${rawData.length} حركة بصمة من السحابة وحفظها بنجاح!`,
+    message: isAr
+      ? `تم سحب ${rawData.length} حركة بصمة من السحابة وحفظها بنجاح!`
+      : `Berhasil mengunduh dan menyimpan ${rawData.length} scan dari cloud!`,
   };
 }
 
 export function useSyncFingerspotCloud() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ date, token, cloudId }: { date: string; token: string; cloudId: string }) =>
-      syncFingerspotCloud(date, token, cloudId),
+    mutationFn: ({ date, token, cloudId, lang }: { date: string; token: string; cloudId: string; lang?: 'id' | 'ar' }) =>
+      syncFingerspotCloud(date, token, cloudId, lang),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['attendance-logs'] });
     },

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useOptionalI18n } from '../../i18n/I18nProvider';
 
 export interface SpinnerProps {
   size?: 'sm' | 'md' | 'lg';
@@ -6,6 +7,7 @@ export interface SpinnerProps {
 }
 
 export const Spinner: React.FC<SpinnerProps> = ({ size = 'md', className = '' }) => {
+  const i18n = useOptionalI18n();
   const sizeClass = {
     sm: 'w-4 h-4 border-2',
     md: 'w-8 h-8 border-3',
@@ -16,7 +18,7 @@ export const Spinner: React.FC<SpinnerProps> = ({ size = 'md', className = '' })
     <div
       className={`inline-block border-navy border-t-transparent rounded-full animate-spin ${sizeClass} ${className}`}
       role="status"
-      aria-label="Loading"
+      aria-label={i18n?.t('common.loading') || 'Loading'}
     />
   );
 };

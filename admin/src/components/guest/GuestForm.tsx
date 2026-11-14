@@ -173,7 +173,7 @@ export const GuestForm: React.FC<GuestFormProps> = ({
           <Input
             value={idNumber}
             onChange={(e) => setIdNumber(e.target.value)}
-            placeholder="16-digit / Passport number"
+            placeholder={t('guest.idNumberPlaceholder')}
           />
         </Field>
       </div>

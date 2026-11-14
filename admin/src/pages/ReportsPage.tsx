@@ -947,7 +947,7 @@ export const ReportsPage: React.FC = () => {
       const occRows = operationalReport.rows.map((r) => {
         const payDetails =
           r.payments
-            .map((p) => `دفعة رقم ${p.seq} (${p.method}: ${Number(p.amount).toLocaleString()})`)
+            .map((p) => `${t('report.paymentNumberLabel', { num: p.seq })} (${p.method}: ${Number(p.amount).toLocaleString()})`)
             .join(' + ') || '—';
 
         return {
@@ -968,7 +968,7 @@ export const ReportsPage: React.FC = () => {
               : r.stayType === 'stayover'
               ? 'نزيل مقيم / قديم (Stayover)'
               : 'خارج إقامة اليوم (Outside Stay)',
-          'Nama Tamu / اسم الضيف': r.isVacant ? '—' : r.guestName + (r.isOutsideStay ? ' (دفعة خارج إقامة اليوم)' : ''),
+          'Nama Tamu / اسم الضيف': r.isVacant ? '—' : r.guestName + (r.isOutsideStay ? ` (${t('report.outsideStayLabel')})` : ''),
           'Telepon / الهاتف': r.guestPhone || '—',
           'Kode Booking / رمز الحجز': r.bookingCode || '—',
           'Sumber / المصدر': r.sourceCode || '—',
@@ -1848,9 +1848,9 @@ export const ReportsPage: React.FC = () => {
                     <Th>{t('report.occupiedRooms')}</Th>
                     <Th>{t('report.kpiOccupancy')}</Th>
                     <Th>{t('report.kpiRevenue')}</Th>
-                    <Th>Cash</Th>
-                    <Th>Transfer</Th>
-                    <Th>App / Other</Th>
+                    <Th>{t('paymentMethod.cash')}</Th>
+                    <Th>{t('paymentMethod.transfer')}</Th>
+                    <Th>{t('report.appAndOther')}</Th>
                     <Th>{t('report.totalReceived')}</Th>
                     <Th>{t('report.adr')}</Th>
                   </Tr>
@@ -1928,9 +1928,9 @@ export const ReportsPage: React.FC = () => {
                 <Tr>
                   <Th>{t('report.month')}</Th>
                   <Th>{t('report.kpiRevenue')}</Th>
-                  <Th>Cash</Th>
-                  <Th>Transfer</Th>
-                  <Th>App / Other</Th>
+                  <Th>{t('paymentMethod.cash')}</Th>
+                  <Th>{t('paymentMethod.transfer')}</Th>
+                  <Th>{t('report.appAndOther')}</Th>
                   <Th>{t('report.roomNights')}</Th>
                   <Th>{t('report.kpiOccupancy')}</Th>
                 </Tr>

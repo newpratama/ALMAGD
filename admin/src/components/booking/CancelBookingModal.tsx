@@ -200,7 +200,7 @@ export const CancelBookingModal: React.FC<CancelBookingModalProps> = ({
         {paidAmount === 0 ? (
           <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 leading-relaxed text-xs space-y-1">
             <div className="font-bold text-sm">⚠️ {t('scenarios.freeCancelNoPaymentMsg')}</div>
-            <div>سيتم إلغاء الحجز وتفريغ الوحدة فوراً ليصبح متاحاً للنزلاء الآخرين دون أي أثر مالي.</div>
+            <div>{t('scenarios.freeCancelInstantReleaseDesc')}</div>
           </div>
         ) : (
           <div className="space-y-4">
@@ -255,7 +255,7 @@ export const CancelBookingModal: React.FC<CancelBookingModalProps> = ({
                     {policy === 'full_refund' && (
                       <div className="mt-3 pt-3 border-t border-emerald-200/80 space-y-2">
                         <div className="text-xs font-bold text-emerald-950">
-                          طريقة تسوية الدفعات في النظام:
+                          {t('scenarios.refundSettlementMethodTitle')}
                         </div>
 
                         <label className="flex items-center gap-2 text-xs font-medium text-emerald-900 cursor-pointer">
@@ -393,7 +393,7 @@ export const CancelBookingModal: React.FC<CancelBookingModalProps> = ({
                             setCustomPenalty(Number(e.target.value));
                             setPenaltyError(null);
                           }}
-                          placeholder="مثال: 500000"
+                          placeholder={t('scenarios.amountExamplePlaceholder')}
                         />
                         {penaltyError && <p className="text-xs text-danger font-medium">{penaltyError}</p>}
                       </div>

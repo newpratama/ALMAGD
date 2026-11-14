@@ -304,7 +304,7 @@ export const UnitPerformanceReport: React.FC<UnitPerformanceReportProps> = ({
             <span>{t('report.unitPerformanceTitle')}</span>
           </div>
           <div className="text-xs text-text-muted">
-            جميع المبالغ بالروبية الإندونيسية (IDR)
+            {t('report.currencyNoteIdr')}
           </div>
         </div>
 

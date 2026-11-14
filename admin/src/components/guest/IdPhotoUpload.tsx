@@ -150,7 +150,7 @@ export const IdPhotoUpload: React.FC<IdPhotoUploadProps> = ({
               className="block w-full text-xs text-muted file:me-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-navy file:text-white hover:file:bg-navy-light cursor-pointer"
             />
           </label>
-          <p className="text-[11px] text-muted mt-1.5">JPG, PNG, WEBP (max 5 MB)</p>
+          <p className="text-[11px] text-muted mt-1.5">{t('guest.photoFormatHint')}</p>
           {uploading && (
             <p className="text-xs text-navy font-medium mt-2">{t('common.loading')}</p>
           )}
