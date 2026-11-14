@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useI18n } from '../i18n/I18nProvider';
 import { useUnits, useUpdateUnit } from '../api/units';
 import type { Unit } from '../api/units';
@@ -19,6 +19,11 @@ import type { StaffMember, StaffInsert } from '../api/staff';
 import { todayISO, addDaysISO, formatDateHuman } from '../lib/dates';
 import { formatIDR } from '../lib/money';
 import { friendlyError } from '../lib/errors';
+import {
+  formatMissingFieldsMessage,
+  isValidHexColor,
+  isValidUUID,
+} from '../lib/validation';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
@@ -46,6 +51,7 @@ export const SettingsPage: React.FC = () => {
   const updateUnitMutation = useUpdateUnit();
   const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
   const [unitRateInput, setUnitRateInput] = useState<number>(0);
+  const [unitRateError, setUnitRateError] = useState<string | null>(null);
 
   // Sources
   const { data: sources = [], isLoading: loadingSources } = useBookingSources();
@@ -53,6 +59,7 @@ export const SettingsPage: React.FC = () => {
   const [editingSource, setEditingSource] = useState<BookingSource | null>(null);
   const [sourceLabelInput, setSourceLabelInput] = useState<string>('');
   const [sourceColorInput, setSourceColorInput] = useState<string>('#536275');
+  const [sourceErrors, setSourceErrors] = useState<{ label?: string; color?: string }>({});
 
   // Blocks
   const { data: blocks = [], isLoading: loadingBlocks } = useUnitBlocks();
@@ -63,6 +70,12 @@ export const SettingsPage: React.FC = () => {
   const [blockStart, setBlockStart] = useState<string>(todayISO());
   const [blockEnd, setBlockEnd] = useState<string>(addDaysISO(todayISO(), 2));
   const [blockReason, setBlockReason] = useState<string>('');
+  const [blockErrors, setBlockErrors] = useState<{
+    unit?: string;
+    start?: string;
+    end?: string;
+    reason?: string;
+  }>({});
   const [deletingBlock, setDeletingBlock] = useState<UnitBlock | null>(null);
 
   // Staff
@@ -73,12 +86,30 @@ export const SettingsPage: React.FC = () => {
   const [staffUuid, setStaffUuid] = useState<string>('');
   const [staffName, setStaffName] = useState<string>('');
   const [staffRole, setStaffRole] = useState<'manager' | 'reception'>('reception');
+  const [staffErrors, setStaffErrors] = useState<{ uuid?: string; name?: string }>({});
+
+  useEffect(() => {
+    setUnitRateError(null);
+  }, [editingUnit]);
+
+  useEffect(() => {
+    setSourceErrors({});
+  }, [editingSource]);
 
   // ----------------------------------------------------
   // Handlers
   // ----------------------------------------------------
   const handleSaveUnitRate = async () => {
     if (!editingUnit) return;
+    setUnitRateError(null);
+
+    if (Number.isNaN(unitRateInput) || unitRateInput <= 0) {
+      const msg = formatMissingFieldsMessage([t('settings.defaultRate')], t);
+      setUnitRateError(t('validation.invalidValue', { field: t('settings.defaultRate') }));
+      showToast('error', msg);
+      return;
+    }
+
     try {
       await updateUnitMutation.mutateAsync({
         id: editingUnit.id,
@@ -105,10 +136,34 @@ export const SettingsPage: React.FC = () => {
 
   const handleSaveSource = async () => {
     if (!editingSource) return;
+    setSourceErrors({});
+
+    const nextErrors: { label?: string; color?: string } = {};
+    const missingFields: string[] = [];
+    const extraDetails: string[] = [];
+
+    if (!sourceLabelInput.trim()) {
+      missingFields.push('Label');
+      nextErrors.label = t('validation.fieldRequired', { field: 'Label' });
+    }
+    if (!sourceColorInput.trim()) {
+      missingFields.push('Color (Hex)');
+      nextErrors.color = t('validation.fieldRequired', { field: 'Color (Hex)' });
+    } else if (!isValidHexColor(sourceColorInput)) {
+      extraDetails.push(t('validation.invalidColorHex'));
+      nextErrors.color = t('validation.invalidColorHex');
+    }
+
+    if (missingFields.length > 0 || extraDetails.length > 0) {
+      setSourceErrors(nextErrors);
+      showToast('error', formatMissingFieldsMessage(missingFields, t, extraDetails));
+      return;
+    }
+
     try {
       await updateSourceMutation.mutateAsync({
         code: editingSource.code,
-        updates: { label: sourceLabelInput.trim(), color: sourceColorInput },
+        updates: { label: sourceLabelInput.trim(), color: sourceColorInput.trim() },
       });
       showToast('success', t('common.success'));
       setEditingSource(null);
@@ -131,10 +186,38 @@ export const SettingsPage: React.FC = () => {
 
   const handleCreateBlock = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!blockUnitId || !blockReason.trim() || blockEnd <= blockStart) {
-      showToast('error', t('errors.invalidData'));
+    setBlockErrors({});
+
+    const nextErrors: Record<string, string> = {};
+    const missingFields: string[] = [];
+    const extraDetails: string[] = [];
+
+    if (!blockUnitId) {
+      missingFields.push(t('settings.blockUnit'));
+      nextErrors.unit = t('validation.fieldRequired', { field: t('settings.blockUnit') });
+    }
+    if (!blockStart) {
+      missingFields.push(t('settings.blockStart'));
+      nextErrors.start = t('validation.fieldRequired', { field: t('settings.blockStart') });
+    }
+    if (!blockEnd) {
+      missingFields.push(t('settings.blockEnd'));
+      nextErrors.end = t('validation.fieldRequired', { field: t('settings.blockEnd') });
+    } else if (blockStart && blockEnd <= blockStart) {
+      extraDetails.push(t('validation.endAfterStart'));
+      nextErrors.end = t('validation.endAfterStart');
+    }
+    if (!blockReason.trim()) {
+      missingFields.push(t('settings.blockReason'));
+      nextErrors.reason = t('validation.fieldRequired', { field: t('settings.blockReason') });
+    }
+
+    if (missingFields.length > 0 || extraDetails.length > 0) {
+      setBlockErrors(nextErrors);
+      showToast('error', formatMissingFieldsMessage(missingFields, t, extraDetails));
       return;
     }
+
     try {
       const payload: UnitBlockInsert = {
         unit_id: blockUnitId,
@@ -145,7 +228,10 @@ export const SettingsPage: React.FC = () => {
       await createBlockMutation.mutateAsync(payload);
       showToast('success', t('common.success'));
       setIsAddBlockOpen(false);
+      setBlockStart(todayISO());
+      setBlockEnd(addDaysISO(todayISO(), 2));
       setBlockReason('');
+      setBlockErrors({});
     } catch (err) {
       showToast('error', t(friendlyError(err)));
     }
@@ -164,10 +250,31 @@ export const SettingsPage: React.FC = () => {
 
   const handleCreateStaff = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!staffUuid.trim() || !staffName.trim()) {
-      showToast('error', t('common.required'));
+    setStaffErrors({});
+
+    const nextErrors: Record<string, string> = {};
+    const missingFields: string[] = [];
+    const extraDetails: string[] = [];
+
+    if (!staffUuid.trim()) {
+      missingFields.push(t('settings.staffUuid'));
+      nextErrors.uuid = t('validation.fieldRequired', { field: t('settings.staffUuid') });
+    } else if (!isValidUUID(staffUuid)) {
+      extraDetails.push(t('validation.invalidUuid'));
+      nextErrors.uuid = t('validation.invalidUuid');
+    }
+
+    if (!staffName.trim()) {
+      missingFields.push(t('settings.staffName'));
+      nextErrors.name = t('validation.fieldRequired', { field: t('settings.staffName') });
+    }
+
+    if (missingFields.length > 0 || extraDetails.length > 0) {
+      setStaffErrors(nextErrors);
+      showToast('error', formatMissingFieldsMessage(missingFields, t, extraDetails));
       return;
     }
+
     try {
       const payload: StaffInsert = {
         id: staffUuid.trim(),
@@ -180,6 +287,7 @@ export const SettingsPage: React.FC = () => {
       setIsAddStaffOpen(false);
       setStaffUuid('');
       setStaffName('');
+      setStaffErrors({});
     } catch (err) {
       showToast('error', t(friendlyError(err)));
     }
@@ -405,7 +513,11 @@ export const SettingsPage: React.FC = () => {
               variant="primary"
               size="sm"
               onClick={() => {
-                if (units.length > 0) setBlockUnitId(units[0].id);
+                setBlockUnitId(units.length > 0 ? units[0].id : 0);
+                setBlockStart(todayISO());
+                setBlockEnd(addDaysISO(todayISO(), 2));
+                setBlockReason('');
+                setBlockErrors({});
                 setIsAddBlockOpen(true);
               }}
             >
@@ -545,10 +657,14 @@ export const SettingsPage: React.FC = () => {
         title={`${t('common.edit')} ${editingUnit?.name || ''}`}
       >
         <div className="space-y-4">
-          <Field label={t('settings.defaultRate')} required>
+          <Field label={t('settings.defaultRate')} required error={unitRateError || undefined}>
             <MoneyInput
               value={unitRateInput}
-              onChange={(val) => setUnitRateInput(val)}
+              error={Boolean(unitRateError)}
+              onChange={(val) => {
+                setUnitRateInput(val);
+                setUnitRateError(null);
+              }}
             />
           </Field>
           <div className="flex justify-end gap-2">
@@ -569,25 +685,36 @@ export const SettingsPage: React.FC = () => {
         title={`${t('common.edit')} ${editingSource?.code || ''}`}
       >
         <div className="space-y-4">
-          <Field label="Label" required>
+          <Field label="Label" required error={sourceErrors.label}>
             <Input
               type="text"
+              error={Boolean(sourceErrors.label)}
               value={sourceLabelInput}
-              onChange={(e) => setSourceLabelInput(e.target.value)}
+              onChange={(e) => {
+                setSourceLabelInput(e.target.value);
+                setSourceErrors((prev) => ({ ...prev, label: undefined }));
+              }}
             />
           </Field>
-          <Field label="Color (Hex)" required>
+          <Field label="Color (Hex)" required error={sourceErrors.color}>
             <div className="flex items-center gap-3">
               <input
                 type="color"
-                value={sourceColorInput}
-                onChange={(e) => setSourceColorInput(e.target.value)}
+                value={isValidHexColor(sourceColorInput) ? sourceColorInput : '#536275'}
+                onChange={(e) => {
+                  setSourceColorInput(e.target.value);
+                  setSourceErrors((prev) => ({ ...prev, color: undefined }));
+                }}
                 className="w-10 h-10 rounded border border-line cursor-pointer"
               />
               <Input
                 type="text"
+                error={Boolean(sourceErrors.color)}
                 value={sourceColorInput}
-                onChange={(e) => setSourceColorInput(e.target.value)}
+                onChange={(e) => {
+                  setSourceColorInput(e.target.value);
+                  setSourceErrors((prev) => ({ ...prev, color: undefined }));
+                }}
                 className="w-32 font-mono"
               />
             </div>
@@ -609,12 +736,17 @@ export const SettingsPage: React.FC = () => {
         onClose={() => setIsAddBlockOpen(false)}
         title={t('settings.addBlock')}
       >
-        <form onSubmit={handleCreateBlock} className="space-y-4">
-          <Field label={t('settings.blockUnit')} required>
+        <form onSubmit={handleCreateBlock} className="space-y-4" noValidate>
+          <Field label={t('settings.blockUnit')} required error={blockErrors.unit}>
             <Select
-              value={String(blockUnitId)}
-              onChange={(e) => setBlockUnitId(parseInt(e.target.value))}
+              error={Boolean(blockErrors.unit)}
+              value={blockUnitId ? String(blockUnitId) : ''}
+              onChange={(e) => {
+                setBlockUnitId(parseInt(e.target.value, 10) || 0);
+                setBlockErrors((prev) => ({ ...prev, unit: undefined }));
+              }}
             >
+              {units.length === 0 && <option value="">-- {t('booking.unitRequired')} --</option>}
               {units.map((u) => (
                 <option key={u.id} value={u.id}>
                   {u.name}
@@ -624,28 +756,40 @@ export const SettingsPage: React.FC = () => {
           </Field>
 
           <div className="grid grid-cols-2 gap-3">
-            <Field label={t('settings.blockStart')} required>
+            <Field label={t('settings.blockStart')} required error={blockErrors.start}>
               <Input
                 type="date"
+                error={Boolean(blockErrors.start)}
                 value={blockStart}
-                onChange={(e) => setBlockStart(e.target.value)}
+                onChange={(e) => {
+                  setBlockStart(e.target.value);
+                  setBlockErrors((prev) => ({ ...prev, start: undefined, end: undefined }));
+                }}
               />
             </Field>
-            <Field label={t('settings.blockEnd')} required>
+            <Field label={t('settings.blockEnd')} required error={blockErrors.end}>
               <Input
                 type="date"
+                error={Boolean(blockErrors.end)}
                 value={blockEnd}
-                onChange={(e) => setBlockEnd(e.target.value)}
+                onChange={(e) => {
+                  setBlockEnd(e.target.value);
+                  setBlockErrors((prev) => ({ ...prev, end: undefined }));
+                }}
               />
             </Field>
           </div>
 
-          <Field label={t('settings.blockReason')} required>
+          <Field label={t('settings.blockReason')} required error={blockErrors.reason}>
             <Input
               type="text"
+              error={Boolean(blockErrors.reason)}
               placeholder="e.g. Renovasi AC / Cat Ulang"
               value={blockReason}
-              onChange={(e) => setBlockReason(e.target.value)}
+              onChange={(e) => {
+                setBlockReason(e.target.value);
+                setBlockErrors((prev) => ({ ...prev, reason: undefined }));
+              }}
             />
           </Field>
 
@@ -675,22 +819,30 @@ export const SettingsPage: React.FC = () => {
         onClose={() => setIsAddStaffOpen(false)}
         title={t('settings.addStaff')}
       >
-        <form onSubmit={handleCreateStaff} className="space-y-4">
-          <Field label={t('settings.staffUuid')} required>
+        <form onSubmit={handleCreateStaff} className="space-y-4" noValidate>
+          <Field label={t('settings.staffUuid')} required error={staffErrors.uuid}>
             <Input
               type="text"
+              error={Boolean(staffErrors.uuid)}
               placeholder="auth.users UUID (e.g. 11111111-1111-...)"
               value={staffUuid}
-              onChange={(e) => setStaffUuid(e.target.value)}
+              onChange={(e) => {
+                setStaffUuid(e.target.value);
+                setStaffErrors((prev) => ({ ...prev, uuid: undefined }));
+              }}
             />
           </Field>
 
-          <Field label={t('settings.staffName')} required>
+          <Field label={t('settings.staffName')} required error={staffErrors.name}>
             <Input
               type="text"
+              error={Boolean(staffErrors.name)}
               placeholder="Nama Lengkap Staf"
               value={staffName}
-              onChange={(e) => setStaffName(e.target.value)}
+              onChange={(e) => {
+                setStaffName(e.target.value);
+                setStaffErrors((prev) => ({ ...prev, name: undefined }));
+              }}
             />
           </Field>
 

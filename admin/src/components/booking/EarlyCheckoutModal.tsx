@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useI18n } from '../../i18n/I18nProvider';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
@@ -6,6 +6,7 @@ import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { formatIDR } from '../../lib/money';
 import { todayISO, nightsBetween, formatDateHuman } from '../../lib/dates';
+import { formatMissingFieldsMessage } from '../../lib/validation';
 import { updateBooking, type BookingOverview } from '../../api/bookings';
 import { createPayment } from '../../api/payments';
 import { setUnitHousekeepingStatus } from '../../lib/housekeeping';
@@ -51,6 +52,16 @@ export const EarlyCheckoutModal: React.FC<EarlyCheckoutModalProps> = ({
     isOta ? 'app' : 'cash'
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [dateError, setDateError] = useState<string | null>(null);
+  const [customTotalError, setCustomTotalError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setActualCheckOut(todayISO());
+      setDateError(null);
+      setCustomTotalError(null);
+    }
+  }, [isOpen]);
 
   const actualNights = useMemo(() => {
     return Math.max(1, nightsBetween(checkIn, actualCheckOut));
@@ -70,6 +81,30 @@ export const EarlyCheckoutModal: React.FC<EarlyCheckoutModalProps> = ({
 
   const handleConfirm = async () => {
     if (!booking.id) return;
+    setDateError(null);
+    setCustomTotalError(null);
+
+    const missingFields: string[] = [];
+    const extraDetails: string[] = [];
+
+    if (!actualCheckOut) {
+      missingFields.push(t('scenarios.actualDepartureDateLabel'));
+      setDateError(t('validation.fieldRequired', { field: t('scenarios.actualDepartureDateLabel') }));
+    } else if (actualCheckOut < checkIn || actualCheckOut > originalCheckOut) {
+      extraDetails.push(t('validation.dateOutOfRange'));
+      setDateError(t('validation.dateOutOfRange'));
+    }
+
+    if (policy === 'custom' && (Number.isNaN(customTotal) || customTotal < 0)) {
+      missingFields.push(t('scenarios.policyCustomTitle'));
+      setCustomTotalError(t('validation.invalidValue', { field: t('scenarios.policyCustomTitle') }));
+    }
+
+    if (missingFields.length > 0 || extraDetails.length > 0) {
+      showToast('error', formatMissingFieldsMessage(missingFields, t, extraDetails));
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       // 1. Record negative payment for immediate cash/transfer/app refund if applicable
@@ -162,11 +197,16 @@ export const EarlyCheckoutModal: React.FC<EarlyCheckoutModalProps> = ({
           </label>
           <Input
             type="date"
+            error={Boolean(dateError)}
             min={checkIn}
             max={originalCheckOut}
             value={actualCheckOut}
-            onChange={(e) => setActualCheckOut(e.target.value)}
+            onChange={(e) => {
+              setActualCheckOut(e.target.value);
+              setDateError(null);
+            }}
           />
+          {dateError && <p className="text-xs text-danger font-medium">{dateError}</p>}
           <div className="text-xs text-text-muted">
             {t('scenarios.nightsStayedCount', {
               actual: actualNights,
@@ -238,10 +278,15 @@ export const EarlyCheckoutModal: React.FC<EarlyCheckoutModalProps> = ({
                     type="number"
                     step={10000}
                     min={0}
+                    error={Boolean(customTotalError)}
                     value={customTotal || ''}
-                    onChange={(e) => setCustomTotal(Number(e.target.value))}
+                    onChange={(e) => {
+                      setCustomTotal(Number(e.target.value));
+                      setCustomTotalError(null);
+                    }}
                     placeholder="e.g. 500000"
                   />
+                  {customTotalError && <p className="text-xs text-danger font-medium">{customTotalError}</p>}
                 </div>
               )}
             </div>

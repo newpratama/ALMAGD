@@ -3,7 +3,7 @@ import type { BookingOverview } from '../../api/bookings';
 import type { Payment } from '../../api/payments';
 import type { Guest } from '../../api/guests';
 import { useI18n } from '../../i18n/I18nProvider';
-import { formatDateHuman } from '../../lib/dates';
+import { formatDateHuman, todayISO } from '../../lib/dates';
 import { formatIDR } from '../../lib/money';
 import { formatNationalityDisplay } from '../../lib/nationalities';
 
@@ -43,11 +43,7 @@ export const BookingReceipt: React.FC<BookingReceiptProps> = ({
   const isPaidInFull = balance <= 0 && paidAmount > 0;
   const isRefundDue = balance < 0 || (booking.status === 'cancelled' && paidAmount > 0);
 
-  const issueDate = new Date().toLocaleDateString(lang === 'ar' ? 'ar-SA' : 'id-ID', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  const issueDate = todayISO();
 
   const localizedSource =
     (booking.source_code && t(`source.${booking.source_code}`)) ||

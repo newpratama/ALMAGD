@@ -37,6 +37,7 @@ import {
   type AttendanceSettings,
 } from '../api/attendance';
 import { todayISO, addDaysISO, formatDateHuman } from '../lib/dates';
+import { formatMissingFieldsMessage } from '../lib/validation';
 import { Card } from '../components/ui/Card';
 import { StatCard } from '../components/ui/StatCard';
 import { Button } from '../components/ui/Button';
@@ -48,7 +49,7 @@ import { Spinner } from '../components/ui/Spinner';
 import { EmptyState } from '../components/ui/EmptyState';
 
 export const AttendancePage: React.FC = () => {
-  const { lang } = useI18n();
+  const { t, lang } = useI18n();
   const { showToast } = useToast();
   const isAr = lang === 'ar';
 
@@ -158,12 +159,11 @@ export const AttendancePage: React.FC = () => {
     const pin = newEmpPin.trim();
     const role = newEmpRole.trim() || (isAr ? 'موظف' : 'Karyawan');
 
-    if (!name) {
-      showToast('warning', isAr ? 'يرجى كتابة اسم الموظف' : 'Silakan masukkan nama karyawan');
-      return;
-    }
-    if (!pin) {
-      showToast('warning', isAr ? 'يرجى تحديد رقم البصمة (PIN)' : 'Silakan tentukan PIN mesin');
+    const missingFields: string[] = [];
+    if (!name) missingFields.push(t('attendance.employee'));
+    if (!pin) missingFields.push(t('attendance.pin'));
+    if (missingFields.length > 0) {
+      showToast('warning', formatMissingFieldsMessage(missingFields, t));
       return;
     }
 
@@ -198,6 +198,19 @@ export const AttendancePage: React.FC = () => {
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!settingsDraft) return;
+
+    const missingFields: string[] = [];
+    if (!settingsDraft.deviceSn?.trim()) missingFields.push(t('attendance.deviceSn'));
+    if (!settingsDraft.apiToken?.trim()) missingFields.push(t('attendance.apiToken'));
+    if (!settingsDraft.shiftStart) missingFields.push(t('attendance.shiftStart'));
+    if (!settingsDraft.shiftEnd) missingFields.push(t('attendance.shiftEnd'));
+    if (Number.isNaN(settingsDraft.lateTolerance) || settingsDraft.lateTolerance < 0) {
+      missingFields.push(t('attendance.lateTolerance'));
+    }
+    if (missingFields.length > 0) {
+      showToast('error', formatMissingFieldsMessage(missingFields, t));
+      return;
+    }
 
     try {
       await saveSettingsMutation.mutateAsync(settingsDraft);
@@ -253,13 +266,19 @@ export const AttendancePage: React.FC = () => {
   // Handle Manual Punch Submission
   const handleSaveManualPunch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!manualStaffId) {
-      showToast('warning', isAr ? 'يرجى اختيار الموظف' : 'Silakan pilih karyawan');
+    const missingFields: string[] = [];
+    if (!manualStaffId) missingFields.push(t('attendance.employee'));
+    if (!manualTime) missingFields.push(t('attendance.punchTime'));
+    if (missingFields.length > 0) {
+      showToast('error', formatMissingFieldsMessage(missingFields, t));
       return;
     }
 
     const person = dailyAttendance.find((r) => r.staffId === manualStaffId);
-    if (!person || !settings) return;
+    if (!person || !settings) {
+      showToast('error', t('errors.invalidData'));
+      return;
+    }
 
     const pin = person.pin;
     const scanTime = `${selectedDate} ${manualTime}:00`;
@@ -1213,6 +1232,7 @@ export const AttendancePage: React.FC = () => {
                 onChange={(e) => setManualStaffId(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg border border-line bg-white text-ink text-xs sm:text-sm focus:outline-none focus:ring-1.5 focus:ring-gold"
               >
+                <option value="">-- {t('attendance.selectStaff')} --</option>
                 {dailyAttendance.map((row) => (
                   <option key={`${row.staffId}:${row.pin}`} value={row.staffId}>
                     {row.staffName} ({row.role}) - PIN #{row.pin}

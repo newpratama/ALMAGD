@@ -293,19 +293,19 @@ export const BookingsPage: React.FC = () => {
                     <Td className="text-xs font-medium">
                       {booking.unit_name}
                     </Td>
-                    <Td className="text-xs text-muted whitespace-nowrap">
+                    <Td className="text-xs text-muted whitespace-nowrap font-mono">
                       {booking.check_in ? (
                         <div className="flex flex-col">
                           <span>{formatDateHuman(booking.check_in, lang)}</span>
                           {formatLeadTime(booking.check_in, todayISO(), lang) && (
-                            <span className="text-[10px] text-blue-700 font-semibold mt-0.5">
+                            <span className="text-[10px] text-blue-700 font-semibold font-sans mt-0.5">
                               ⏳ {formatLeadTime(booking.check_in, todayISO(), lang)}
                             </span>
                           )}
                         </div>
                       ) : '—'}
                     </Td>
-                    <Td className="text-xs text-muted">
+                    <Td className="text-xs text-muted whitespace-nowrap font-mono">
                       {booking.check_out ? formatDateHuman(booking.check_out, lang) : '—'}
                     </Td>
                     <Td className="text-xs">

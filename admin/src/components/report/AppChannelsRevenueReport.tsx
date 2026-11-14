@@ -21,6 +21,7 @@ export interface AppChannelsRevenueReportProps {
   totalNights: number;
   periodLabel: string;
   periodMode: string;
+  isLoading?: boolean;
 }
 
 const CHANNEL_ICONS: Record<string, { icon: string; badge: string }> = {
@@ -39,6 +40,7 @@ export const AppChannelsRevenueReport: React.FC<AppChannelsRevenueReportProps> =
   totalNights,
   periodLabel,
   periodMode,
+  isLoading = false,
 }) => {
   const { lang } = useI18n();
 
@@ -54,10 +56,9 @@ export const AppChannelsRevenueReport: React.FC<AppChannelsRevenueReportProps> =
     return lang === 'ar' ? 'تقرير الفترة المحددة' : 'Laporan Periode';
   }, [periodMode, lang]);
 
-  // Filter out inactive channels with 0 collections to eliminate clutter
+  // Filter out inactive channels to eliminate clutter
   const activeItems = useMemo(() => {
-    const active = items.filter((it) => it.collected > 0 || it.bookings > 0);
-    // If all are zero (e.g. future empty day), show all non-zero or fallback to items
+    const active = items.filter((it) => it.collected > 0 || it.bookings > 0 || it.nights > 0);
     return active.length > 0 ? active : items.filter((it) => it.bookings > 0);
   }, [items]);
 
@@ -86,9 +87,13 @@ export const AppChannelsRevenueReport: React.FC<AppChannelsRevenueReportProps> =
         <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
           <div className="px-3.5 py-1.5 bg-emerald-50 border border-emerald-300 rounded-xl text-xs font-bold text-emerald-950 flex items-center gap-2 shadow-2xs">
             <span>{lang === 'ar' ? 'إجمالي المقبوضات المحصلة:' : 'Total Diterima:'}</span>
-            <span className="font-mono text-base font-black text-emerald-700">
-              {formatIDRWithCommas(Math.round(totalCollected))}
-            </span>
+            {isLoading ? (
+              <span className="inline-block w-28 h-5 bg-emerald-200/70 animate-pulse rounded" />
+            ) : (
+              <span className="font-mono text-base font-black text-emerald-700">
+                {formatIDRWithCommas(Math.round(totalCollected))}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -108,7 +113,37 @@ export const AppChannelsRevenueReport: React.FC<AppChannelsRevenueReportProps> =
             </Tr>
           </Thead>
           <Tbody>
-            {activeItems.length === 0 ? (
+            {isLoading ? (
+              // Loading Skeleton
+              Array.from({ length: 4 }).map((_, idx) => (
+                <Tr key={`skeleton-${idx}`} className="animate-pulse">
+                  <Td>
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-5 h-5 rounded-full bg-stone-200" />
+                      <div className="space-y-1.5">
+                        <div className="w-24 h-3.5 bg-stone-200 rounded" />
+                        <div className="w-12 h-2.5 bg-stone-100 rounded" />
+                      </div>
+                    </div>
+                  </Td>
+                  <Td>
+                    <div className="w-12 h-3.5 bg-stone-200 rounded" />
+                  </Td>
+                  <Td>
+                    <div className="w-14 h-3.5 bg-stone-200 rounded" />
+                  </Td>
+                  <Td className="bg-emerald-50/20">
+                    <div className="w-24 h-4 bg-emerald-200/50 rounded" />
+                  </Td>
+                  <Td>
+                    <div className="flex items-center gap-2 min-w-32">
+                      <div className="flex-1 bg-stone-200 h-2 rounded-full" />
+                      <div className="w-8 h-3 bg-stone-200 rounded" />
+                    </div>
+                  </Td>
+                </Tr>
+              ))
+            ) : activeItems.length === 0 ? (
               <Tr>
                 <Td colSpan={5} className="py-8 text-center text-xs text-muted">
                   {lang === 'ar' ? 'لا توجد مقبوضات مسجلة في هذه الفترة' : 'Tidak ada penerimaan tercatat pada periode ini'}
@@ -117,6 +152,7 @@ export const AppChannelsRevenueReport: React.FC<AppChannelsRevenueReportProps> =
             ) : (
               activeItems.map((item) => {
                 const meta = CHANNEL_ICONS[item.code] || { icon: '📱', badge: item.label };
+                const effectiveShare = totalCollected > 0 ? (item.collected / totalCollected) * 100 : item.sharePercent;
 
                 return (
                   <Tr key={item.code} className="hover:bg-mist/50 transition-colors">
@@ -160,13 +196,13 @@ export const AppChannelsRevenueReport: React.FC<AppChannelsRevenueReportProps> =
                           <div
                             className="h-full rounded-full transition-all duration-300"
                             style={{
-                              width: `${Math.min(100, Math.max(0, item.sharePercent))}%`,
+                              width: `${Math.min(100, Math.max(0, effectiveShare))}%`,
                               backgroundColor: item.color,
                             }}
                           />
                         </div>
                         <span className="font-mono text-xs font-bold text-navy w-12 text-end">
-                          {item.sharePercent.toFixed(1)}%
+                          {effectiveShare.toFixed(1)}%
                         </span>
                       </div>
                     </Td>
@@ -182,13 +218,25 @@ export const AppChannelsRevenueReport: React.FC<AppChannelsRevenueReportProps> =
                 <span>{lang === 'ar' ? 'الإجمالي الكلي للمقبوضات' : 'TOTAL KESELURUHAN DITERIMA'}</span>
               </Td>
               <Td className="font-mono text-xs text-white">
-                {totalBookings} {lang === 'ar' ? 'حجز' : 'booking'}
+                {isLoading ? (
+                  <span className="inline-block w-12 h-3.5 bg-slate-700 animate-pulse rounded" />
+                ) : (
+                  `${totalBookings} ${lang === 'ar' ? 'حجز' : 'booking'}`
+                )}
               </Td>
               <Td className="font-mono text-xs text-white">
-                {totalNights} {lang === 'ar' ? 'ليلة' : 'malam'}
+                {isLoading ? (
+                  <span className="inline-block w-12 h-3.5 bg-slate-700 animate-pulse rounded" />
+                ) : (
+                  `${totalNights} ${lang === 'ar' ? 'ليلة' : 'malam'}`
+                )}
               </Td>
               <Td className="font-mono text-base font-black text-emerald-400 bg-slate-800/80">
-                {formatIDRWithCommas(Math.round(totalCollected))}
+                {isLoading ? (
+                  <span className="inline-block w-24 h-4 bg-slate-700 animate-pulse rounded" />
+                ) : (
+                  formatIDRWithCommas(Math.round(totalCollected))
+                )}
               </Td>
               <Td className="font-mono text-xs font-bold text-gold">
                 100.0%

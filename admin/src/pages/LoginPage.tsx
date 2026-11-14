@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../auth/AuthProvider';
 import { useI18n } from '../i18n/I18nProvider';
 import { friendlyError } from '../lib/errors';
+import { formatMissingFieldsMessage } from '../lib/validation';
 
 export const LoginPage: React.FC = () => {
   const { session, staff, error: authError, clearError } = useAuth();
@@ -15,6 +16,7 @@ export const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [validationMessage, setValidationMessage] = useState<string | null>(null);
 
   // If already logged in with active staff profile, redirect
   React.useEffect(() => {
@@ -26,6 +28,16 @@ export const LoginPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setValidationMessage(null);
+
+    const missingFields: string[] = [];
+    if (!email.trim()) missingFields.push(t('auth.email'));
+    if (!password) missingFields.push(t('auth.password'));
+    if (missingFields.length > 0) {
+      setValidationMessage(formatMissingFieldsMessage(missingFields, t));
+      return;
+    }
+
     if (!supabase) return;
 
     clearError();
@@ -55,7 +67,7 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const displayedError = loginError ? t(loginError) : authError ? t(authError) : null;
+  const displayedError = validationMessage || (loginError ? t(loginError) : authError ? t(authError) : null);
 
   return (
     <div className="min-h-screen bg-mist flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative">
@@ -94,7 +106,7 @@ export const LoginPage: React.FC = () => {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-6 shadow-sm border border-line rounded-xl sm:px-10">
-          <form className="space-y-5" onSubmit={handleSubmit}>
+          <form className="space-y-5" onSubmit={handleSubmit} noValidate>
             {displayedError && (
               <div className="rounded-lg bg-danger/10 border border-danger/20 p-3 text-sm text-danger text-start">
                 {displayedError}

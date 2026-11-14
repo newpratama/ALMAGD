@@ -66,7 +66,7 @@ export const GuestPicker: React.FC<GuestPickerProps> = ({
   const isBlacklist = selectedGuest?.tags?.includes('blacklist');
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" data-invalid={error ? 'true' : undefined}>
       <div className="flex items-center justify-between">
         <label className="block text-sm font-semibold text-ink">
           {t('booking.guest')} <span className="text-danger">*</span>

@@ -1,5 +1,4 @@
 import { addDays, differenceInCalendarDays, format, parseISO } from 'date-fns';
-import { arSA, id as idLocale } from 'date-fns/locale';
 
 export type ISODate = string; // 'YYYY-MM-DD'
 
@@ -36,12 +35,25 @@ export function parseDateRange(r: string): { start: ISODate; end: ISODate } {
   return { start: match[1], end: match[2] };
 }
 
-export function formatDateHuman(d: ISODate, locale: 'id' | 'ar'): string {
+/**
+ * Format an ISO date string into consistent numeric YYYY-MM-DD digits without
+ * localized weekday or month letters.
+ */
+export function formatDateHuman(d: ISODate, _locale?: 'id' | 'ar'): string {
+  if (!d) return '—';
   const parsed = parseISO(d);
-  if (locale === 'ar') {
-    return format(parsed, 'EEEE, d MMMM yyyy', { locale: arSA });
-  }
-  return format(parsed, 'EEE, d MMM yyyy', { locale: idLocale });
+  if (Number.isNaN(parsed.getTime())) return d;
+  return format(parsed, 'yyyy-MM-dd');
+}
+
+/**
+ * Format an ISO timestamp into consistent numeric YYYY-MM-DD HH:mm digits.
+ */
+export function formatDateTimeNumeric(iso: string): string {
+  if (!iso) return '—';
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime())) return iso;
+  return format(parsed, 'yyyy-MM-dd HH:mm');
 }
 
 export function excelSerialToISO(serial: number): ISODate {

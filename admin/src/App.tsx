@@ -23,16 +23,20 @@ import { ReportsPage } from './pages/ReportsPage';
 import { UnitRevenuePage } from './pages/UnitRevenuePage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AttendancePage } from './pages/AttendancePage';
+import { setupQueryPersistence } from './lib/queryPersister';
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
-      staleTime: 1000 * 30, // 30s
+      staleTime: 1000 * 60 * 5, // 5 min cache
+      gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days in memory / persister
     },
   },
 });
+
+setupQueryPersistence(queryClient);
 
 export default function App() {
   if (!supabase) {

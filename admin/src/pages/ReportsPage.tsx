@@ -13,13 +13,20 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { BarChart3, Building2 } from 'lucide-react';
+import { BarChart3, Building2, RefreshCw } from 'lucide-react';
 import { useI18n } from '../i18n/I18nProvider';
 import { supabase } from '../lib/supabase';
 import { useBookingSources, type BookingOverview } from '../api/bookings';
-import { useReportDaily, useReportBySource } from '../api/reports';
+import { useReportDaily, useReportBySource, useReportChannelCollections } from '../api/reports';
 import { todayISO, addDaysISO, formatDateHuman, nightsBetween } from '../lib/dates';
 import { formatIDR, formatIDRWithCommas } from '../lib/money';
+import {
+  chunkIds,
+  buildPaymentSequenceAndTotals,
+  resolveOutsideBookingBalance,
+  parseTransferNote,
+  type OperationalPaymentRecord,
+} from '../lib/operationalReport';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { StatCard } from '../components/ui/StatCard';
@@ -123,10 +130,31 @@ export const ReportsPage: React.FC = () => {
   const { t, lang } = useI18n();
   const navigate = useNavigate();
 
-  const [periodMode, setPeriodMode] = useState<PeriodMode>('today');
+  const [periodMode, setPeriodMode] = useState<PeriodMode>(() => {
+    try {
+      const saved = localStorage.getItem('almagd_reports_period_mode');
+      if (
+        saved &&
+        ['today', 'yesterday', 'singleDay', 'thisMonth', 'lastMonth', 'thisQuarter', 'thisYear', 'custom'].includes(saved)
+      ) {
+        return saved as PeriodMode;
+      }
+    } catch {}
+    return 'today';
+  });
   const [singleDayDate, setSingleDayDate] = useState<string>(todayISO());
   const [customFrom, setCustomFrom] = useState(addDaysISO(todayISO(), -30));
   const [customTo, setCustomTo] = useState(todayISO());
+
+  const handleSetPeriodMode = (mode: PeriodMode) => {
+    setPeriodMode(mode);
+    try {
+      localStorage.setItem('almagd_reports_period_mode', mode);
+    } catch {}
+    if (mode === 'singleDay' && !singleDayDate) {
+      setSingleDayDate(todayISO());
+    }
+  };
 
   // Density & View filters for operational report
   const [isDense, setIsDense] = useState<boolean>(true);
@@ -143,8 +171,27 @@ export const ReportsPage: React.FC = () => {
     return getPeriodDates(periodMode, singleDayDate);
   }, [periodMode, singleDayDate, customFrom, customTo]);
 
-  const { data: daily = [], isLoading: loadingDaily } = useReportDaily(from, to);
-  const { data: bySource = [], isLoading: loadingSource } = useReportBySource(from, to);
+  const {
+    data: daily = [],
+    isLoading: loadingDaily,
+    isFetching: fetchingDaily,
+    refetch: refetchDaily,
+  } = useReportDaily(from, to);
+
+  const {
+    data: bySource = [],
+    isLoading: loadingSource,
+    isFetching: fetchingSource,
+    refetch: refetchSource,
+  } = useReportBySource(from, to);
+
+  const {
+    data: channelCollectionsData,
+    isLoading: loadingChannelCollections,
+    isFetching: fetchingChannelCollections,
+    refetch: refetchChannelCollections,
+  } = useReportChannelCollections(from, to);
+
   const { data: sources = [] } = useBookingSources();
 
   const sourceColorMap = useMemo(() => {
@@ -160,67 +207,122 @@ export const ReportsPage: React.FC = () => {
   }, [sources]);
 
   const isSingleDay = from === to;
-  const { data: operationalReport, isLoading: loadingOperational } = useQuery({
+  const {
+    data: operationalReport,
+    isLoading: loadingOperational,
+    isFetching: fetchingOperational,
+    refetch: refetchOperational,
+  } = useQuery({
     queryKey: ['report-daily-operational', from, to],
     queryFn: async () => {
       if (!supabase || !from || !to) return null;
+      const client = supabase;
 
-      // 0. Fetch all units for complete property listing
-      const { data: allUnitsData, error: unitsErr } = await supabase
-        .from('units')
-        .select('id, name, kind, sort_order, active, parent_id')
-        .order('sort_order', { ascending: true });
-      if (unitsErr) throw unitsErr;
-      const allUnits = allUnitsData || [];
+      // Fetch units, in-house stays, and payments concurrently for maximum speed
+      const [unitsRes, inHouseRes, paymentsRes] = await Promise.all([
+        client
+          .from('units')
+          .select('id, name, kind, sort_order, active, parent_id')
+          .order('sort_order', { ascending: true }),
+        client
+          .from('booking_overview')
+          .select('*')
+          .lte('check_in', to)
+          .gt('check_out', from)
+          .neq('status', 'cancelled')
+          .order('check_in', { ascending: true }),
+        client
+          .from('payments')
+          .select('*, bookings(id, code, unit_id, check_in, check_out, total_amount, source_code, status, guests(full_name, phone), units(id, name, kind, sort_order))')
+          .gte('paid_on', from)
+          .lte('paid_on', to)
+          .order('paid_on', { ascending: true })
+          .order('created_at', { ascending: true }),
+      ]);
 
-      // 1. In-house stays on selected date or period (non-cancelled)
-      const { data: inHouseData, error: inHouseErr } = await supabase
-        .from('booking_overview')
-        .select('*')
-        .lte('check_in', to)
-        .gt('check_out', from)
-        .neq('status', 'cancelled')
-        .order('check_in', { ascending: true });
-      if (inHouseErr) throw inHouseErr;
-      const inHouse = (inHouseData || []) as BookingOverview[];
+      if (unitsRes.error) throw unitsRes.error;
+      if (inHouseRes.error) throw inHouseRes.error;
+      if (paymentsRes.error) throw paymentsRes.error;
 
-      // 2. Payments collected on this date or period
-      const { data: paymentsData, error: payErr } = await supabase
-        .from('payments')
-        .select('*, bookings(id, code, unit_id, check_in, check_out, total_amount, source_code, status, guests(full_name, phone), units(id, name, kind, sort_order))')
-        .gte('paid_on', from)
-        .lte('paid_on', to)
-        .order('created_at', { ascending: true });
-      if (payErr) throw payErr;
-      const paymentsToday = paymentsData || [];
+      const allUnits = unitsRes.data || [];
+      const inHouse = (inHouseRes.data || []) as BookingOverview[];
+      const paymentsToday = paymentsRes.data || [];
 
-      // 3. Get sequence numbers for all payments of these bookings
+      // Collect all booking IDs to compute payment sequences, and identify outside-stay
+      // bookings so we can fetch their authoritative total balance from booking_overview.
+      const inHouseIdSet = new Set<string>();
       const allBookingIds = new Set<string>();
       inHouse.forEach((b) => {
-        if (b.id) allBookingIds.add(b.id);
+        if (b.id) {
+          inHouseIdSet.add(b.id);
+          allBookingIds.add(b.id);
+        }
       });
+      const outsideBookingIdSet = new Set<string>();
       paymentsToday.forEach((p) => {
-        if (p.booking_id) allBookingIds.add(p.booking_id);
+        if (p.booking_id) {
+          allBookingIds.add(p.booking_id);
+          if (!inHouseIdSet.has(p.booking_id)) {
+            outsideBookingIdSet.add(p.booking_id);
+          }
+        }
       });
 
-      let allPaymentsData: Array<{ id: string; booking_id: string; created_at: string; paid_on: string }> = [];
-      if (allBookingIds.size > 0) {
-        const { data: allPay, error: allPayErr } = await supabase
-          .from('payments')
-          .select('id, booking_id, created_at, paid_on')
-          .in('booking_id', Array.from(allBookingIds))
-          .order('created_at', { ascending: true });
-        if (allPayErr) throw allPayErr;
-        allPaymentsData = allPay || [];
+      const paymentBatches = chunkIds(Array.from(allBookingIds), 50);
+      const outsideOverviewBatches = chunkIds(Array.from(outsideBookingIdSet), 50);
+
+      const [paymentBatchResults, outsideOverviewResults] = await Promise.all([
+        Promise.all(
+          paymentBatches.map((batch) =>
+            client
+              .from('payments')
+              .select('id, booking_id, created_at, paid_on, amount')
+              .in('booking_id', batch)
+              .order('paid_on', { ascending: true })
+              .order('created_at', { ascending: true })
+          )
+        ),
+        Promise.all(
+          outsideOverviewBatches.map((batch) =>
+            client
+              .from('booking_overview')
+              .select('id, balance, paid, total_amount')
+              .in('id', batch)
+          )
+        ),
+      ]);
+
+      const allPaymentsData: OperationalPaymentRecord[] = [];
+      for (const res of paymentBatchResults) {
+        if (res.error) throw res.error;
+        if (res.data) {
+          allPaymentsData.push(
+            ...res.data.map((p) => ({
+              id: p.id,
+              booking_id: p.booking_id,
+              created_at: p.created_at,
+              paid_on: p.paid_on,
+              amount: Number(p.amount || 0),
+            }))
+          );
+        }
       }
 
-      const seqMap = new Map<string, number>();
-      const countMap = new Map<string, number>();
-      for (const p of allPaymentsData) {
-        const cur = (countMap.get(p.booking_id) || 0) + 1;
-        countMap.set(p.booking_id, cur);
-        seqMap.set(p.id, cur);
+      const outsideOverviewMap = new Map<string, { balance: number | null; paid: number | null; total_amount: number | null }>();
+      for (const res of outsideOverviewResults) {
+        if (res.error) throw res.error;
+        for (const row of res.data || []) {
+          if (row.id) {
+            outsideOverviewMap.set(row.id, {
+              balance: row.balance,
+              paid: row.paid,
+              total_amount: row.total_amount,
+            });
+          }
+        }
       }
+
+      const { seqMap, totalPaidByBooking } = buildPaymentSequenceAndTotals(allPaymentsData);
 
       // Group payments by booking
       const paymentsByBooking = new Map<string, any[]>();
@@ -266,19 +368,7 @@ export const ReportsPage: React.FC = () => {
             const payments = paymentsByBooking.get(b.id) || [];
             const todayCollected = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
 
-            let transferFromUnit: string | null = null;
-            let transferBookingCode: string | null = null;
-            if (b.notes) {
-              const matchAr = b.notes.match(/متابعة نقل النزيل من ([^(]+?)(?:\s*\(الحجز السابق:\s*([^)]+)\))?(?:\s*ابتداءً)?/);
-              const matchId = b.notes.match(/Lanjutan pindah unit dari ([^(]+?)(?:\s*\(Booking sebelumnya:\s*([^)]+)\))?(?:\s*mulai)?/);
-              if (matchAr) {
-                transferFromUnit = matchAr[1].trim();
-                transferBookingCode = matchAr[2]?.trim() || null;
-              } else if (matchId) {
-                transferFromUnit = matchId[1].trim();
-                transferBookingCode = matchId[2]?.trim() || null;
-              }
-            }
+            const { transferFromUnit, transferBookingCode } = parseTransferNote(b.notes);
 
             rows.push({
               id: b.id,
@@ -302,7 +392,7 @@ export const ReportsPage: React.FC = () => {
               todayCollected,
               payments,
               totalAmount: Number(b.total_amount || 0),
-              balance: Number(b.balance || 0),
+              balance: Math.max(0, Number(b.balance || 0)),
               status: b.status || 'confirmed',
             });
           }
@@ -342,19 +432,7 @@ export const ReportsPage: React.FC = () => {
           const payments = paymentsByBooking.get(b.id) || [];
           const todayCollected = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
 
-          let transferFromUnit: string | null = null;
-          let transferBookingCode: string | null = null;
-          if (b.notes) {
-            const matchAr = b.notes.match(/متابعة نقل النزيل من ([^(]+?)(?:\s*\(الحجز السابق:\s*([^)]+)\))?(?:\s*ابتداءً)?/);
-            const matchId = b.notes.match(/Lanjutan pindah unit dari ([^(]+?)(?:\s*\(Booking sebelumnya:\s*([^)]+)\))?(?:\s*mulai)?/);
-            if (matchAr) {
-              transferFromUnit = matchAr[1].trim();
-              transferBookingCode = matchAr[2]?.trim() || null;
-            } else if (matchId) {
-              transferFromUnit = matchId[1].trim();
-              transferBookingCode = matchId[2]?.trim() || null;
-            }
-          }
+          const { transferFromUnit, transferBookingCode } = parseTransferNote(b.notes);
 
           rows.push({
             id: b.id,
@@ -378,7 +456,7 @@ export const ReportsPage: React.FC = () => {
             todayCollected,
             payments,
             totalAmount: Number(b.total_amount || 0),
-            balance: Number(b.balance || 0),
+            balance: Math.max(0, Number(b.balance || 0)),
             status: b.status || 'confirmed',
           });
         }
@@ -394,6 +472,15 @@ export const ReportsPage: React.FC = () => {
 
         // Skip outside bookings if net collection today is 0, or if cancelled
         if (todayCollected === 0 || b.status === 'cancelled') continue;
+
+        const overview = outsideOverviewMap.get(b.id);
+        const totalAmount = Number(overview?.total_amount ?? b.total_amount ?? 0);
+        const balance = resolveOutsideBookingBalance({
+          totalAmount,
+          overviewBalance: overview?.balance,
+          totalPaid: totalPaidByBooking.get(b.id),
+          fallbackCollectedInPeriod: todayCollected,
+        });
 
         rows.push({
           id: `outside-pay-${b.id}`,
@@ -414,8 +501,8 @@ export const ReportsPage: React.FC = () => {
           sourceCode: b.source_code || 'walk_in',
           todayCollected,
           payments,
-          totalAmount: Number(b.total_amount || 0),
-          balance: Math.max(0, Number(b.total_amount || 0) - todayCollected),
+          totalAmount,
+          balance,
           status: b.status || 'confirmed',
         });
       }
@@ -761,27 +848,15 @@ export const ReportsPage: React.FC = () => {
     }));
   }, [daily, monthlyData]);
 
-  // Channel collections breakdown for unified AppChannelsRevenueReport (المقبوضات المحصلة الفعلية فقط)
+  // Channel collections breakdown for unified AppChannelsRevenueReport (المقبوضات المحصلة الفعلية من البنك/الخزينة)
   const channelReportItems = useMemo<AppChannelItem[]>(() => {
-    const paymentsBySource = new Map<string, number>();
-    if (operationalReport?.rows) {
-      for (const r of operationalReport.rows) {
-        if (!r.isVacant && r.sourceCode) {
-          const current = paymentsBySource.get(r.sourceCode) || 0;
-          paymentsBySource.set(r.sourceCode, current + (r.todayCollected || 0));
-        }
-      }
-    }
-
-    let sumCollected = 0;
-    for (const amt of paymentsBySource.values()) {
-      sumCollected += amt;
-    }
+    const channelMap = channelCollectionsData?.bySource || {};
+    const sumCollected = channelCollectionsData?.total ?? 0;
 
     return bySource.map((s) => {
       const bCount = Number(s.bookings || 0);
       const nTotal = Number(s.nights || 0);
-      const paid = paymentsBySource.get(s.source_code) || 0;
+      const paid = channelMap[s.source_code] || 0;
       const share = sumCollected > 0 ? (paid / sumCollected) * 100 : 0;
 
       return {
@@ -794,12 +869,15 @@ export const ReportsPage: React.FC = () => {
         sharePercent: share,
       };
     });
-  }, [bySource, operationalReport]);
+  }, [bySource, channelCollectionsData]);
 
-  const channelTotalCollected = useMemo(
-    () => channelReportItems.reduce((acc, c) => acc + c.collected, 0),
-    [channelReportItems]
-  );
+  const channelTotalCollected = useMemo(() => {
+    if (channelCollectionsData && typeof channelCollectionsData.total === 'number') {
+      return channelCollectionsData.total;
+    }
+    return channelReportItems.reduce((acc, c) => acc + c.collected, 0);
+  }, [channelCollectionsData, channelReportItems]);
+
   const channelTotalBookings = useMemo(
     () => channelReportItems.reduce((acc, c) => acc + c.bookings, 0),
     [channelReportItems]
@@ -975,6 +1053,18 @@ export const ReportsPage: React.FC = () => {
     window.print();
   };
 
+  const isRefreshing =
+    fetchingDaily || fetchingSource || fetchingChannelCollections || fetchingOperational;
+
+  const handleRefresh = async () => {
+    await Promise.all([
+      refetchDaily(),
+      refetchSource(),
+      refetchChannelCollections(),
+      refetchOperational(),
+    ]);
+  };
+
   const isLoading = loadingDaily || loadingSource;
 
   return (
@@ -983,12 +1073,37 @@ export const ReportsPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-navy">{t('nav.reports')}</h1>
-          <p className="text-xs text-muted mt-1">
+          <p className="text-xs text-muted mt-1 font-mono">
             {from} ➔ {to}
           </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-[11px] text-muted hidden sm:flex items-center gap-1.5 bg-stone/40 px-2.5 py-1.5 rounded-xl border border-line">
+            <span>💾</span>
+            <span>{lang === 'ar' ? 'محفوظ ومحدث في المتصفح' : 'Tersimpan di Browser'}</span>
+          </span>
+
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="flex items-center gap-1.5"
+            title={lang === 'ar' ? 'تحديث فوري للبيانات من السيرفر' : 'Segarkan data dari server'}
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-gold' : ''}`} />
+            <span>
+              {isRefreshing
+                ? lang === 'ar'
+                  ? 'جاري التحديث...'
+                  : 'Menyegarkan...'
+                : lang === 'ar'
+                ? 'تحديث البيانات'
+                : 'Segarkan Data'}
+            </span>
+          </Button>
+
           <Button variant="secondary" size="sm" onClick={handleExportExcel}>
             📥 {t('report.exportExcel')}
           </Button>
@@ -1024,12 +1139,7 @@ export const ReportsPage: React.FC = () => {
               <button
                 key={mode}
                 type="button"
-                onClick={() => {
-                  setPeriodMode(mode);
-                  if (mode === 'singleDay' && !singleDayDate) {
-                    setSingleDayDate(todayISO());
-                  }
-                }}
+                onClick={() => handleSetPeriodMode(mode)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                   periodMode === mode
                     ? 'bg-navy text-white shadow-sm'
@@ -1171,6 +1281,7 @@ export const ReportsPage: React.FC = () => {
                 : `${formatDateHuman(from, lang)} ➔ ${formatDateHuman(to, lang)}`
             }
             periodMode={periodMode}
+            isLoading={loadingDaily || loadingSource || loadingChannelCollections}
           />
 
           {/* Charts Row */}

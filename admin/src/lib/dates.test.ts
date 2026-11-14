@@ -4,6 +4,7 @@ import {
   eachNight,
   excelSerialToISO,
   formatDateHuman,
+  formatDateTimeNumeric,
   nightsBetween,
   parseDateRange,
   todayISO,
@@ -44,14 +45,20 @@ describe('dates utils', () => {
     });
   });
 
-  it('formatDateHuman formats dates in Indonesian and Arabic', () => {
+  it('formatDateHuman formats dates consistently as numeric YYYY-MM-DD without letters', () => {
     const idFormatted = formatDateHuman('2026-10-24', 'id');
-    expect(idFormatted).toContain('24');
-    expect(idFormatted).toContain('Okt');
+    expect(idFormatted).toBe('2026-10-24');
 
     const arFormatted = formatDateHuman('2026-10-24', 'ar');
-    expect(arFormatted).toContain('24');
-    expect(arFormatted).toContain('أكتوبر');
+    expect(arFormatted).toBe('2026-10-24');
+    expect(arFormatted).not.toMatch(/[أ-يa-zA-Z]/);
+    expect(formatDateHuman('', 'ar')).toBe('—');
+  });
+
+  it('formatDateTimeNumeric formats timestamps consistently in numeric YYYY-MM-DD HH:mm', () => {
+    const formatted = formatDateTimeNumeric('2026-10-24T09:15:00Z');
+    expect(formatted).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/);
+    expect(formatDateTimeNumeric('')).toBe('—');
   });
 
   it('excelSerialToISO converts Excel serial number to ISO date', () => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { z } from 'zod';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useBookingSources, useCreateBooking, useUpdateBooking } from '../../api/bookings';
@@ -7,6 +7,7 @@ import type { Unit } from '../../api/units';
 import { todayISO, addDaysISO, nightsBetween, formatDateHuman } from '../../lib/dates';
 import { isOtaSource } from '../../lib/bookingHelpers';
 import { formatIDRWithCommas, calcOtaNetPayout } from '../../lib/money';
+import { focusFirstInvalidField, formatMissingFieldsMessage } from '../../lib/validation';
 import { MoneyInput } from '../ui/MoneyInput';
 import { friendlyError } from '../../lib/errors';
 import { Field } from '../ui/Field';
@@ -79,7 +80,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
   );
 
   const [otaReference, setOtaReference] = useState<string>(initialBooking?.ota_reference || '');
-  const [dueDate, setDueDate] = useState<string>(initialBooking?.due_date || '');
+  const [dueDate, setDueDate] = useState<string>(initialBooking?.due_date || todayISO());
   const [notes, setNotes] = useState<string>(initialBooking?.notes || '');
 
   // First payment
@@ -90,6 +91,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'transfer' | 'app' | 'other'>('cash');
   const [paymentRef, setPaymentRef] = useState<string>('');
 
+  const formRef = useRef<HTMLFormElement>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -103,7 +105,10 @@ export const BookingForm: React.FC<BookingFormProps> = ({
   const updateBookingMutation = useUpdateBooking();
 
   // Nights calculation
-  const nights = checkIn && checkOut && checkOut > checkIn ? nightsBetween(checkIn, checkOut) : 0;
+  const nights =
+    checkIn.length >= 10 && checkOut.length >= 10 && checkOut > checkIn
+      ? nightsBetween(checkIn, checkOut)
+      : 0;
 
   // Sync total when price per night or nights change in 'per_night' mode
   useEffect(() => {
@@ -119,16 +124,19 @@ export const BookingForm: React.FC<BookingFormProps> = ({
   // When check-in changes and check-out <= check-in, set check-out to check-in + 1
   const handleCheckInChange = (newIn: string) => {
     setCheckIn(newIn);
-    if (!checkOut || checkOut <= newIn) {
-      setCheckOut(addDaysISO(newIn, 1));
-    }
-    if (isOtaSource(sourceCode)) {
-      setDueDate(newIn);
+    if (newIn.length >= 10) {
+      if (!checkOut || checkOut <= newIn) {
+        setCheckOut(addDaysISO(newIn, 1));
+      }
+      if (isOtaSource(sourceCode)) {
+        setDueDate(newIn);
+      }
     }
   };
 
   const handleUnitSelect = (id: number | null, unit: Unit | null) => {
     setUnitId(id);
+    setErrors((prev) => ({ ...prev, unitId: '' }));
     if (unit?.default_rate && !isEdit) {
       const rate = Number(unit.default_rate);
       setPricePerNight(rate);
@@ -150,19 +158,29 @@ export const BookingForm: React.FC<BookingFormProps> = ({
           ? z.string().optional()
           : z.string().min(1, t('booking.guestRequired')),
         unitId: z.number().int().positive(t('booking.unitRequired')),
-        checkIn: z.string().min(10),
-        checkOut: z.string().min(10),
-        adults: z.number().int().min(1),
+        checkIn: z
+          .string()
+          .min(10, t('validation.fieldRequired', { field: t('booking.checkIn') })),
+        checkOut: z
+          .string()
+          .min(10, t('validation.fieldRequired', { field: t('booking.checkOut') })),
+        adults: z
+          .number()
+          .int()
+          .min(1, t('validation.invalidValue', { field: t('booking.adults') })),
         children: z.number().int().min(0),
-        totalAmount: z.number().int().min(0),
+        totalAmount: z
+          .number()
+          .int()
+          .min(0, t('validation.invalidValue', { field: t('booking.totalPrice') })),
       })
-      .refine((d) => d.checkOut > d.checkIn, {
+      .refine((d) => !d.checkIn || !d.checkOut || d.checkOut > d.checkIn, {
         message: t('booking.invalidDates'),
         path: ['checkOut'],
       });
 
     const parsed = schema.safeParse({
-      guestId: guestId || undefined,
+      guestId: guestId || '',
       unitId: unitId || 0,
       checkIn,
       checkOut,
@@ -173,11 +191,34 @@ export const BookingForm: React.FC<BookingFormProps> = ({
 
     if (!parsed.success) {
       const fieldErrors: Record<string, string> = {};
+      const missingFields: string[] = [];
+      const extraDetails: string[] = [];
+      const fieldLabelMap: Record<string, string> = {
+        guestId: t('booking.guest'),
+        unitId: t('booking.unit'),
+        checkIn: t('booking.checkIn'),
+        checkOut: t('booking.checkOut'),
+        adults: t('booking.adults'),
+        totalAmount: t('booking.totalPrice'),
+      };
+
       for (const issue of parsed.error.issues) {
-        const key = issue.path[0] as string;
-        fieldErrors[key] = issue.message;
+        const key = String(issue.path[0] || '');
+        if (!fieldErrors[key]) {
+          fieldErrors[key] = issue.message;
+        }
+        if (key === 'checkOut' && issue.message === t('booking.invalidDates')) {
+          extraDetails.push(t('booking.invalidDates'));
+        } else if (fieldLabelMap[key]) {
+          missingFields.push(fieldLabelMap[key]);
+        } else if (issue.message) {
+          extraDetails.push(issue.message);
+        }
       }
+
       setErrors(fieldErrors);
+      showToast('error', formatMissingFieldsMessage(missingFields, t, extraDetails));
+      requestAnimationFrame(() => focusFirstInvalidField(formRef.current));
       return;
     }
 
@@ -264,7 +305,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 text-start">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-6 text-start" noValidate>
       {/* 1. Guest Section */}
       <Card>
         <h3 className="text-base font-bold text-navy mb-4">
@@ -272,7 +313,10 @@ export const BookingForm: React.FC<BookingFormProps> = ({
         </h3>
         <GuestPicker
           selectedGuestId={guestId}
-          onSelectGuest={(g) => setGuestId(g ? g.id : null)}
+          onSelectGuest={(g) => {
+            setGuestId(g ? g.id : null);
+            setErrors((prev) => ({ ...prev, guestId: '' }));
+          }}
           error={errors.guestId}
         />
         {isEdit && !guestId && (
@@ -291,25 +335,37 @@ export const BookingForm: React.FC<BookingFormProps> = ({
           <Field label={t('booking.checkIn')} required error={errors.checkIn}>
             <Input
               type="date"
+              error={Boolean(errors.checkIn)}
               value={checkIn}
-              onChange={(e) => handleCheckInChange(e.target.value)}
+              onChange={(e) => {
+                handleCheckInChange(e.target.value);
+                setErrors((prev) => ({ ...prev, checkIn: '', checkOut: '' }));
+              }}
             />
           </Field>
 
           <Field label={t('booking.checkOut')} required error={errors.checkOut}>
             <Input
               type="date"
+              error={Boolean(errors.checkOut)}
               value={checkOut}
-              onChange={(e) => setCheckOut(e.target.value)}
+              onChange={(e) => {
+                setCheckOut(e.target.value);
+                setErrors((prev) => ({ ...prev, checkOut: '' }));
+              }}
             />
           </Field>
 
-          <Field label={t('booking.adults')} required>
+          <Field label={t('booking.adults')} required error={errors.adults}>
             <Input
               type="number"
               min={1}
+              error={Boolean(errors.adults)}
               value={adults}
-              onChange={(e) => setAdults(Math.max(1, parseInt(e.target.value) || 1))}
+              onChange={(e) => {
+                setAdults(Math.max(1, parseInt(e.target.value) || 1));
+                setErrors((prev) => ({ ...prev, adults: '' }));
+              }}
             />
           </Field>
 
@@ -571,10 +627,14 @@ export const BookingForm: React.FC<BookingFormProps> = ({
           {/* 3. Amount Inputs */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {priceMode === 'per_night' ? (
-              <Field label={t('booking.pricePerNight')} required>
+              <Field label={t('booking.pricePerNight')} required error={errors.totalAmount}>
                 <MoneyInput
                   value={pricePerNight}
-                  onChange={(val) => setPricePerNight(val)}
+                  error={Boolean(errors.totalAmount)}
+                  onChange={(val) => {
+                    setPricePerNight(val);
+                    setErrors((prev) => ({ ...prev, totalAmount: '' }));
+                  }}
                 />
               </Field>
             ) : (
@@ -596,6 +656,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                   error={Boolean(errors.totalAmount)}
                   onChange={(val) => {
                     setCommissionableInput(val);
+                    setErrors((prev) => ({ ...prev, totalAmount: '' }));
                     if (isOtaCommissionable && otaEntryMode === 'commissionable') {
                       const calc = calcOtaNetPayout(val);
                       setTotalAmount(calc.netPayout);

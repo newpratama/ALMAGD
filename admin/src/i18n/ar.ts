@@ -630,4 +630,17 @@ export const ar = {
     punchSaved: 'تم تسجيل البصمة بنجاح',
     exportExcel: 'تصدير الكشف (Excel/CSV)',
   },
+  validation: {
+    listSeparator: '، ',
+    missingFields: 'يرجى إكمال الحقول الناقصة: {fields}',
+    fieldRequired: 'يرجى إدخال {field}',
+    invalidValue: 'يرجى إدخال قيمة صحيحة في حقل: {field}',
+    invalidUuid: 'صيغة معرف المستخدم (UUID) غير صحيحة',
+    invalidColorHex: 'يرجى إدخال رمز لون Hex صحيح (مثال: #536275)',
+    endAfterStart: 'تاريخ الانتهاء يجب أن يكون بعد تاريخ البدء',
+    dateOutOfRange: 'التاريخ المختار خارج نطاق تواريخ الإقامة المسموح',
+    selectNewUnit: 'يرجى اختيار الوحدة الجديدة المراد النقل إليها',
+    penaltyAmountRequired: 'يرجى إدخال مبلغ رسوم الإلغاء المستقطعة (أكبر من 0 وحتى {max})',
+    shiftDeviceRequired: 'بيانات اتصال الجهاز (SN / API Token) ومواعيد الدوام مطلوبة',
+  },
 };

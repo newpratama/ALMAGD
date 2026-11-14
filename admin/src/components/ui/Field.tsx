@@ -20,7 +20,10 @@ export const Field: React.FC<FieldProps> = ({
   id,
 }) => {
   return (
-    <div className={`space-y-1 text-start ${className}`}>
+    <div
+      data-invalid={error ? 'true' : undefined}
+      className={`space-y-1 text-start ${className}`}
+    >
       {label && (
         <label htmlFor={id} className="block text-sm font-medium text-ink">
           {label}

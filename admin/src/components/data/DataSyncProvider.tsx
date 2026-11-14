@@ -30,10 +30,20 @@ export const DataSyncProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         void queryClient.invalidateQueries({ queryKey: ['calendar'] });
         void queryClient.invalidateQueries({ queryKey: ['today'] });
         void queryClient.invalidateQueries({ queryKey: ['units'] });
+        void queryClient.invalidateQueries({ queryKey: ['report-daily'] });
+        void queryClient.invalidateQueries({ queryKey: ['report-source'] });
+        void queryClient.invalidateQueries({ queryKey: ['report-channel-collections'] });
+        void queryClient.invalidateQueries({ queryKey: ['report-daily-operational'] });
+        void queryClient.invalidateQueries({ queryKey: ['unit-revenue-performance'] });
       } else if (domain === 'payments') {
         void queryClient.invalidateQueries({ queryKey: ['payments'] });
         void queryClient.invalidateQueries({ queryKey: ['bookings'] });
         void queryClient.invalidateQueries({ queryKey: ['today'] });
+        void queryClient.invalidateQueries({ queryKey: ['report-daily'] });
+        void queryClient.invalidateQueries({ queryKey: ['report-source'] });
+        void queryClient.invalidateQueries({ queryKey: ['report-channel-collections'] });
+        void queryClient.invalidateQueries({ queryKey: ['report-daily-operational'] });
+        void queryClient.invalidateQueries({ queryKey: ['unit-revenue-performance'] });
       } else if (domain === 'guests') {
         void queryClient.invalidateQueries({ queryKey: ['guests'] });
       } else if (domain === 'units' || domain === 'blocks') {
@@ -66,10 +76,20 @@ export const DataSyncProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           void queryClient.invalidateQueries({ queryKey: ['calendar'] });
           void queryClient.invalidateQueries({ queryKey: ['today'] });
           void queryClient.invalidateQueries({ queryKey: ['units'] });
+          void queryClient.invalidateQueries({ queryKey: ['report-daily'] });
+          void queryClient.invalidateQueries({ queryKey: ['report-source'] });
+          void queryClient.invalidateQueries({ queryKey: ['report-channel-collections'] });
+          void queryClient.invalidateQueries({ queryKey: ['report-daily-operational'] });
+          void queryClient.invalidateQueries({ queryKey: ['unit-revenue-performance'] });
         } else if (domain === 'payments') {
           void queryClient.invalidateQueries({ queryKey: ['payments'] });
           void queryClient.invalidateQueries({ queryKey: ['bookings'] });
           void queryClient.invalidateQueries({ queryKey: ['today'] });
+          void queryClient.invalidateQueries({ queryKey: ['report-daily'] });
+          void queryClient.invalidateQueries({ queryKey: ['report-source'] });
+          void queryClient.invalidateQueries({ queryKey: ['report-channel-collections'] });
+          void queryClient.invalidateQueries({ queryKey: ['report-daily-operational'] });
+          void queryClient.invalidateQueries({ queryKey: ['unit-revenue-performance'] });
         } else if (domain === 'guests') {
           void queryClient.invalidateQueries({ queryKey: ['guests'] });
         } else if (domain === 'units') {

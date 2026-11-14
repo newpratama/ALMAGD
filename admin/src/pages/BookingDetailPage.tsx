@@ -20,7 +20,7 @@ import {
 import type { Payment, PaymentInsert, PaymentUpdate } from '../api/payments';
 import { useGuest } from '../api/guests';
 import { BookingReceipt } from '../components/booking/BookingReceipt';
-import { formatDateHuman } from '../lib/dates';
+import { formatDateHuman, formatDateTimeNumeric } from '../lib/dates';
 import { formatIDR } from '../lib/money';
 import { friendlyError } from '../lib/errors';
 import { isOtaSource } from '../lib/bookingHelpers';
@@ -582,7 +582,7 @@ export const BookingDetailPage: React.FC = () => {
                         <span className="text-muted">{log.table_name}</span>
                       </div>
                       <span className="font-mono text-muted text-[11px]">
-                        {new Date(log.at).toLocaleString()}
+                        {formatDateTimeNumeric(log.at)}
                       </span>
                     </div>
                   ))}
@@ -638,7 +638,7 @@ export const BookingDetailPage: React.FC = () => {
           bookingId={bookingId}
           bookingCode={booking.code}
           defaultOtaRef={booking.ota_reference}
-          defaultPaidOn={booking.check_in}
+          defaultPaidOn={isOtaSource(booking.source_code) ? booking.check_in : undefined}
           defaultMethod={
             booking.source_code && booking.source_code !== 'direct' && booking.source_code !== 'walk_in'
               ? 'app'

@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { Payment, PaymentInsert, PaymentUpdate } from '../../api/payments';
 import { todayISO } from '../../lib/dates';
+import { focusFirstInvalidField, formatMissingFieldsMessage } from '../../lib/validation';
 import { Field } from '../ui/Field';
 import { Input } from '../ui/Input';
 import { MoneyInput } from '../ui/MoneyInput';
 import { Select } from '../ui/Select';
 import { Textarea } from '../ui/Textarea';
 import { Button } from '../ui/Button';
+import { useToast } from '../ui/Toast';
 
 export interface PaymentFormProps {
   bookingId: string;
@@ -35,6 +37,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   onCancel,
 }) => {
   const { t } = useI18n();
+  const { showToast } = useToast();
+  const formRef = useRef<HTMLFormElement>(null);
 
   const isEdit = Boolean(initialPayment);
   const initialAmount = initialPayment ? Math.abs(Number(initialPayment.amount)) : defaultAmount;
@@ -62,6 +66,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   );
   const [notes, setNotes] = useState<string>(initialPayment?.notes || '');
   const [amountError, setAmountError] = useState<string | null>(null);
+  const [paidOnError, setPaidOnError] = useState<string | null>(null);
 
   const handleMethodChange = (newMethod: MethodType) => {
     setMethod(newMethod);
@@ -80,12 +85,27 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setAmountError(null);
+    setPaidOnError(null);
+
     const numAmount = amount;
+    const missingFields: string[] = [];
+
     if (!numAmount || isNaN(numAmount) || numAmount <= 0) {
-      setAmountError(t('common.required'));
+      missingFields.push(t('booking.amount'));
+      setAmountError(t('validation.fieldRequired', { field: t('booking.amount') }));
+    }
+
+    if (!paidOn) {
+      missingFields.push(t('booking.dueDate'));
+      setPaidOnError(t('validation.fieldRequired', { field: t('booking.dueDate') }));
+    }
+
+    if (missingFields.length > 0) {
+      showToast('error', formatMissingFieldsMessage(missingFields, t));
+      requestAnimationFrame(() => focusFirstInvalidField(formRef.current));
       return;
     }
-    setAmountError(null);
 
     const finalAmount = isRefund ? -Math.abs(numAmount) : Math.abs(numAmount);
 
@@ -112,7 +132,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 text-start">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-4 text-start" noValidate>
       {/* Refund Toggle */}
       <div className="p-3 bg-stone/40 rounded-lg flex items-center justify-between">
         <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-ink">
@@ -138,7 +158,10 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           <MoneyInput
             value={amount}
             error={Boolean(amountError)}
-            onChange={(val) => setAmount(val)}
+            onChange={(val) => {
+              setAmount(val);
+              if (amountError) setAmountError(null);
+            }}
             fullAmountButton={
               defaultAmount > 0
                 ? {
@@ -164,11 +187,15 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label={t('booking.dueDate')} required>
+        <Field label={t('booking.dueDate')} required error={paidOnError || undefined}>
           <Input
             type="date"
+            error={Boolean(paidOnError)}
             value={paidOn}
-            onChange={(e) => setPaidOn(e.target.value)}
+            onChange={(e) => {
+              setPaidOn(e.target.value);
+              if (paidOnError) setPaidOnError(null);
+            }}
           />
         </Field>
 

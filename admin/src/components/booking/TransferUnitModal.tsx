@@ -12,6 +12,7 @@ import { updateBooking, createBooking, type BookingOverview, type BookingInsert 
 import { fetchAvailableUnits, useUnits, type Unit } from '../../api/units';
 import { fetchPayments, createPayment, updatePayment, deletePayment } from '../../api/payments';
 import { friendlyError } from '../../lib/errors';
+import { formatMissingFieldsMessage } from '../../lib/validation';
 import { useToast } from '../ui/Toast';
 
 export interface TransferUnitModalProps {
@@ -52,6 +53,16 @@ export const TransferUnitModal: React.FC<TransferUnitModalProps> = ({
   const [executionMode, setExecutionMode] = useState<'split' | 'modify_checkin'>('split');
   const [reason, setReason] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [dateError, setDateError] = useState<string | null>(null);
+  const [unitError, setUnitError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setTransferDate(initialTransferDate);
+      setDateError(null);
+      setUnitError(null);
+    }
+  }, [isOpen, initialTransferDate]);
 
   const { data: allUnits = [] } = useUnits();
 
@@ -194,7 +205,33 @@ export const TransferUnitModal: React.FC<TransferUnitModalProps> = ({
   const priceDiff = finalTotal - currentTotal;
 
   const handleConfirm = async () => {
-    if (!booking.id || !selectedUnitId || !targetUnit) return;
+    if (!booking.id) return;
+    setDateError(null);
+    setUnitError(null);
+
+    const missingFields: string[] = [];
+    const extraDetails: string[] = [];
+
+    if (!transferDate) {
+      missingFields.push(t('scenarios.transferDateLabel'));
+      setDateError(t('validation.fieldRequired', { field: t('scenarios.transferDateLabel') }));
+    } else if (transferDate < checkIn || transferDate > maxTransferDate) {
+      extraDetails.push(t('validation.dateOutOfRange'));
+      setDateError(t('validation.dateOutOfRange'));
+    }
+
+    if (!selectedUnitId || !targetUnit) {
+      missingFields.push(t('scenarios.selectNewUnitLabel'));
+      setUnitError(t('validation.selectNewUnit'));
+    }
+
+    if (missingFields.length > 0 || extraDetails.length > 0) {
+      showToast('error', formatMissingFieldsMessage(missingFields, t, extraDetails));
+      return;
+    }
+
+    if (!selectedUnitId || !targetUnit) return;
+
     setIsSubmitting(true);
 
     try {
@@ -362,7 +399,7 @@ export const TransferUnitModal: React.FC<TransferUnitModalProps> = ({
             variant="primary"
             onClick={handleConfirm}
             loading={isSubmitting}
-            disabled={!selectedUnitId || loadingUnits}
+            disabled={loadingUnits}
           >
             {t('scenarios.confirmTransferBtn')}
           </Button>
@@ -398,13 +435,20 @@ export const TransferUnitModal: React.FC<TransferUnitModalProps> = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 items-center">
-            <Input
-              type="date"
-              value={transferDate}
-              min={checkIn}
-              max={maxTransferDate}
-              onChange={(e) => setTransferDate(e.target.value)}
-            />
+            <div>
+              <Input
+                type="date"
+                error={Boolean(dateError)}
+                value={transferDate}
+                min={checkIn}
+                max={maxTransferDate}
+                onChange={(e) => {
+                  setTransferDate(e.target.value);
+                  setDateError(null);
+                }}
+              />
+              {dateError && <p className="text-xs text-danger font-medium mt-1">{dateError}</p>}
+            </div>
 
             {/* Quick date buttons */}
             <div className="flex items-center gap-1.5 flex-wrap">
@@ -485,9 +529,14 @@ export const TransferUnitModal: React.FC<TransferUnitModalProps> = ({
             </div>
           ) : (
             <Select
+              error={Boolean(unitError)}
               value={selectedUnitId || ''}
-              onChange={(e) => setSelectedUnitId(Number(e.target.value))}
+              onChange={(e) => {
+                setSelectedUnitId(Number(e.target.value) || null);
+                setUnitError(null);
+              }}
             >
+              <option value="">-- {t('scenarios.selectNewUnitLabel')} --</option>
               {allVillas.map((villa) => {
                 const wholeVilla = availableWholeVillasMap.get(villa.id);
                 const childRooms = roomsByVilla.get(villa.id) || [];
@@ -537,6 +586,7 @@ export const TransferUnitModal: React.FC<TransferUnitModalProps> = ({
               )}
             </Select>
           )}
+          {unitError && <p className="text-xs text-danger font-medium">{unitError}</p>}
         </div>
 
         {/* Mid-Stay Execution Method */}

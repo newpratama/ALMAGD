@@ -630,6 +630,19 @@ export const id = {
     punchSaved: 'Data scan berhasil disimpan',
     exportExcel: 'Ekspor Data (Excel/CSV)',
   },
+  validation: {
+    listSeparator: ', ',
+    missingFields: 'Mohon lengkapi kolom berikut: {fields}',
+    fieldRequired: 'Mohon isi {field}',
+    invalidValue: 'Mohon masukkan nilai yang valid untuk: {field}',
+    invalidUuid: 'Format User UUID tidak valid',
+    invalidColorHex: 'Mohon masukkan kode warna Hex yang valid (contoh: #536275)',
+    endAfterStart: 'Tanggal selesai harus setelah tanggal mulai',
+    dateOutOfRange: 'Tanggal berada di luar rentang menginap yang diizinkan',
+    selectNewUnit: 'Silakan pilih unit baru tujuan pemindahan',
+    penaltyAmountRequired: 'Mohon masukkan jumlah denda yang valid (lebih dari 0 dan maksimal {max})',
+    shiftDeviceRequired: 'SN mesin, API Token, serta jam masuk & pulang wajib diisi',
+  },
 };
 
 export type TranslationKey = string;

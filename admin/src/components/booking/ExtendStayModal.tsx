@@ -5,7 +5,8 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Spinner } from '../ui/Spinner';
 import { formatIDR } from '../../lib/money';
-import { addDaysISO, nightsBetween, formatDateHuman } from '../../lib/dates';
+import { addDaysISO, nightsBetween, formatDateHuman, todayISO } from '../../lib/dates';
+import { formatMissingFieldsMessage } from '../../lib/validation';
 import { updateBooking, type BookingOverview } from '../../api/bookings';
 import { fetchAvailableUnits } from '../../api/units';
 import { friendlyError } from '../../lib/errors';
@@ -33,12 +34,23 @@ export const ExtendStayModal: React.FC<ExtendStayModalProps> = ({
   const ratePerNight = Math.round(currentTotal / currentNights);
 
   const [newCheckOut, setNewCheckOut] = useState<string>(() =>
-    currentCheckOut ? addDaysISO(currentCheckOut, 1) : ''
+    currentCheckOut ? addDaysISO(currentCheckOut, 1) : addDaysISO(todayISO(), 1)
   );
   const [extraAmount, setExtraAmount] = useState<number>(ratePerNight);
   const [checkingAvailability, setCheckingAvailability] = useState<boolean>(false);
   const [isUnitAvailable, setIsUnitAvailable] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [dateError, setDateError] = useState<string | null>(null);
+  const [amountError, setAmountError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setNewCheckOut(currentCheckOut ? addDaysISO(currentCheckOut, 1) : addDaysISO(todayISO(), 1));
+      setExtraAmount(ratePerNight);
+      setDateError(null);
+      setAmountError(null);
+    }
+  }, [isOpen, currentCheckOut, ratePerNight]);
 
   const extraNights = useMemo(() => {
     if (!currentCheckOut || !newCheckOut) return 0;
@@ -79,7 +91,34 @@ export const ExtendStayModal: React.FC<ExtendStayModalProps> = ({
   };
 
   const handleConfirm = async () => {
-    if (!booking.id || extraNights <= 0) return;
+    if (!booking.id) return;
+    setDateError(null);
+    setAmountError(null);
+
+    const missingFields: string[] = [];
+    const extraDetails: string[] = [];
+
+    if (!newCheckOut) {
+      missingFields.push(t('scenarios.newCheckOutLabel'));
+      setDateError(t('validation.fieldRequired', { field: t('scenarios.newCheckOutLabel') }));
+    } else if (extraNights <= 0) {
+      extraDetails.push(t('booking.invalidDates'));
+      setDateError(t('booking.invalidDates'));
+    } else if (!isUnitAvailable) {
+      extraDetails.push(t('scenarios.unitConflictWarning'));
+      setDateError(t('scenarios.unitConflictWarning'));
+    }
+
+    if (Number.isNaN(extraAmount) || extraAmount < 0) {
+      missingFields.push(t('scenarios.additionalChargeLabel'));
+      setAmountError(t('validation.invalidValue', { field: t('scenarios.additionalChargeLabel') }));
+    }
+
+    if (missingFields.length > 0 || extraDetails.length > 0) {
+      showToast('error', formatMissingFieldsMessage(missingFields, t, extraDetails));
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const newTotal = currentTotal + extraAmount;
@@ -125,7 +164,7 @@ export const ExtendStayModal: React.FC<ExtendStayModalProps> = ({
             variant="primary"
             onClick={handleConfirm}
             loading={isSubmitting}
-            disabled={extraNights <= 0 || !isUnitAvailable || checkingAvailability}
+            disabled={checkingAvailability}
           >
             {t('scenarios.confirmExtendBtn')}
           </Button>
@@ -191,10 +230,15 @@ export const ExtendStayModal: React.FC<ExtendStayModalProps> = ({
           </label>
           <Input
             type="date"
+            error={Boolean(dateError)}
             min={currentCheckOut ? addDaysISO(currentCheckOut, 1) : undefined}
             value={newCheckOut}
-            onChange={(e) => setNewCheckOut(e.target.value)}
+            onChange={(e) => {
+              setNewCheckOut(e.target.value);
+              setDateError(null);
+            }}
           />
+          {dateError && <p className="text-xs text-danger font-medium">{dateError}</p>}
           {newCheckOut && (
             <div className="text-xs text-text-muted">
               {formatDateHuman(newCheckOut, lang)} ({extraNights} {t('booking.nights')}{' '}
@@ -229,9 +273,14 @@ export const ExtendStayModal: React.FC<ExtendStayModalProps> = ({
             type="number"
             step={10000}
             min={0}
+            error={Boolean(amountError)}
             value={extraAmount || ''}
-            onChange={(e) => setExtraAmount(Number(e.target.value))}
+            onChange={(e) => {
+              setExtraAmount(Number(e.target.value));
+              setAmountError(null);
+            }}
           />
+          {amountError && <p className="text-xs text-danger font-medium">{amountError}</p>}
           <div className="text-[11px] text-text-muted">
             {t('scenarios.suggestedRateCalc', {
               rate: formatIDR(ratePerNight),

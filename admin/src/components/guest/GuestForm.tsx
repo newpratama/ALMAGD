@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useI18n } from '../../i18n/I18nProvider';
 import { Field } from '../ui/Field';
 import { Input } from '../ui/Input';
@@ -7,6 +7,8 @@ import { Textarea } from '../ui/Textarea';
 import { Button } from '../ui/Button';
 import { NationalitySelect } from './NationalitySelect';
 import { findNationalityOption } from '../../lib/nationalities';
+import { focusFirstInvalidField, formatMissingFieldsMessage } from '../../lib/validation';
+import { useToast } from '../ui/Toast';
 import type { Guest, GuestInsert, GuestUpdate } from '../../api/guests';
 
 export interface GuestFormProps {
@@ -23,6 +25,8 @@ export const GuestForm: React.FC<GuestFormProps> = ({
   onCancel,
 }) => {
   const { t } = useI18n();
+  const { showToast } = useToast();
+  const formRef = useRef<HTMLFormElement>(null);
 
   const [fullName, setFullName] = useState(initialData?.full_name || '');
   const [phone, setPhone] = useState(initialData?.phone || '');
@@ -42,7 +46,9 @@ export const GuestForm: React.FC<GuestFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName.trim()) {
-      setNameError(t('common.required'));
+      setNameError(t('validation.fieldRequired', { field: t('guest.fullName') }));
+      showToast('error', formatMissingFieldsMessage([t('guest.fullName')], t));
+      requestAnimationFrame(() => focusFirstInvalidField(formRef.current));
       return;
     }
     setNameError(null);
@@ -66,7 +72,7 @@ export const GuestForm: React.FC<GuestFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5 text-start">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-5 text-start" noValidate>
       {isBlacklist && (
         <div className="p-3 bg-danger/10 border border-danger/30 rounded-lg text-danger text-sm font-semibold flex items-center gap-2">
           <span>⚠️</span>

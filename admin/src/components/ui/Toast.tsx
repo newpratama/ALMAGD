@@ -26,9 +26,10 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const id = Math.random().toString(36).substring(2, 9);
     setToasts((prev) => [...prev, { id, type, message }]);
 
+    const durationMs = type === 'error' || type === 'warning' ? 5500 : 4000;
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 4000);
+    }, durationMs);
   }, []);
 
   return (
@@ -46,6 +47,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           return (
             <div
               key={toast.id}
+              role={toast.type === 'error' || toast.type === 'warning' ? 'alert' : 'status'}
               className={`pointer-events-auto flex items-center justify-between p-3.5 rounded-xl shadow-lg text-sm font-medium transition-all transform translate-y-0 ${typeStyles}`}
             >
               <span>{toast.message}</span>

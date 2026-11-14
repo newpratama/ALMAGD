@@ -50,6 +50,7 @@ export const CancelBookingModal: React.FC<CancelBookingModalProps> = ({
     isOta ? 'app' : 'cash'
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [penaltyError, setPenaltyError] = useState<string | null>(null);
 
   const penaltyAmount =
     policy === 'full_refund'
@@ -62,6 +63,19 @@ export const CancelBookingModal: React.FC<CancelBookingModalProps> = ({
 
   const handleConfirm = async () => {
     if (!booking.id) return;
+    setPenaltyError(null);
+
+    if (
+      paidAmount > 0 &&
+      policy === 'partial_penalty' &&
+      (!customPenalty || Number.isNaN(customPenalty) || customPenalty <= 0 || customPenalty > paidAmount)
+    ) {
+      const msg = t('validation.penaltyAmountRequired', { max: formatIDR(paidAmount) });
+      setPenaltyError(msg);
+      showToast('error', msg);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const newStatus = isNoShow ? 'no_show' : 'cancelled';
@@ -373,10 +387,15 @@ export const CancelBookingModal: React.FC<CancelBookingModalProps> = ({
                           type="number"
                           min={0}
                           max={paidAmount}
+                          error={Boolean(penaltyError)}
                           value={customPenalty || ''}
-                          onChange={(e) => setCustomPenalty(Number(e.target.value))}
+                          onChange={(e) => {
+                            setCustomPenalty(Number(e.target.value));
+                            setPenaltyError(null);
+                          }}
                           placeholder="مثال: 500000"
                         />
+                        {penaltyError && <p className="text-xs text-danger font-medium">{penaltyError}</p>}
                       </div>
                     )}
                   </div>

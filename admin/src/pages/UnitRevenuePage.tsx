@@ -91,13 +91,34 @@ export const UnitRevenuePage: React.FC = () => {
     queryFn: async () => {
       if (!supabase || !from || !to) return null;
 
-      // 1. Fetch units
-      const { data: allUnitsData, error: unitsErr } = await supabase
-        .from('units')
-        .select('id, name, kind, sort_order, active, parent_id')
-        .order('sort_order', { ascending: true });
-      if (unitsErr) throw unitsErr;
-      const allUnits = allUnitsData || [];
+      // Fetch units, payments, and in-house stays concurrently
+      const [unitsRes, paymentsRes, inHouseRes] = await Promise.all([
+        supabase
+          .from('units')
+          .select('id, name, kind, sort_order, active, parent_id')
+          .order('sort_order', { ascending: true }),
+        supabase
+          .from('payments')
+          .select('*, bookings(id, code, unit_id, check_in, check_out, total_amount, source_code, status)')
+          .gte('paid_on', from)
+          .lte('paid_on', to)
+          .order('created_at', { ascending: true }),
+        supabase
+          .from('booking_overview')
+          .select('*')
+          .lte('check_in', to)
+          .gt('check_out', from)
+          .neq('status', 'cancelled')
+          .order('check_in', { ascending: true }),
+      ]);
+
+      if (unitsRes.error) throw unitsRes.error;
+      if (paymentsRes.error) throw paymentsRes.error;
+      if (inHouseRes.error) throw inHouseRes.error;
+
+      const allUnits = unitsRes.data || [];
+      const payments = paymentsRes.data || [];
+      const inHouse = (inHouseRes.data || []) as BookingOverview[];
 
       // Map parent units
       const parentUnitMap = new Map<number, any>();
@@ -145,16 +166,6 @@ export const UnitRevenuePage: React.FC = () => {
         });
       }
 
-      // 2. Fetch payments paid in [from, to]
-      const { data: paymentsData, error: payErr } = await supabase
-        .from('payments')
-        .select('*, bookings(id, code, unit_id, check_in, check_out, total_amount, source_code, status)')
-        .gte('paid_on', from)
-        .lte('paid_on', to)
-        .order('created_at', { ascending: true });
-      if (payErr) throw payErr;
-      const payments = paymentsData || [];
-
       for (const p of payments) {
         const b = (p as any).bookings;
         if (!b?.unit_id || b.status === 'cancelled') continue;
@@ -163,17 +174,6 @@ export const UnitRevenuePage: React.FC = () => {
           unitMetrics.get(parentId)!.paid += Number(p.amount || 0);
         }
       }
-
-      // 3. Fetch in-house stays overlapping [from, to]
-      const { data: inHouseData, error: inHouseErr } = await supabase
-        .from('booking_overview')
-        .select('*')
-        .lte('check_in', to)
-        .gt('check_out', from)
-        .neq('status', 'cancelled')
-        .order('check_in', { ascending: true });
-      if (inHouseErr) throw inHouseErr;
-      const inHouse = (inHouseData || []) as BookingOverview[];
 
       for (const b of inHouse) {
         if (!b.unit_id || b.status === 'cancelled' || !b.check_in || !b.check_out) continue;
@@ -280,6 +280,7 @@ export const UnitRevenuePage: React.FC = () => {
       };
     },
     enabled: Boolean(from && to && to >= from),
+    staleTime: 1000 * 60 * 5,
   });
 
   // Export to Excel

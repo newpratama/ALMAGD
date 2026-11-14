@@ -98,7 +98,7 @@ export const UnitPicker: React.FC<UnitPickerProps> = ({
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2" data-invalid={error ? 'true' : undefined}>
       <div className="flex items-center justify-between">
         <label className="block text-sm font-semibold text-ink">
           {t('booking.unit')} <span className="text-danger">*</span>
