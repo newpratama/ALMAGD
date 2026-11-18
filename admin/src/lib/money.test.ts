@@ -5,6 +5,9 @@ import {
   formatNumberWithCommas,
   formatAmountWords,
   parseIDR,
+  calcOtaNetPayout,
+  invertOtaNetPayout,
+  extractOtaVoucherFromNotes,
 } from './money';
 
 describe('money utils', () => {
@@ -41,6 +44,29 @@ describe('money utils', () => {
     expect(parseIDR('-50000')).toBe(-50000);
     expect(parseIDR('')).toBe(0);
     expect(parseIDR('Rp 0')).toBe(0);
+  });
+
+  it('calcOtaNetPayout and invertOtaNetPayout round-trip accurately without double deduction', () => {
+    for (const voucher of [0, 500000, 1000000, 1166771, 1452500, 3500000]) {
+      const calc = calcOtaNetPayout(voucher);
+      const inverted = invertOtaNetPayout(calc.netPayout);
+      expect(calcOtaNetPayout(inverted).netPayout).toBe(calc.netPayout);
+    }
+
+    // Direct net payout value (like 1,302,267 from screenshot) also inverts cleanly
+    const invertedSample = invertOtaNetPayout(1302267);
+    expect(Math.abs(calcOtaNetPayout(invertedSample).netPayout - 1302267)).toBeLessThanOrEqual(1);
+  });
+
+  it('extractOtaVoucherFromNotes extracts valid voucher and ignores stale or bogus lines', () => {
+    const validCalc = calcOtaNetPayout(1452500);
+    const notesWithValid = `[سند Agoda: المبلغ الاسمي Rp 1,452,500 | الصافي للبنك ${formatIDRWithCommas(validCalc.netPayout)}]`;
+    expect(extractOtaVoucherFromNotes(notesWithValid, validCalc.netPayout)).toBe(1452500);
+    expect(extractOtaVoucherFromNotes(notesWithValid, 999999)).toBeNull();
+
+    // Bogus line where voucher == recordedNet (from earlier double-deduction bug) must be ignored
+    const bogusNotes = `[سند Agoda: المبلغ الاسمي Rp 1,302,267 | الصافي للبنك Rp 1,302,267]`;
+    expect(extractOtaVoucherFromNotes(bogusNotes, 1302267)).toBeNull();
   });
 });
 

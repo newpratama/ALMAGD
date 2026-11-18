@@ -109,3 +109,74 @@ export function calcOtaNetPayout(commissionableAmount: number): {
   };
 }
 
+/**
+ * Finds the commissionable voucher amount that yields the given net bank payout
+ * under `calcOtaNetPayout`. Used when switching modes in edit view so an already-net
+ * amount is never double-deducted.
+ */
+export function invertOtaNetPayout(netAmount: number): number {
+  const target = Math.max(0, Math.round(netAmount));
+  if (target === 0) return 0;
+
+  let low = 0;
+  let high = Math.ceil(target * 1.3) + 100;
+  while (low < high) {
+    const mid = Math.floor((low + high) / 2);
+    if (calcOtaNetPayout(mid).netPayout < target) {
+      low = mid + 1;
+    } else {
+      high = mid;
+    }
+  }
+
+  let best = low;
+  let bestDiff = Math.abs(calcOtaNetPayout(best).netPayout - target);
+  for (let cand = Math.max(0, low - 3); cand <= low + 3; cand++) {
+    const diff = Math.abs(calcOtaNetPayout(cand).netPayout - target);
+    if (diff < bestDiff) {
+      best = cand;
+      bestDiff = diff;
+    }
+  }
+  return best;
+}
+
+/**
+ * Extracts the most recent valid OTA nominal voucher amount from booking notes
+ * (e.g. `[سند Agoda: المبلغ الاسمي Rp 1,452,500 | الصافي للبنك Rp 1,301,371]`),
+ * ensuring it matches `expectedNetAmount` and `calcOtaNetPayout`.
+ */
+export function extractOtaVoucherFromNotes(
+  notes: string | null | undefined,
+  expectedNetAmount?: number
+): number | null {
+  if (!notes) return null;
+  const lines = notes.split(/\r?\n/);
+  const pattern =
+    /المبلغ الاسمي(?:\s+بالسند)?\s+Rp\s+([\d.,]+)\s*\|\s*الصافي للبنك\s+Rp\s+([\d.,]+)/;
+
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const match = lines[i].match(pattern);
+    if (!match) continue;
+
+    const voucher = parseIDR(match[1]);
+    const recordedNet = parseIDR(match[2]);
+    if (voucher <= 0 || recordedNet <= 0) continue;
+
+    if (
+      expectedNetAmount !== undefined &&
+      Math.abs(recordedNet - Math.round(expectedNetAmount)) > 1
+    ) {
+      continue;
+    }
+
+    if (Math.abs(calcOtaNetPayout(voucher).netPayout - recordedNet) > 1) {
+      continue;
+    }
+
+    return voucher;
+  }
+
+  return null;
+}
+

@@ -5,8 +5,19 @@ import { useBookingSources, useCreateBooking, useUpdateBooking } from '../../api
 import type { Booking, BookingInsert, BookingUpdate } from '../../api/bookings';
 import type { Unit } from '../../api/units';
 import { todayISO, addDaysISO, nightsBetween, formatDateHuman } from '../../lib/dates';
-import { isOtaSource } from '../../lib/bookingHelpers';
-import { formatIDRWithCommas, calcOtaNetPayout } from '../../lib/money';
+import {
+  buildBookingFinalNotes,
+  getInitialBookingPricingState,
+  isOtaCommissionableSource,
+  isOtaSource,
+  type OtaEntryMode,
+} from '../../lib/bookingHelpers';
+import {
+  calcOtaNetPayout,
+  extractOtaVoucherFromNotes,
+  formatIDRWithCommas,
+  invertOtaNetPayout,
+} from '../../lib/money';
 import { focusFirstInvalidField, formatMissingFieldsMessage } from '../../lib/validation';
 import { MoneyInput } from '../ui/MoneyInput';
 import { friendlyError } from '../../lib/errors';
@@ -65,19 +76,16 @@ export const BookingForm: React.FC<BookingFormProps> = ({
   );
 
   // Price mode: 'per_night' or 'total'
+  const [initialPricing] = useState(() => getInitialBookingPricingState(initialBooking));
   const [priceMode, setPriceMode] = useState<'per_night' | 'total'>('total');
-  const [pricePerNight, setPricePerNight] = useState<number>(1000000);
+  const [pricePerNight, setPricePerNight] = useState<number>(initialPricing.pricePerNight);
   const [sourceCode, setSourceCode] = useState<string>(initialBooking?.source_code || 'walk_in');
-  const isOtaCommissionable = sourceCode === 'booking' || sourceCode === 'agoda';
-  const [otaEntryMode, setOtaEntryMode] = useState<'commissionable' | 'net'>(
-    isOtaCommissionable ? 'commissionable' : 'net'
-  );
+  const isOtaCommissionable = isOtaCommissionableSource(sourceCode);
+  const [otaEntryMode, setOtaEntryMode] = useState<OtaEntryMode>(initialPricing.otaEntryMode);
   const [commissionableInput, setCommissionableInput] = useState<number>(
-    initialBooking ? Number(initialBooking.total_amount) : 1000000
+    initialPricing.commissionableInput
   );
-  const [totalAmount, setTotalAmount] = useState<number>(
-    initialBooking ? Number(initialBooking.total_amount) : 1000000
-  );
+  const [totalAmount, setTotalAmount] = useState<number>(initialPricing.totalAmount);
 
   const [otaReference, setOtaReference] = useState<string>(initialBooking?.ota_reference || '');
   const [dueDate, setDueDate] = useState<string>(initialBooking?.due_date || todayISO());
@@ -99,6 +107,10 @@ export const BookingForm: React.FC<BookingFormProps> = ({
   const { data: sources = [] } = useBookingSources();
   const isOta = isOtaSource(sourceCode);
   const sourceObj = sources.find((s) => s.code === sourceCode);
+  const otaCalc =
+    isOtaCommissionable && otaEntryMode === 'commissionable'
+      ? calcOtaNetPayout(commissionableInput)
+      : null;
 
   // Mutations
   const createBookingMutation = useCreateBooking();
@@ -112,14 +124,33 @@ export const BookingForm: React.FC<BookingFormProps> = ({
 
   // Sync total when price per night or nights change in 'per_night' mode
   useEffect(() => {
-    if (priceMode === 'per_night') {
-      const calculated = pricePerNight * Math.max(1, nights);
+    if (priceMode !== 'per_night') return;
+    const calculated = pricePerNight * Math.max(1, nights);
+    if (isOtaCommissionable && otaEntryMode === 'commissionable') {
+      setCommissionableInput(calculated);
+      const calc = calcOtaNetPayout(calculated);
+      setTotalAmount(calc.netPayout);
+      if (!isEdit && hasFirstPayment) {
+        setPaymentAmount(calc.netPayout);
+      }
+    } else {
       setTotalAmount(calculated);
+      setCommissionableInput(
+        isOtaCommissionable ? invertOtaNetPayout(calculated) : calculated
+      );
       if (!isEdit && hasFirstPayment) {
         setPaymentAmount(calculated);
       }
     }
-  }, [priceMode, pricePerNight, nights, isEdit, hasFirstPayment]);
+  }, [
+    priceMode,
+    pricePerNight,
+    nights,
+    isEdit,
+    hasFirstPayment,
+    isOtaCommissionable,
+    otaEntryMode,
+  ]);
 
   // When check-in changes and check-out <= check-in, set check-out to check-in + 1
   const handleCheckInChange = (newIn: string) => {
@@ -141,9 +172,120 @@ export const BookingForm: React.FC<BookingFormProps> = ({
       const rate = Number(unit.default_rate);
       setPricePerNight(rate);
       const calculated = rate * Math.max(1, nights);
-      setTotalAmount(calculated);
-      setPaymentAmount(calculated);
+      setCommissionableInput(calculated);
+      if (isOtaCommissionable && otaEntryMode === 'commissionable') {
+        const calc = calcOtaNetPayout(calculated);
+        setTotalAmount(calc.netPayout);
+        setPaymentAmount(calc.netPayout);
+      } else {
+        setTotalAmount(calculated);
+        setPaymentAmount(calculated);
+      }
     }
+  };
+
+  const handleSourceChange = (val: string) => {
+    const wasOtaCommissionable = isOtaCommissionableSource(sourceCode);
+    const nextOtaCommissionable = isOtaCommissionableSource(val);
+    setSourceCode(val);
+
+    if (isEdit) {
+      // Keep saved/edited net total intact in edit mode — never auto-deduct on channel change.
+      setOtaEntryMode('net');
+      if (nextOtaCommissionable) {
+        const matchedVoucher =
+          extractOtaVoucherFromNotes(initialBooking?.notes, totalAmount) ??
+          invertOtaNetPayout(totalAmount);
+        setCommissionableInput(matchedVoucher);
+      } else {
+        setCommissionableInput(totalAmount);
+      }
+    } else if (nextOtaCommissionable) {
+      if (!wasOtaCommissionable) {
+        setOtaEntryMode('commissionable');
+        const baseVoucher =
+          priceMode === 'per_night'
+            ? pricePerNight * Math.max(1, nights)
+            : commissionableInput;
+        setCommissionableInput(baseVoucher);
+        const calc = calcOtaNetPayout(baseVoucher);
+        setTotalAmount(calc.netPayout);
+        if (hasFirstPayment) setPaymentAmount(calc.netPayout);
+      }
+    } else {
+      setOtaEntryMode('net');
+      const restoredAmount =
+        priceMode === 'per_night'
+          ? pricePerNight * Math.max(1, nights)
+          : otaEntryMode === 'commissionable'
+          ? commissionableInput
+          : totalAmount;
+      setCommissionableInput(restoredAmount);
+      setTotalAmount(restoredAmount);
+      if (hasFirstPayment) setPaymentAmount(restoredAmount);
+    }
+
+    if (!isEdit) {
+      if (isOtaSource(val)) {
+        setPaymentMethod('app');
+        setDueDate(checkIn);
+        if (otaReference) setPaymentRef(otaReference);
+      } else if (paymentMethod === 'app') {
+        setPaymentMethod('cash');
+        setPaymentRef('CSH-01');
+      }
+    }
+  };
+
+  const handleSelectOtaMode = (nextMode: OtaEntryMode) => {
+    if (nextMode === otaEntryMode) return;
+    setOtaEntryMode(nextMode);
+
+    if (nextMode === 'commissionable') {
+      if (isEdit) {
+        const matchedVoucher =
+          extractOtaVoucherFromNotes(initialBooking?.notes, totalAmount) ??
+          invertOtaNetPayout(totalAmount);
+        setCommissionableInput(matchedVoucher);
+        if (priceMode === 'per_night') {
+          setPricePerNight(Math.round(matchedVoucher / Math.max(1, nights)));
+        }
+        const calc = calcOtaNetPayout(matchedVoucher);
+        setTotalAmount(calc.netPayout);
+      } else {
+        const baseVoucher =
+          priceMode === 'per_night'
+            ? pricePerNight * Math.max(1, nights)
+            : totalAmount;
+        setCommissionableInput(baseVoucher);
+        const calc = calcOtaNetPayout(baseVoucher);
+        setTotalAmount(calc.netPayout);
+        if (hasFirstPayment) setPaymentAmount(calc.netPayout);
+      }
+    } else if (isEdit) {
+      if (priceMode === 'per_night') {
+        setPricePerNight(Math.round(totalAmount / Math.max(1, nights)));
+      }
+    } else {
+      const nextNet =
+        priceMode === 'per_night'
+          ? pricePerNight * Math.max(1, nights)
+          : commissionableInput;
+      setTotalAmount(nextNet);
+      if (hasFirstPayment) setPaymentAmount(nextNet);
+    }
+  };
+
+  const handlePriceModeChange = (nextPriceMode: 'total' | 'per_night') => {
+    if (nextPriceMode === priceMode) return;
+    if (nextPriceMode === 'per_night') {
+      const baseTotal =
+        isOtaCommissionable && otaEntryMode === 'commissionable'
+          ? commissionableInput
+          : totalAmount;
+      setPricePerNight(Math.round(baseTotal / Math.max(1, nights)));
+    }
+    setPriceMode(nextPriceMode);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -224,15 +366,15 @@ export const BookingForm: React.FC<BookingFormProps> = ({
 
     setIsSubmitting(true);
     try {
-      const otaAuditNote =
-        isOtaCommissionable && otaEntryMode === 'commissionable'
-          ? `[سند ${sourceCode === 'booking' ? 'Booking.com' : 'Agoda'}: المبلغ الاسمي ${formatIDRWithCommas(commissionableInput)} | الصافي للبنك ${formatIDRWithCommas(totalAmount)}]`
-          : null;
-      const finalNotes = notes.trim()
-        ? otaAuditNote
-          ? `${notes.trim()}\n${otaAuditNote}`
-          : notes.trim()
-        : otaAuditNote || null;
+      const finalNotes = buildBookingFinalNotes({
+        rawNotes: notes,
+        isEdit,
+        initialTotalAmount: initialBooking?.total_amount,
+        sourceCode,
+        otaEntryMode,
+        commissionableInput,
+        totalAmount,
+      });
 
       if (isEdit && initialBooking) {
         const updatePayload: BookingUpdate = {
@@ -413,7 +555,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
           <div className="flex items-center gap-2 p-1 bg-stone/50 rounded-lg w-fit">
             <button
               type="button"
-              onClick={() => setPriceMode('total')}
+              onClick={() => handlePriceModeChange('total')}
               className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
                 priceMode === 'total'
                   ? 'bg-navy text-white shadow-sm'
@@ -424,7 +566,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => setPriceMode('per_night')}
+              onClick={() => handlePriceModeChange('per_night')}
               className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
                 priceMode === 'per_night'
                   ? 'bg-navy text-white shadow-sm'
@@ -440,32 +582,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
             <Field label={t('booking.source')} required>
               <Select
                 value={sourceCode}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setSourceCode(val);
-                  if (val === 'booking' || val === 'agoda') {
-                    setOtaEntryMode('commissionable');
-                    const calc = calcOtaNetPayout(commissionableInput);
-                    setTotalAmount(calc.netPayout);
-                    if (!isEdit && hasFirstPayment) setPaymentAmount(calc.netPayout);
-                  } else {
-                    setOtaEntryMode('net');
-                    setTotalAmount(commissionableInput);
-                    if (!isEdit && hasFirstPayment) setPaymentAmount(commissionableInput);
-                  }
-                  if (!isEdit) {
-                    if (isOtaSource(val)) {
-                      setPaymentMethod('app');
-                      setDueDate(checkIn);
-                      if (otaReference) setPaymentRef(otaReference);
-                    } else {
-                      if (paymentMethod === 'app') {
-                        setPaymentMethod('cash');
-                        setPaymentRef('CSH-01');
-                      }
-                    }
-                  }
-                }}
+                onChange={(e) => handleSourceChange(e.target.value)}
               >
                 {sources.map((s) => (
                   <option key={s.code} value={s.code}>
@@ -512,7 +629,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
           </div>
 
           {/* 2. OTA Commission Mode Toggle (Booking.com & Agoda) */}
-          {(sourceCode === 'booking' || sourceCode === 'agoda') && (
+          {isOtaCommissionable && (
             <div className="bg-white border border-line rounded-xl p-4 shadow-2xs space-y-3.5 text-start">
               <div className="flex items-center justify-between flex-wrap gap-2 pb-2.5 border-b border-line/60">
                 <div className="flex items-center gap-2">
@@ -528,16 +645,32 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                 </span>
               </div>
 
+              {isEdit && (
+                <div
+                  className={`p-3 rounded-lg border text-xs flex items-start gap-2 ${
+                    otaEntryMode === 'net'
+                      ? 'bg-emerald-50/80 border-emerald-200 text-emerald-950'
+                      : 'bg-amber-50/80 border-amber-200 text-amber-950'
+                  }`}
+                >
+                  <span className="text-sm shrink-0">
+                    {otaEntryMode === 'net' ? '🛡️' : 'ℹ️'}
+                  </span>
+                  <span className="leading-relaxed">
+                    {otaEntryMode === 'net'
+                      ? t('booking.otaEditNetProtectionBanner', {
+                          amount: formatIDRWithCommas(totalAmount),
+                        })
+                      : t('booking.otaEditRecalculateBanner')}
+                  </span>
+                </div>
+              )}
+
               {/* Segmented Mode Selector */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                 <button
                   type="button"
-                  onClick={() => {
-                    setOtaEntryMode('commissionable');
-                    const calc = calcOtaNetPayout(commissionableInput);
-                    setTotalAmount(calc.netPayout);
-                    if (!isEdit && hasFirstPayment) setPaymentAmount(calc.netPayout);
-                  }}
+                  onClick={() => handleSelectOtaMode('commissionable')}
                   className={`p-3 rounded-lg border text-start transition-all flex items-start gap-2.5 ${
                     otaEntryMode === 'commissionable'
                       ? 'border-navy bg-navy/5 text-navy font-bold ring-1 ring-navy/20 shadow-2xs'
@@ -551,21 +684,21 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                   </span>
                   <div>
                     <span className="block font-bold text-xs sm:text-sm text-ink">
-                      {t('booking.otaCommissionableModeTitle')}
+                      {isEdit
+                        ? t('booking.otaEditCommissionableModeTitle')
+                        : t('booking.otaCommissionableModeTitle')}
                     </span>
                     <span className="block text-[11px] text-muted mt-0.5 font-normal">
-                      {t('booking.otaCommissionableModeDesc')}
+                      {isEdit
+                        ? t('booking.otaEditCommissionableModeDesc')
+                        : t('booking.otaCommissionableModeDesc')}
                     </span>
                   </div>
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => {
-                    setOtaEntryMode('net');
-                    setTotalAmount(commissionableInput);
-                    if (!isEdit && hasFirstPayment) setPaymentAmount(commissionableInput);
-                  }}
+                  onClick={() => handleSelectOtaMode('net')}
                   className={`p-3 rounded-lg border text-start transition-all flex items-start gap-2.5 ${
                     otaEntryMode === 'net'
                       ? 'border-navy bg-navy/5 text-navy font-bold ring-1 ring-navy/20 shadow-2xs'
@@ -579,17 +712,21 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                   </span>
                   <div>
                     <span className="block font-bold text-xs sm:text-sm text-ink">
-                      {t('booking.otaNetModeTitle')}
+                      {isEdit
+                        ? t('booking.otaEditNetModeTitle')
+                        : t('booking.otaNetModeTitle')}
                     </span>
                     <span className="block text-[11px] text-muted mt-0.5 font-normal">
-                      {t('booking.otaNetModeDesc')}
+                      {isEdit
+                        ? t('booking.otaEditNetModeDesc')
+                        : t('booking.otaNetModeDesc')}
                     </span>
                   </div>
                 </button>
               </div>
 
               {/* Financial Calculation Details */}
-              {otaEntryMode === 'commissionable' && (
+              {otaCalc && (
                 <div className="bg-stone/25 border border-line/70 rounded-xl p-3.5 text-xs space-y-2">
                   <div className="flex items-center justify-between text-muted">
                     <span>{t('booking.otaVoucherAmountLabel')}</span>
@@ -601,14 +738,14 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                   <div className="flex items-center justify-between text-muted">
                     <span>{t('booking.otaGrossGuestPriceLabel')}</span>
                     <span className="font-mono text-muted">
-                      {formatIDRWithCommas(calcOtaNetPayout(commissionableInput).gross)}
+                      {formatIDRWithCommas(otaCalc.gross)}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between text-rose-600 font-medium">
                     <span>{t('booking.otaTotalDeductionsLabel')}</span>
                     <span className="font-mono font-bold">
-                      -{formatIDRWithCommas(calcOtaNetPayout(commissionableInput).totalDeductions)}
+                      -{formatIDRWithCommas(otaCalc.totalDeductions)}
                     </span>
                   </div>
 
@@ -618,7 +755,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                       <span>{t('booking.otaNetBankReceivableLabel')}</span>
                     </span>
                     <span className="font-mono text-sm sm:text-base font-black text-emerald-800 bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-200 shadow-2xs">
-                      {formatIDRWithCommas(calcOtaNetPayout(commissionableInput).netPayout)}
+                      {formatIDRWithCommas(otaCalc.netPayout)}
                     </span>
                   </div>
                 </div>
@@ -642,8 +779,10 @@ export const BookingForm: React.FC<BookingFormProps> = ({
             ) : (
               <Field
                 label={
-                  isOtaCommissionable && otaEntryMode === 'commissionable'
-                    ? t('booking.otaVoucherFieldLabel')
+                  isOtaCommissionable
+                    ? otaEntryMode === 'commissionable'
+                      ? t('booking.otaVoucherFieldLabel')
+                      : t('booking.otaNetFieldLabel')
                     : t('booking.totalPrice')
                 }
                 required
@@ -657,14 +796,17 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                   }
                   error={Boolean(errors.totalAmount)}
                   onChange={(val) => {
-                    setCommissionableInput(val);
                     setErrors((prev) => ({ ...prev, totalAmount: '' }));
                     if (isOtaCommissionable && otaEntryMode === 'commissionable') {
+                      setCommissionableInput(val);
                       const calc = calcOtaNetPayout(val);
                       setTotalAmount(calc.netPayout);
                       if (!isEdit && hasFirstPayment) setPaymentAmount(calc.netPayout);
                     } else {
                       setTotalAmount(val);
+                      setCommissionableInput(
+                        isEdit && isOtaCommissionable ? invertOtaNetPayout(val) : val
+                      );
                       if (!isEdit && hasFirstPayment) setPaymentAmount(val);
                     }
                   }}
@@ -677,15 +819,15 @@ export const BookingForm: React.FC<BookingFormProps> = ({
           <div className="p-3.5 bg-stone/40 border border-line/60 rounded-xl flex flex-wrap items-center justify-between gap-3">
             <div className="space-y-0.5">
               <span className="text-xs text-muted block">
-                {isOtaCommissionable && otaEntryMode === 'commissionable'
+                {isOtaCommissionable
                   ? t('booking.otaNetSummaryLabel')
                   : t('booking.totalPrice')}
               </span>
-              {isOtaCommissionable && otaEntryMode === 'commissionable' ? (
+              {otaCalc ? (
                 <span className="text-[11px] text-muted block">
                   {t('booking.otaDeductionSummaryNote', {
                     voucher: formatIDRWithCommas(commissionableInput),
-                    deduction: formatIDRWithCommas(calcOtaNetPayout(commissionableInput).totalDeductions),
+                    deduction: formatIDRWithCommas(otaCalc.totalDeductions),
                   })}
                 </span>
               ) : priceMode === 'per_night' && nights > 0 ? (
@@ -698,7 +840,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
               <span className="font-mono font-black text-emerald-800 text-lg sm:text-xl tracking-tight block">
                 {formatIDRWithCommas(totalAmount)}
               </span>
-              {isOtaCommissionable && otaEntryMode === 'commissionable' && (
+              {isOtaCommissionable && (
                 <span className="text-[10px] text-emerald-700 font-bold block">
                   {t('booking.otaActualBankNetBadge')}
                 </span>
